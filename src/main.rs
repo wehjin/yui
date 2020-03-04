@@ -29,7 +29,7 @@ impl Bounds {
 trait RenderContext {
 	fn row(&self) -> i32;
 	fn col(&self) -> i32;
-	fn set_glyph(&self, row: i32, col: i32);
+	fn set_fill(&self, row: i32, col: i32);
 }
 
 trait Yard {
@@ -37,34 +37,39 @@ trait Yard {
 	fn render(&self, ctx: &dyn RenderContext);
 }
 
-struct FillYard {
-	edge_bounds: Bounds
+struct YardImpl<F, G> where F: FnMut(&Bounds) -> Bounds, G: Fn(&dyn RenderContext, &Bounds) {
+	layout_fn: F,
+	render_fn: G,
+	init: Bounds,
 }
 
-impl FillYard {
-	fn new() -> FillYard {
-		FillYard { edge_bounds: Bounds::zero() }
-	}
-}
-
-impl Yard for FillYard {
+impl<F, G> Yard for YardImpl<F, G> where F: FnMut(&Bounds) -> Bounds, G: Fn(&dyn RenderContext, &Bounds) {
 	fn layout(&mut self, bounds: &Bounds) -> Bounds {
-		self.edge_bounds = bounds.clone();
-		self.edge_bounds
+		self.init = (self.layout_fn)(bounds);
+		self.init
 	}
 
 	fn render(&self, ctx: &dyn RenderContext) {
-		let row = ctx.row();
-		let col = ctx.col();
-		if self.edge_bounds.intersects(row, col) {
-			ctx.set_glyph(row, col)
-		}
+		(self.render_fn)(ctx, &self.init)
 	}
 }
 
-fn fill_yard() -> Box<dyn Yard> {
-	Box::new(FillYard::new())
+fn fill_yard() -> impl Yard {
+	YardImpl {
+		layout_fn: |edge_bounds| {
+			edge_bounds.clone()
+		},
+		render_fn: |ctx, bounds| {
+			let row = ctx.row();
+			let col = ctx.col();
+			if bounds.intersects(row, col) {
+				ctx.set_fill(row, col)
+			}
+		},
+		init: Bounds::zero(),
+	}
 }
+
 
 struct CursesRenderContext {
 	row: i32,
@@ -74,7 +79,7 @@ struct CursesRenderContext {
 impl RenderContext for CursesRenderContext {
 	fn row(&self) -> i32 { self.row }
 	fn col(&self) -> i32 { self.col }
-	fn set_glyph(&self, row: i32, col: i32) {
+	fn set_fill(&self, row: i32, col: i32) {
 		mv(row, col);
 		attrset(COLOR_PAIR(1));
 		addch(32);
