@@ -2,26 +2,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-pub(crate) trait Yard {
-	fn yard_id(&self) -> i32;
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize;
-	fn render(&self, ctx: &dyn RenderContext);
-}
-
-pub(crate) trait LayoutContext {
-	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>>;
-	fn edge_bounds(&self) -> (usize, Bounds);
-	fn push_core_bounds(&mut self, bounds: &Bounds) -> usize;
-	fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize);
-}
-
-pub(crate) trait RenderContext {
-	fn spot(&self) -> (i32, i32);
-	fn yard_bounds(&self, yard_id: i32) -> Bounds;
-	fn set_fill(&self, row: i32, col: i32);
-}
-
-
 #[derive(Copy, Clone)]
 pub struct Bounds {
 	right: i32,
@@ -51,12 +31,19 @@ impl Bounds {
 	}
 }
 
-pub(crate) struct BoundsHold {
+pub struct BoundsHold {
 	holdings: Vec<Bounds>,
 	map: HashMap<i32, usize>,
 }
 
 impl BoundsHold {
+	pub fn init(width: i32, height: i32) -> (usize, Rc<RefCell<BoundsHold>>) {
+		let mut init_hold = BoundsHold::new();
+		let init_index = init_hold.push_root(width, height);
+		let hold_ref = Rc::new(RefCell::new(init_hold));
+		(init_index, hold_ref)
+	}
+
 	pub fn new() -> BoundsHold {
 		BoundsHold { holdings: Vec::new(), map: HashMap::new() }
 	}
