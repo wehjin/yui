@@ -7,30 +7,30 @@ pub(crate) fn yard() -> Rc<dyn Yard> {
 }
 
 struct FillYard {
-	yard_id: i32,
+	id: i32,
 }
 
 impl FillYard {
 	fn new() -> Rc<dyn Yard> {
 		let yard_id = rand::random();
-		Rc::new(FillYard { yard_id })
+		Rc::new(FillYard { id: yard_id })
 	}
 }
 
 impl Yard for FillYard {
-	fn yard_id(&self) -> i32 {
-		self.yard_id
+	fn id(&self) -> i32 {
+		self.id
 	}
 
 	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();
-		ctx.set_yard_bounds(self.yard_id(), bounds_id);
+		ctx.set_yard_bounds(self.id(), bounds_id);
 		bounds_id
 	}
 
 	fn render(&self, ctx: &dyn RenderContext) {
 		let (row, col) = ctx.spot();
-		let bounds = ctx.yard_bounds(self.yard_id);
+		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
 			ctx.set_fill(row, col)
 		}

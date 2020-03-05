@@ -61,12 +61,12 @@ impl BoundsHold {
 		self.holdings.len() - 1
 	}
 
-	pub fn yard_bounds(&self, yard_id: i32) -> &Bounds {
-		let bounds_index = self.map.get(&yard_id).unwrap().to_owned();
+	pub fn yard_bounds(&self, id: i32) -> &Bounds {
+		let bounds_index = self.map.get(&id).unwrap().to_owned();
 		self.holdings.get(bounds_index).unwrap()
 	}
 
-	pub fn insert_yard_bounds(&mut self, yard_id: i32, bounds_index: usize) {
-		self.map.insert(yard_id, bounds_index);
+	pub fn insert_yard_bounds(&mut self, id: i32, bounds_index: usize) {
+		self.map.insert(id, bounds_index);
 	}
 }

@@ -9,7 +9,7 @@ pub mod bounds;
 pub mod layout;
 
 pub trait Yard {
-	fn yard_id(&self) -> i32;
+	fn id(&self) -> i32;
 	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize;
 	fn render(&self, ctx: &dyn RenderContext);
 }

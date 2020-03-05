@@ -10,7 +10,7 @@ impl Padding for Rc<dyn Yard> {
 }
 
 struct PadYard {
-	yard_id: i32,
+	id: i32,
 	left_cols: i32,
 	right_cols: i32,
 	top_rows: i32,
@@ -23,7 +23,7 @@ impl PadYard {
 		let cols = size * 2;
 		let rows = size;
 		Rc::new(PadYard {
-			yard_id: rand::random(),
+			id: rand::random(),
 			left_cols: cols,
 			right_cols: cols,
 			top_rows: rows,
@@ -34,7 +34,7 @@ impl PadYard {
 }
 
 impl Yard for PadYard {
-	fn yard_id(&self) -> i32 { self.yard_id }
+	fn id(&self) -> i32 { self.id }
 
 	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
 		let (index, bounds) = ctx.edge_bounds();
