@@ -14,7 +14,7 @@ use crate::yui::layout::LayoutContextImpl;
 mod yui;
 
 fn main() {
-	let yard = fill::yard().pack_sides(10);
+	let yard = fill::yard().pad_sides(10);
 
 	initscr();
 	if !has_colors() {

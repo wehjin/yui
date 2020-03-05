@@ -19,7 +19,7 @@ impl Bounds {
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
 		row >= self.top && row < self.bottom && col >= self.left && col < self.right
 	}
-	pub fn pack(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Bounds {
+	pub fn pad(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Bounds {
 		Bounds {
 			right: self.right - right_cols,
 			bottom: self.bottom - bottom_rows,

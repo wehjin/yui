@@ -4,7 +4,7 @@ use std::rc::Rc;
 use crate::yui::bounds::{Bounds, BoundsHold};
 
 pub mod fill;
-pub mod pack;
+pub mod pad;
 pub mod bounds;
 pub mod layout;
 
@@ -27,6 +27,6 @@ pub trait RenderContext {
 	fn set_fill(&self, row: i32, col: i32);
 }
 
-pub trait Packing {
-	fn pack_sides(self, size: i32) -> Rc<dyn Yard>;
+pub trait Padding {
+	fn pad_sides(self, size: i32) -> Rc<dyn Yard>;
 }
