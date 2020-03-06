@@ -28,7 +28,7 @@ impl Yard for GlyphYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_glyph(self.glyph, bounds.near);
+			ctx.set_glyph(self.glyph, bounds.z);
 		}
 	}
 }

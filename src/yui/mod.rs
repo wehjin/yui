@@ -16,10 +16,11 @@ pub trait Yard {
 }
 
 pub trait LayoutContext {
-	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>>;
 	fn edge_bounds(&self) -> (usize, Bounds);
-	fn push_core_bounds(&mut self, bounds: &Bounds) -> usize;
-	fn set_yard_bounds(&mut self, id: i32, bounds_index: usize);
+	fn bounds(&self, index: usize) -> Bounds;
+	fn push_bounds(&mut self, bounds: &Bounds) -> usize;
+	fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize);
+	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>>;
 }
 
 pub trait RenderContext {

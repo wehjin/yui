@@ -61,7 +61,6 @@ struct CursesRenderContext {
 	row: i32,
 	col: i32,
 	bounds_hold: Rc<RefCell<BoundsHold>>,
-	rows: i32,
 	cols: i32,
 	spots: Vec<RefCell<SpotStack>>,
 }
@@ -72,7 +71,6 @@ impl CursesRenderContext {
 			row: 0,
 			col: 0,
 			bounds_hold,
-			rows,
 			cols,
 			spots: vec![SpotStack::default(); (rows * cols) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
 		}

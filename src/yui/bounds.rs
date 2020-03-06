@@ -8,13 +8,12 @@ pub struct Bounds {
 	pub bottom: i32,
 	pub left: i32,
 	pub top: i32,
-	pub near: i32,
-	pub far: i32,
+	pub z: i32,
 }
 
 impl Bounds {
 	pub fn new(width: i32, height: i32) -> Bounds {
-		Bounds { right: width, bottom: height, left: 0, top: 0, near: 0, far: 0 }
+		Bounds { right: width, bottom: height, left: 0, top: 0, z: 0 }
 	}
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
 		row >= self.top && row < self.bottom && col >= self.left && col < self.right
@@ -25,9 +24,13 @@ impl Bounds {
 			bottom: self.bottom - bottom_rows,
 			left: self.left + left_cols,
 			top: self.top + top_rows,
-			near: self.near,
-			far: self.far,
+			z: self.z,
 		}
+	}
+	pub fn with_z(&self, z: i32) -> Bounds {
+		let mut new = self.clone();
+		new.z = z;
+		new
 	}
 }
 

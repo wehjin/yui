@@ -37,13 +37,19 @@ impl Yard for PadYard {
 	fn id(&self) -> i32 { self.id }
 
 	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
-		let (index, bounds) = ctx.edge_bounds();
-		let alt_bounds = bounds.pad(self.left_cols, self.right_cols, self.top_rows, self.bottom_rows);
-		let alt_index = ctx.push_core_bounds(&alt_bounds);
+		let (edge_index, edge_bounds) = ctx.edge_bounds();
+		let alt_bounds = edge_bounds.pad(self.left_cols, self.right_cols, self.top_rows, self.bottom_rows);
+		let alt_index = ctx.push_bounds(&alt_bounds);
 		let mut alt_ctx = LayoutContextImpl::new(alt_index, ctx.bounds_hold().to_owned());
-		self.yard.layout(&mut alt_ctx);
-		// TODO Merge padded bounds into near/far.
-		index
+		let core_index = self.yard.layout(&mut alt_ctx);
+		if core_index == alt_index {
+			edge_index
+		} else {
+			let core_bounds = ctx.bounds(core_index);
+			let final_bounds = edge_bounds.with_z(core_bounds.z);
+			let final_index = ctx.push_bounds(&final_bounds);
+			final_index
+		}
 	}
 
 	fn render(&self, ctx: &dyn RenderContext) {

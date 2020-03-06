@@ -32,7 +32,7 @@ impl Yard for FillYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_fill(bounds.near)
+			ctx.set_fill(bounds.z)
 		}
 	}
 }
