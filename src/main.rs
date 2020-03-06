@@ -8,6 +8,7 @@ use ncurses::*;
 use yui::*;
 
 use crate::yui::bounds::{Bounds, BoundsHold};
+use crate::yui::fill::fill_yard;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContextImpl;
 
@@ -17,7 +18,7 @@ const CONTENT_ON_BACKGROUND: i16 = 1;
 const CONTENT_ON_PRIMARY: i16 = 2;
 
 fn main() {
-	let yard = glyph_yard('@');
+	let yard = glyph_yard('*').pad(20).before(fill_yard()).pad(2);
 
 	initscr();
 	if !has_colors() {
@@ -32,7 +33,7 @@ fn main() {
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 	clear();
 
-	init_pair(CONTENT_ON_BACKGROUND, COLOR_WHITE, COLOR_BLACK);
+	init_pair(CONTENT_ON_BACKGROUND, COLOR_BLACK, COLOR_WHITE);
 	init_pair(CONTENT_ON_PRIMARY, COLOR_WHITE, COLOR_BLUE);
 
 	let mut max_x = 0;
@@ -109,7 +110,7 @@ impl RenderContext for CursesRenderContext {
 }
 
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct SpotStack {
 	fill_type: bool,
 	fill_z: i32,
@@ -126,8 +127,8 @@ impl Default for SpotStack {
 impl SpotStack {
 	fn set_fill(&mut self, z: i32) {
 		if z <= self.fill_z {
-			self.fill_type = true;
 			self.fill_z = z;
+			self.fill_type = true;
 		}
 	}
 
@@ -146,7 +147,7 @@ impl SpotStack {
 		let glyph = match self.stroke_type {
 			None => ' ',
 			Some(glyph) => {
-				match self.fill_type == false || self.stroke_z < self.fill_z {
+				match self.fill_type == false || self.stroke_z <= self.fill_z {
 					true => glyph,
 					false => ' '
 				}

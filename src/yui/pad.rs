@@ -4,7 +4,7 @@ use crate::yui::{LayoutContext, Padding, RenderContext, Yard};
 use crate::yui::layout::LayoutContextImpl;
 
 impl Padding for Rc<dyn Yard> {
-	fn pad_sides(self, size: i32) -> Rc<dyn Yard> {
+	fn pad(self, size: i32) -> Rc<dyn Yard> {
 		PadYard::new(size, self)
 	}
 }

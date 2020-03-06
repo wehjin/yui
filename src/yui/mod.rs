@@ -8,6 +8,7 @@ pub mod layout;
 pub mod glyph;
 pub mod fill;
 pub mod pad;
+pub mod before;
 
 pub trait Yard {
 	fn id(&self) -> i32;
@@ -25,11 +26,15 @@ pub trait LayoutContext {
 
 pub trait RenderContext {
 	fn spot(&self) -> (i32, i32);
-	fn yard_bounds(&self, id: i32) -> Bounds;
+	fn yard_bounds(&self, yard_id: i32) -> Bounds;
 	fn set_fill(&self, z: i32);
 	fn set_glyph(&self, glyph: char, z: i32);
 }
 
 pub trait Padding {
-	fn pad_sides(self, size: i32) -> Rc<dyn Yard>;
+	fn pad(self, size: i32) -> Rc<dyn Yard>;
+}
+
+pub trait Before {
+	fn before(self, yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
 }
