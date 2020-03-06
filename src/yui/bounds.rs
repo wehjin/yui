@@ -4,12 +4,12 @@ use std::rc::Rc;
 
 #[derive(Copy, Clone)]
 pub struct Bounds {
-	right: i32,
-	bottom: i32,
-	left: i32,
-	top: i32,
-	near: i32,
-	far: i32,
+	pub right: i32,
+	pub bottom: i32,
+	pub left: i32,
+	pub top: i32,
+	pub near: i32,
+	pub far: i32,
 }
 
 impl Bounds {

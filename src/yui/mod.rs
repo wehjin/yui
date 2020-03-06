@@ -3,10 +3,11 @@ use std::rc::Rc;
 
 use crate::yui::bounds::{Bounds, BoundsHold};
 
-pub mod fill;
-pub mod pad;
 pub mod bounds;
 pub mod layout;
+pub mod glyph;
+pub mod fill;
+pub mod pad;
 
 pub trait Yard {
 	fn id(&self) -> i32;
@@ -18,13 +19,14 @@ pub trait LayoutContext {
 	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>>;
 	fn edge_bounds(&self) -> (usize, Bounds);
 	fn push_core_bounds(&mut self, bounds: &Bounds) -> usize;
-	fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize);
+	fn set_yard_bounds(&mut self, id: i32, bounds_index: usize);
 }
 
 pub trait RenderContext {
 	fn spot(&self) -> (i32, i32);
-	fn yard_bounds(&self, yard_id: i32) -> Bounds;
-	fn set_fill(&self, row: i32, col: i32);
+	fn yard_bounds(&self, id: i32) -> Bounds;
+	fn set_fill(&self, z: i32);
+	fn set_glyph(&self, glyph: char, z: i32);
 }
 
 pub trait Padding {

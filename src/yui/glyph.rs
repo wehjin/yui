@@ -2,22 +2,18 @@ use std::rc::Rc;
 
 use crate::yui::{LayoutContext, RenderContext, Yard};
 
-pub fn fill_yard() -> Rc<dyn Yard> {
-	FillYard::new()
+pub fn glyph_yard(glyph: char) -> Rc<dyn Yard> {
+	assert!(!glyph.is_control());
+	let id = rand::random();
+	Rc::new(GlyphYard { id, glyph })
 }
 
-struct FillYard {
+struct GlyphYard {
 	id: i32,
+	glyph: char,
 }
 
-impl FillYard {
-	fn new() -> Rc<dyn Yard> {
-		let yard_id = rand::random();
-		Rc::new(FillYard { id: yard_id })
-	}
-}
-
-impl Yard for FillYard {
+impl Yard for GlyphYard {
 	fn id(&self) -> i32 {
 		self.id
 	}
@@ -32,7 +28,7 @@ impl Yard for FillYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_fill(bounds.near)
+			ctx.set_glyph(self.glyph, bounds.near);
 		}
 	}
 }
