@@ -11,14 +11,12 @@ use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::fill::fill_yard;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContextImpl;
+use crate::yui::palette::{FillColor, Palette, StrokeColor};
 
 mod yui;
 
-const CONTENT_ON_BACKGROUND: i16 = 1;
-const CONTENT_ON_PRIMARY: i16 = 2;
-
 fn main() {
-	let yard = glyph_yard('*').pad(20).before(fill_yard()).pad(2);
+	let yard = glyph_yard('#').pad(1).before(fill_yard());
 
 	initscr();
 	if !has_colors() {
@@ -26,15 +24,13 @@ fn main() {
 		println!("Your terminal does not support color");
 		std::process::exit(1);
 	}
-	start_color();
 	raw();
 	keypad(stdscr(), true);
 	noecho();
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 	clear();
 
-	init_pair(CONTENT_ON_BACKGROUND, COLOR_BLACK, COLOR_WHITE);
-	init_pair(CONTENT_ON_PRIMARY, COLOR_WHITE, COLOR_BLUE);
+	let palette = Palette::new();
 
 	let mut max_x = 0;
 	let mut max_y = 0;
@@ -42,7 +38,12 @@ fn main() {
 	let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
 	yard.layout(&mut LayoutContextImpl::new(init_index, init_hold.clone()));
 
-	let mut ctx = CursesRenderContext::new(max_y, max_x, init_hold.clone());
+	let mut ctx = CursesRenderContext::new(
+		max_y,
+		max_x,
+		init_hold.clone(),
+		&palette,
+	);
 	for row in 0..max_y {
 		ctx.row = row;
 		for col in 0..max_x {
@@ -54,30 +55,37 @@ fn main() {
 
 	refresh();
 	getch();
+	use_default_colors();
 	endwin();
 }
 
 
-struct CursesRenderContext {
+struct CursesRenderContext<'a> {
 	row: i32,
 	col: i32,
 	bounds_hold: Rc<RefCell<BoundsHold>>,
 	cols: i32,
-	spots: Vec<RefCell<SpotStack>>,
+	spots: Vec<RefCell<SpotStack<'a>>>,
 }
 
-impl CursesRenderContext {
-	fn new(rows: i32, cols: i32, bounds_hold: Rc<RefCell<BoundsHold>>) -> Self {
+impl<'a> CursesRenderContext<'a> {
+	fn new(
+		rows: i32,
+		cols: i32,
+		bounds_hold: Rc<RefCell<BoundsHold>>,
+		palette: &'a Palette,
+	) -> Self {
+		let origin_stack = SpotStack::new(palette);
 		CursesRenderContext {
 			row: 0,
 			col: 0,
 			bounds_hold,
 			cols,
-			spots: vec![SpotStack::default(); (rows * cols) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
+			spots: vec![origin_stack; (rows * cols) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
 		}
 	}
 
-	fn spot_stack(&self) -> &RefCell<SpotStack> {
+	fn spot_stack(&self) -> &RefCell<SpotStack<'a>> {
 		let index = self.row * self.cols + self.col;
 		&self.spots[index as usize]
 	}
@@ -91,7 +99,7 @@ impl CursesRenderContext {
 	}
 }
 
-impl RenderContext for CursesRenderContext {
+impl<'a> RenderContext for CursesRenderContext<'a> {
 	fn spot(&self) -> (i32, i32) {
 		(self.row as i32, self.col as i32)
 	}
@@ -111,20 +119,25 @@ impl RenderContext for CursesRenderContext {
 
 
 #[derive(Copy, Clone, Debug)]
-struct SpotStack {
+struct SpotStack<'a> {
 	fill_type: bool,
 	fill_z: i32,
 	stroke_type: Option<char>,
 	stroke_z: i32,
+	palette: &'a Palette,
 }
 
-impl Default for SpotStack {
-	fn default() -> Self {
-		SpotStack { fill_type: false, fill_z: i32::max_value(), stroke_type: Option::None, stroke_z: i32::max_value() }
+impl<'a> SpotStack<'a> {
+	fn new(palette: &'a Palette) -> Self {
+		SpotStack {
+			fill_type: false,
+			fill_z: i32::max_value(),
+			stroke_type: Option::None,
+			stroke_z: i32::max_value(),
+			palette,
+		}
 	}
-}
 
-impl SpotStack {
 	fn set_fill(&mut self, z: i32) {
 		if z <= self.fill_z {
 			self.fill_z = z;
@@ -140,10 +153,7 @@ impl SpotStack {
 	}
 
 	fn color_pair_index_and_glyph(&self) -> (i16, char) {
-		let color_pair = match self.fill_type {
-			true => CONTENT_ON_PRIMARY,
-			false => CONTENT_ON_BACKGROUND
-		};
+		let color_pair = self.palette.color_pair_index(StrokeColor::Body, FillColor::Background);
 		let glyph = match self.stroke_type {
 			None => ' ',
 			Some(glyph) => {

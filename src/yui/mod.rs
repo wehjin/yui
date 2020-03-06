@@ -9,6 +9,7 @@ pub mod glyph;
 pub mod fill;
 pub mod pad;
 pub mod before;
+pub mod palette;
 
 pub trait Yard {
 	fn id(&self) -> i32;
