@@ -1,16 +1,17 @@
 use std::rc::Rc;
 
-use crate::yui::{LayoutContext, RenderContext, Yard};
+use crate::yui::{Cling, LayoutContext, RenderContext, Yard};
 use crate::yui::palette::StrokeColor;
 
-pub fn label_yard(string: &str, color: StrokeColor) -> Rc<dyn Yard> {
-	Rc::new(LabelYard { id: rand::random(), color, string: string.to_owned() })
+pub fn label_yard(string: &str, color: StrokeColor, cling: Cling) -> Rc<dyn Yard> {
+	Rc::new(LabelYard { id: rand::random(), color, string: string.to_owned(), cling })
 }
 
 struct LabelYard {
 	id: i32,
 	color: StrokeColor,
 	string: String,
+	cling: Cling,
 }
 
 impl Yard for LabelYard {
@@ -29,12 +30,13 @@ impl Yard for LabelYard {
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
 			let chars: Vec<char> = self.string.chars().filter(|it| it.is_ascii() && !it.is_control()).collect();
-			let extra_width = bounds.width() - chars.len() as i32;
-			let anchor = 0.0;
-			let extra_left = (extra_width as f32 * anchor) as i32;
-			let left_indent = col - bounds.left;
+			let (extra_width, extra_height) = (bounds.width() - chars.len() as i32, bounds.height() - 1);
+			let Cling::Custom { x, y } = self.cling;
+			let (extra_left, extra_top) = ((extra_width as f32 * x) as i32, (extra_height as f32 * y) as i32);
+			let (left_indent, top_indent) = (col - bounds.left, row - bounds.top);
+			let line_indent = top_indent - extra_top;
 			let string_indent = left_indent - extra_left;
-			let glyph = if string_indent < 0 || string_indent as usize >= chars.len() {
+			let glyph = if line_indent != 0 || string_indent < 0 || string_indent as usize >= chars.len() {
 				' '
 			} else {
 				chars[string_indent as usize]

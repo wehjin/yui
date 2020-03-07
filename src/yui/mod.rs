@@ -46,3 +46,7 @@ pub trait Before {
 pub trait PackTop {
 	fn pack_top(self, rows: i32, top_yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
 }
+
+pub enum Cling {
+	Custom { x: f32, y: f32 }
+}

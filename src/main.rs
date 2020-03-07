@@ -17,8 +17,10 @@ use crate::yui::palette::{FillColor, Palette, StrokeColor};
 mod yui;
 
 fn main() {
-	let header = label_yard("Typography", StrokeColor::Body).pad(1).before(fill_yard(FillColor::Primary));
-	let content = glyph_yard('#', StrokeColor::Body).pad(1).before(fill_yard(FillColor::Background));
+	let header = label_yard("Typography", StrokeColor::PrimaryBody, Cling::Custom { x: 0.0, y: 0.0 }).pad(1)
+		.before(fill_yard(FillColor::Primary));
+	let content = label_yard("Your stuff will appear here", StrokeColor::Comment, Cling::Custom { x: 0.5, y: 0.5 }).pad(1)
+		.before(fill_yard(FillColor::Background));
 	let yard = content.pack_top(3, header);
 
 	initscr();

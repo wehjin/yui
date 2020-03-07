@@ -17,6 +17,7 @@ impl Bounds {
 		Bounds { right: width, bottom: height, left: 0, top: 0, z: 0 }
 	}
 	pub fn width(&self) -> i32 { self.right - self.left }
+	pub fn height(&self) -> i32 { self.bottom - self.top }
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
 		row >= self.top && row < self.bottom && col >= self.left && col < self.right
 	}
