@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::yui::bounds::{Bounds, BoundsHold};
+use crate::yui::palette::FillColor;
 
 pub mod bounds;
 pub mod layout;
@@ -10,6 +11,7 @@ pub mod fill;
 pub mod pad;
 pub mod before;
 pub mod palette;
+pub mod pack;
 
 pub trait Yard {
 	fn id(&self) -> i32;
@@ -28,7 +30,7 @@ pub trait LayoutContext {
 pub trait RenderContext {
 	fn spot(&self) -> (i32, i32);
 	fn yard_bounds(&self, yard_id: i32) -> Bounds;
-	fn set_fill(&self, z: i32);
+	fn set_fill(&self, color: FillColor, z: i32);
 	fn set_glyph(&self, glyph: char, z: i32);
 }
 
@@ -38,4 +40,8 @@ pub trait Padding {
 
 pub trait Before {
 	fn before(self, yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
+}
+
+pub trait PackTop {
+	fn pack_top(self, rows: i32, top_yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
 }

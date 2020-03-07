@@ -16,7 +16,9 @@ use crate::yui::palette::{FillColor, Palette, StrokeColor};
 mod yui;
 
 fn main() {
-	let yard = glyph_yard('#').pad(1).before(fill_yard());
+	let header = fill_yard(FillColor::Primary);
+	let content = glyph_yard('#').pad(1).before(fill_yard(FillColor::Background));
+	let yard = content.pack_top(3, header);
 
 	initscr();
 	if !has_colors() {
@@ -108,8 +110,8 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 		self.bounds_hold.borrow().yard_bounds(yard_id).to_owned()
 	}
 
-	fn set_fill(&self, z: i32) {
-		self.spot_stack().borrow_mut().set_fill(z);
+	fn set_fill(&self, color: FillColor, z: i32) {
+		self.spot_stack().borrow_mut().set_fill(color, z);
 	}
 
 	fn set_glyph(&self, glyph: char, z: i32) {
@@ -120,7 +122,7 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 
 #[derive(Copy, Clone, Debug)]
 struct SpotStack<'a> {
-	fill_type: bool,
+	fill_color: FillColor,
 	fill_z: i32,
 	stroke_type: Option<char>,
 	stroke_z: i32,
@@ -130,7 +132,7 @@ struct SpotStack<'a> {
 impl<'a> SpotStack<'a> {
 	fn new(palette: &'a Palette) -> Self {
 		SpotStack {
-			fill_type: false,
+			fill_color: FillColor::Background,
 			fill_z: i32::max_value(),
 			stroke_type: Option::None,
 			stroke_z: i32::max_value(),
@@ -138,10 +140,10 @@ impl<'a> SpotStack<'a> {
 		}
 	}
 
-	fn set_fill(&mut self, z: i32) {
+	fn set_fill(&mut self, color: FillColor, z: i32) {
 		if z <= self.fill_z {
 			self.fill_z = z;
-			self.fill_type = true;
+			self.fill_color = color;
 		}
 	}
 
@@ -153,15 +155,15 @@ impl<'a> SpotStack<'a> {
 	}
 
 	fn color_pair_index_and_glyph(&self) -> (i16, char) {
-		let color_pair = self.palette.color_pair_index(StrokeColor::Body, FillColor::Background);
+		let fill_color = self.fill_color;
+		let color_pair = self.palette.color_pair_index(StrokeColor::Body, fill_color);
 		let glyph = match self.stroke_type {
 			None => ' ',
-			Some(glyph) => {
-				match self.fill_type == false || self.stroke_z <= self.fill_z {
-					true => glyph,
-					false => ' '
-				}
-			}
+			Some(glyph) => if self.stroke_z <= self.fill_z {
+				glyph
+			} else {
+				' '
+			},
 		};
 		(color_pair, glyph)
 	}

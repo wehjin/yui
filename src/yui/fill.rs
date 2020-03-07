@@ -1,20 +1,15 @@
 use std::rc::Rc;
 
 use crate::yui::{LayoutContext, RenderContext, Yard};
+use crate::yui::palette::FillColor;
 
-pub fn fill_yard() -> Rc<dyn Yard> {
-	FillYard::new()
+pub fn fill_yard(color: FillColor) -> Rc<dyn Yard> {
+	Rc::new(FillYard { id: rand::random(), color })
 }
 
 struct FillYard {
 	id: i32,
-}
-
-impl FillYard {
-	fn new() -> Rc<dyn Yard> {
-		let yard_id = rand::random();
-		Rc::new(FillYard { id: yard_id })
-	}
+	color: FillColor,
 }
 
 impl Yard for FillYard {
@@ -32,7 +27,7 @@ impl Yard for FillYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_fill(bounds.z)
+			ctx.set_fill(self.color, bounds.z)
 		}
 	}
 }

@@ -6,12 +6,14 @@ use ncurses::{init_color, init_pair, start_color, use_default_colors};
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum FillColor {
 	Background,
+	Primary,
 }
 
 impl From<FillColor> for i16 {
 	fn from(color: FillColor) -> Self {
 		match color {
-			FillColor::Background => 0
+			FillColor::Background => 0,
+			FillColor::Primary => 1
 		}
 	}
 }
@@ -40,6 +42,7 @@ impl Palette {
 		start_color();
 		use_default_colors();
 		init_color_by_parts(i16::from(FillColor::Background), BASE3);
+		init_color_by_parts(i16::from(FillColor::Primary), BASE02);
 		init_color_by_parts(i16::from(StrokeColor::Body), BASE00);
 		Palette {
 			indices: RefCell::new(HashMap::new()),
@@ -71,6 +74,7 @@ impl Palette {
 	}
 }
 
+const BASE02: [i32; 3] = [7, 54, 66];
 const BASE00: [i32; 3] = [101, 123, 131];
 const BASE3: [i32; 3] = [253, 246, 227];
 

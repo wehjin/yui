@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::cmp::min;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -31,6 +32,24 @@ impl Bounds {
 		let mut new = self.clone();
 		new.z = z;
 		new
+	}
+	pub fn split_from_top(&self, top_rows: i32) -> (Bounds, Bounds) {
+		let middle = min(self.top + top_rows, self.bottom);
+		let top = Bounds {
+			right: self.right,
+			bottom: middle,
+			left: self.left,
+			top: self.top,
+			z: self.z,
+		};
+		let bottom = Bounds {
+			right: self.right,
+			bottom: self.bottom,
+			left: self.left,
+			top: middle,
+			z: self.z,
+		};
+		(top, bottom)
 	}
 }
 
