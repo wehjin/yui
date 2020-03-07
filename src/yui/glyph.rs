@@ -1,16 +1,18 @@
 use std::rc::Rc;
 
 use crate::yui::{LayoutContext, RenderContext, Yard};
+use crate::yui::palette::StrokeColor;
 
-pub fn glyph_yard(glyph: char) -> Rc<dyn Yard> {
+pub fn glyph_yard(glyph: char, color: StrokeColor) -> Rc<dyn Yard> {
 	assert!(!glyph.is_control());
 	let id = rand::random();
-	Rc::new(GlyphYard { id, glyph })
+	Rc::new(GlyphYard { id, glyph, color })
 }
 
 struct GlyphYard {
 	id: i32,
 	glyph: char,
+	color: StrokeColor,
 }
 
 impl Yard for GlyphYard {
@@ -28,7 +30,7 @@ impl Yard for GlyphYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_glyph(self.glyph, bounds.z);
+			ctx.set_glyph(self.glyph, self.color, bounds.z);
 		}
 	}
 }

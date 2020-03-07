@@ -21,12 +21,14 @@ impl From<FillColor> for i16 {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum StrokeColor {
 	Body,
+	PrimaryBody,
 }
 
 impl From<StrokeColor> for i16 {
 	fn from(color: StrokeColor) -> Self {
 		match color {
-			StrokeColor::Body => 8
+			StrokeColor::Body => 8,
+			StrokeColor::PrimaryBody => 9
 		}
 	}
 }
@@ -44,6 +46,7 @@ impl Palette {
 		init_color_by_parts(i16::from(FillColor::Background), BASE3);
 		init_color_by_parts(i16::from(FillColor::Primary), BASE02);
 		init_color_by_parts(i16::from(StrokeColor::Body), BASE00);
+		init_color_by_parts(i16::from(StrokeColor::PrimaryBody), BASE1);
 		Palette {
 			indices: RefCell::new(HashMap::new()),
 			next_index: Cell::new(1),
@@ -76,6 +79,7 @@ impl Palette {
 
 const BASE02: [i32; 3] = [7, 54, 66];
 const BASE00: [i32; 3] = [101, 123, 131];
+const BASE1: [i32; 3] = [147, 161, 161];
 const BASE3: [i32; 3] = [253, 246, 227];
 
 fn init_color_by_parts(color: i16, parts: [i32; 3]) {
