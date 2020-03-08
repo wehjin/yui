@@ -16,6 +16,14 @@ impl LayoutContextImpl {
 }
 
 impl LayoutContext for LayoutContextImpl {
+	fn current_index(&self) -> usize {
+		self.current_index
+	}
+
+	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>> {
+		self.bounds_hold.clone()
+	}
+
 	fn edge_bounds(&self) -> (usize, Bounds) {
 		let bounds_index = self.current_index;
 		let bounds = self.bounds_hold.borrow().bounds(bounds_index);
@@ -32,9 +40,5 @@ impl LayoutContext for LayoutContextImpl {
 
 	fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize) {
 		self.bounds_hold.borrow_mut().insert_yard_bounds(yard_id, bounds_index);
-	}
-
-	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>> {
-		self.bounds_hold.clone()
 	}
 }

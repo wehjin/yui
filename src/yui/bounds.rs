@@ -3,6 +3,8 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use crate::yui::Cling;
+
 #[derive(Copy, Clone)]
 pub struct Bounds {
 	pub right: i32,
@@ -27,6 +29,20 @@ impl Bounds {
 			bottom: self.bottom - bottom_rows,
 			left: self.left + left_cols,
 			top: self.top + top_rows,
+			z: self.z,
+		}
+	}
+	pub fn confine(&self, width: i32, height: i32, cling: Cling) -> Bounds {
+		let (extra_width, extra_height) = (self.width() - width, self.height() - height);
+		let top_extra = (cling.y() * extra_height as f32) as i32;
+		let bottom_extra = extra_height - top_extra;
+		let left_extra = (cling.x() * extra_width as f32) as i32;
+		let right_extra = extra_width - left_extra;
+		Bounds {
+			right: self.right - right_extra,
+			bottom: self.bottom - bottom_extra,
+			left: self.left + left_extra,
+			top: self.top + top_extra,
 			z: self.z,
 		}
 	}

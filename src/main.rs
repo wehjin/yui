@@ -8,8 +8,9 @@ use ncurses::*;
 use yui::*;
 
 use crate::yui::bounds::{Bounds, BoundsHold};
+use crate::yui::button::button_yard;
+use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
-use crate::yui::glyph::glyph_yard;
 use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContextImpl;
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
@@ -17,10 +18,18 @@ use crate::yui::palette::{FillColor, Palette, StrokeColor};
 mod yui;
 
 fn main() {
-	let header = label_yard("Typography", StrokeColor::PrimaryBody, Cling::Custom { x: 0.0, y: 0.0 }).pad(1)
-		.before(fill_yard(FillColor::Primary));
-	let content = label_yard("Your stuff will appear here", StrokeColor::Comment, Cling::Custom { x: 0.5, y: 0.5 }).pad(1)
-		.before(fill_yard(FillColor::Background));
+	let header =
+		label_yard("Buttons", StrokeColor::PrimaryBody, Cling::Custom { x: 0.0, y: 0.0 }).pad(1)
+			.before(fill_yard(FillColor::Primary));
+
+
+	let button_pole =
+		button_yard("Enabled").confine_height(1, Cling::CenterMiddle)
+			.pack_top(1, empty_yard())
+			.pack_top(1, button_yard("Focused"));
+	let content =
+		button_pole.confine(32, 3, Cling::CenterMiddle).pad(1)
+			.before(fill_yard(FillColor::Background));
 	let yard = content.pack_top(3, header);
 
 	initscr();
