@@ -8,7 +8,7 @@ use ncurses::*;
 
 use crate::yui::{RenderContext, Yard};
 use crate::yui::bounds::{Bounds, BoundsHold};
-use crate::yui::layout::LayoutContextImpl;
+use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
 
 pub struct CursesScreen {
@@ -30,13 +30,18 @@ impl CursesScreen {
 					ScreenAction::ResizeRefresh => {
 						let (max_x, max_y) = Self::size();
 						let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
-						yard.layout(&mut LayoutContextImpl::new(init_index, init_hold.clone()));
+						let mut layout_ctx = LayoutContext::new(init_index, init_hold.clone());
+						yard.layout(&mut layout_ctx);
+						info!("LayoutContext after layout: {:?}", layout_ctx);
+						let focus_id = layout_ctx.focus_id();
+
 						let palette = Palette::new();
 						let mut ctx = CursesRenderContext::new(
 							max_y,
 							max_x,
 							init_hold.clone(),
 							&palette,
+							focus_id,
 						);
 						for row in 0..max_y {
 							ctx.row = row;
@@ -79,6 +84,7 @@ struct CursesRenderContext<'a> {
 	bounds_hold: Rc<RefCell<BoundsHold>>,
 	cols: i32,
 	spots: Vec<RefCell<SpotStack<'a>>>,
+	focus_id: i32,
 }
 
 impl<'a> CursesRenderContext<'a> {
@@ -87,6 +93,7 @@ impl<'a> CursesRenderContext<'a> {
 		cols: i32,
 		bounds_hold: Rc<RefCell<BoundsHold>>,
 		palette: &'a Palette,
+		focus_id: i32,
 	) -> Self {
 		let origin_stack = SpotStack::new(palette);
 		CursesRenderContext {
@@ -95,6 +102,7 @@ impl<'a> CursesRenderContext<'a> {
 			bounds_hold,
 			cols,
 			spots: vec![origin_stack; (rows * cols) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
+			focus_id,
 		}
 	}
 
@@ -113,6 +121,10 @@ impl<'a> CursesRenderContext<'a> {
 }
 
 impl<'a> RenderContext for CursesRenderContext<'a> {
+	fn focus_id(&self) -> i32 {
+		self.focus_id
+	}
+
 	fn spot(&self) -> (i32, i32) {
 		(self.row as i32, self.col as i32)
 	}

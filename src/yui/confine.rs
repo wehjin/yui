@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use crate::yui::{Cling, Confine, LayoutContext, RenderContext, Yard};
-use crate::yui::layout::LayoutContextImpl;
+use crate::yui::{Cling, Confine, RenderContext, Yard, YardOption};
+use crate::yui::layout::LayoutContext;
 
 impl Confine for Rc<dyn Yard> {
 	fn confine_height(self, height: i32, cling: Cling) -> Rc<dyn Yard> {
@@ -35,15 +35,17 @@ impl ConfineYard {
 
 impl Yard for ConfineYard {
 	fn id(&self) -> i32 { self.id }
+	fn update(&self, _option: YardOption) {}
 
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
-		let (edge_index, edge_bounds) = ctx.edge_bounds();
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
+		let (edge_index, edge_bounds) = { ctx.edge_bounds() };
 		let (width, height) = (
 			self.width.unwrap_or_else(|| edge_bounds.width()),
 			self.height.unwrap_or_else(|| edge_bounds.height())
 		);
 		let alt_bounds = edge_bounds.confine(width, height, self.cling);
-		let mut alt_ctx = LayoutContextImpl::new(ctx.push_bounds(&alt_bounds), ctx.bounds_hold().to_owned());
+		let alt_index = { ctx.push_bounds(&alt_bounds) };
+		let mut alt_ctx = ctx.with_index(alt_index);
 		let core_index = self.yard.layout(&mut alt_ctx);
 		if core_index == alt_ctx.current_index() {
 			edge_index

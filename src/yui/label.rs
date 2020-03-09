@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
-use crate::yui::{Cling, LayoutContext, RenderContext, Yard};
+use crate::yui::{Cling, RenderContext, Yard, YardOption};
 use crate::yui::palette::StrokeColor;
+use crate::yui::layout::LayoutContext;
 
 pub fn label_yard(string: &str, color: StrokeColor, cling: Cling) -> Rc<dyn Yard> {
 	Rc::new(LabelYard { id: rand::random(), color, string: string.to_owned(), cling })
@@ -18,8 +19,9 @@ impl Yard for LabelYard {
 	fn id(&self) -> i32 {
 		self.id
 	}
+	fn update(&self, _option: YardOption) {}
 
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();
 		ctx.set_yard_bounds(self.id(), bounds_id);
 		bounds_id

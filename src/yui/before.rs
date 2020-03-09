@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use crate::yui::{Before, LayoutContext, RenderContext, Yard};
-use crate::yui::layout::LayoutContextImpl;
+use crate::yui::{Before, RenderContext, Yard, YardOption};
+use crate::yui::layout::LayoutContext;
 
 impl Before for Rc<dyn Yard> {
 	fn before(self, far_yard: Rc<dyn Yard>) -> Rc<dyn Yard> {
@@ -27,8 +27,9 @@ impl BeforeYard {
 
 impl Yard for BeforeYard {
 	fn id(&self) -> i32 { self.id }
+	fn update(&self, _option: YardOption) {}
 
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
 		let far_index = self.far_yard.layout(ctx);
 		let far_z = if far_index == edge_index {
@@ -39,7 +40,7 @@ impl Yard for BeforeYard {
 		let near_z = far_z - 1;
 		let near_bounds = edge_bounds.with_z(near_z);
 		let near_index = ctx.push_bounds(&near_bounds);
-		let mut near_ctx = LayoutContextImpl::new(near_index, ctx.bounds_hold().clone());
+		let mut near_ctx = ctx.with_index(near_index);
 		let final_index = self.near_yard.layout(&mut near_ctx);
 		final_index
 	}

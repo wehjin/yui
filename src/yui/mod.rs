@@ -1,7 +1,7 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::yui::bounds::{Bounds, BoundsHold};
+use crate::yui::bounds::Bounds;
+use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
@@ -19,20 +19,29 @@ pub mod empty;
 
 pub trait Yard {
 	fn id(&self) -> i32;
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize;
+	fn update(&self, option: YardOption);
+	fn layout(&self, ctx: &mut LayoutContext) -> usize;
 	fn render(&self, ctx: &dyn RenderContext);
 }
 
-pub trait LayoutContext {
-	fn current_index(&self) -> usize;
-	fn bounds_hold(&self) -> Rc<RefCell<BoundsHold>>;
-	fn edge_bounds(&self) -> (usize, Bounds);
-	fn bounds(&self, index: usize) -> Bounds;
-	fn push_bounds(&mut self, bounds: &Bounds) -> usize;
-	fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize);
+pub enum YardOption {
+	FillColor(FillColor)
+}
+
+#[derive(Debug)]
+pub struct Focus {
+	pub yard_id: i32,
+	pub focus_type: FocusType,
+	pub bounds: Bounds,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum FocusType {
+	Submit,
 }
 
 pub trait RenderContext {
+	fn focus_id(&self) -> i32;
 	fn spot(&self) -> (i32, i32);
 	fn yard_bounds(&self, yard_id: i32) -> Bounds;
 	fn set_fill(&self, color: FillColor, z: i32);

@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
-use crate::yui::{LayoutContext, RenderContext, Yard};
+use crate::yui::{RenderContext, Yard, YardOption};
+use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 
 pub fn glyph_yard(glyph: char, color: StrokeColor) -> Rc<dyn Yard> {
@@ -19,8 +20,9 @@ impl Yard for GlyphYard {
 	fn id(&self) -> i32 {
 		self.id
 	}
+	fn update(&self, _option: YardOption) {}
 
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();
 		ctx.set_yard_bounds(self.id(), bounds_id);
 		bounds_id

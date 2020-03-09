@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::yui::Cling;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Bounds {
 	pub right: i32,
 	pub bottom: i32,
@@ -71,6 +71,7 @@ impl Bounds {
 	}
 }
 
+#[derive(Debug)]
 pub struct BoundsHold {
 	holdings: Vec<Bounds>,
 	map: HashMap<i32, usize>,

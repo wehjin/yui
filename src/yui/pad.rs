@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use crate::yui::{LayoutContext, Padding, RenderContext, Yard};
-use crate::yui::layout::LayoutContextImpl;
+use crate::yui::{Padding, RenderContext, Yard, YardOption};
+use crate::yui::layout::LayoutContext;
 
 impl Padding for Rc<dyn Yard> {
 	fn pad(self, size: i32) -> Rc<dyn Yard> {
@@ -35,12 +35,13 @@ impl PadYard {
 
 impl Yard for PadYard {
 	fn id(&self) -> i32 { self.id }
+	fn update(&self, _option: YardOption) {}
 
-	fn layout(&self, ctx: &mut dyn LayoutContext) -> usize {
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
 		let alt_bounds = edge_bounds.pad(self.left_cols, self.right_cols, self.top_rows, self.bottom_rows);
 		let alt_index = ctx.push_bounds(&alt_bounds);
-		let mut alt_ctx = LayoutContextImpl::new(alt_index, ctx.bounds_hold().to_owned());
+		let mut alt_ctx = ctx.with_index(alt_index);
 		let core_index = self.yard.layout(&mut alt_ctx);
 		if core_index == alt_index {
 			edge_index
