@@ -61,7 +61,7 @@ fn main() {
 				done = true;
 			}
 			_ => {
-				println!("KEY: {}", ch);
+				info!("KEY: {}", ch);
 			}
 		}
 	}
