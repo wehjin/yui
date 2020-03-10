@@ -8,7 +8,7 @@ use ncurses::*;
 
 use crate::yui::{RenderContext, Yard};
 use crate::yui::bounds::{Bounds, BoundsHold};
-use crate::yui::layout::LayoutContext;
+use crate::yui::layout::{ActiveFocus, LayoutContext};
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
 
 pub struct CursesScreen {
@@ -20,28 +20,37 @@ impl CursesScreen {
 		let (tx, rx): (Sender<ScreenAction>, Receiver<ScreenAction>) = mpsc::channel();
 		curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 		clear();
+		let inside_tx = tx.clone();
 		thread::spawn(move || {
 			let yard = gen_yard();
+			let mut active_focus: ActiveFocus = Default::default();
 			let mut done = false;
 			while !done {
 				let action = rx.recv().unwrap();
 				info!("ACTION: {:?}", action);
 				match action {
+					ScreenAction::FocusDown => {
+						active_focus = active_focus.move_down();
+						inside_tx.send(ScreenAction::ResizeRefresh).unwrap();
+					}
+					ScreenAction::FocusUp => {
+						active_focus = active_focus.move_up();
+						inside_tx.send(ScreenAction::ResizeRefresh).unwrap();
+					}
 					ScreenAction::ResizeRefresh => {
 						let (max_x, max_y) = Self::size();
 						let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
 						let mut layout_ctx = LayoutContext::new(init_index, init_hold.clone());
 						yard.layout(&mut layout_ctx);
 						info!("LayoutContext after layout: {:?}", layout_ctx);
-						let focus_id = layout_ctx.focus_id();
-
+						active_focus = layout_ctx.pop_active_focus(&active_focus);
 						let palette = Palette::new();
 						let mut ctx = CursesRenderContext::new(
 							max_y,
 							max_x,
 							init_hold.clone(),
 							&palette,
-							focus_id,
+							active_focus.focus_id(),
 						);
 						for row in 0..max_y {
 							ctx.row = row;
@@ -63,6 +72,14 @@ impl CursesScreen {
 
 	pub fn resize_and_refresh(&self) {
 		self.tx.send(ScreenAction::ResizeRefresh).unwrap();
+	}
+
+	pub fn focus_down(&self) {
+		self.tx.send(ScreenAction::FocusDown).unwrap();
+	}
+
+	pub fn focus_up(&self) {
+		self.tx.send(ScreenAction::FocusUp).unwrap();
 	}
 
 	pub fn close(&self) {
@@ -196,6 +213,8 @@ impl<'a> SpotStack<'a> {
 enum ScreenAction {
 	Close,
 	ResizeRefresh,
+	FocusDown,
+	FocusUp,
 }
 
 pub const KEY_EOT: i32 = 4;

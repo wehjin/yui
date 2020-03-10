@@ -51,6 +51,41 @@ impl Bounds {
 		new.z = z;
 		new
 	}
+	pub fn is_below(&self, other: &Bounds) -> bool {
+		self.top >= other.bottom
+	}
+	pub fn is_above(&self, other: &Bounds) -> bool {
+		self.bottom <= other.top
+	}
+	pub fn down_rank(&self, start: &Bounds) -> i32 {
+		let distance = self.top - start.bottom;
+		let overlap = start.x_overlap(self);
+		distance - overlap
+	}
+	pub fn up_rank(&self, start: &Bounds) -> i32 {
+		let distance = start.top - self.bottom;
+		let overlap = start.x_overlap(self);
+		distance - overlap
+	}
+	fn x_overlap(&self, target: &Bounds) -> i32 {
+		if target.right < self.left {
+			-(self.left - target.right)
+		} else if target.right <= self.right {
+			if target.left < self.left {
+				target.right - self.left
+			} else {
+				target.width()
+			}
+		} else {
+			if target.left < self.left {
+				self.width()
+			} else if target.left <= self.right {
+				self.right - target.left
+			} else {
+				-(target.left - self.right)
+			}
+		}
+	}
 	pub fn split_from_top(&self, top_rows: i32) -> (Bounds, Bounds) {
 		let middle = min(self.top + top_rows, self.bottom);
 		let top = Bounds {

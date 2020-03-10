@@ -53,12 +53,12 @@ fn main() {
 	while !done {
 		let ch = getch();
 		match ch {
+			KEY_DOWN => { screen.focus_down(); }
+			KEY_UP => { screen.focus_up(); }
+			KEY_RESIZE => { screen.resize_and_refresh(); }
 			KEY_EOT => {
 				screen.close();
 				done = true;
-			}
-			KEY_RESIZE => {
-				screen.resize_and_refresh();
 			}
 			_ => {
 				println!("KEY: {}", ch);

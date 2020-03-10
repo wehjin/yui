@@ -28,7 +28,7 @@ pub enum YardOption {
 	FillColor(FillColor)
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Focus {
 	pub yard_id: i32,
 	pub focus_type: FocusType,

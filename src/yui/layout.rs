@@ -5,10 +5,73 @@ use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::Focus;
 
 #[derive(Clone, Debug)]
+pub struct ActiveFocus {
+	focus: Option<Rc<Focus>>,
+	peers: Vec<Rc<Focus>>,
+}
+
+impl Default for ActiveFocus {
+	fn default() -> Self {
+		ActiveFocus { focus: None, peers: Vec::new() }
+	}
+}
+
+impl ActiveFocus {
+	pub fn focus_id(&self) -> i32 {
+		match self.focus {
+			Some(ref focus) => focus.yard_id,
+			None => 0
+		}
+	}
+
+	pub fn move_down(&self) -> ActiveFocus {
+		self.move_y(
+			|bounds, origin| bounds.is_below(origin),
+			|bounds, origin| bounds.down_rank(origin),
+		)
+	}
+
+
+	pub fn move_up(&self) -> ActiveFocus {
+		self.move_y(
+			|bounds, origin| bounds.is_above(origin),
+			|bounds, origin| bounds.up_rank(origin),
+		)
+	}
+
+	fn move_y(&self,
+	          is_direction_from: impl Fn(&Bounds, &Bounds) -> bool,
+	          rank_in_direction_from: impl Fn(&Bounds, &Bounds) -> i32,
+	) -> ActiveFocus {
+		if let Some(ref focus) = self.focus {
+			let bounds = focus.bounds;
+			let (mut targets, mut next_peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) =
+				self.peers.clone()
+					.into_iter()
+					.partition(|it| is_direction_from(&it.bounds, &bounds));
+			targets.sort_by_key(|it| rank_in_direction_from(&it.bounds, &bounds));
+			if targets.is_empty() {
+				self.to_owned()
+			} else {
+				let next_focus = targets.remove(0);
+				next_peers.append(&mut targets);
+				next_peers.push(focus.clone());
+				ActiveFocus {
+					focus: Some(next_focus),
+					peers: next_peers,
+				}
+			}
+		} else {
+			self.to_owned()
+		}
+	}
+}
+
+#[derive(Clone, Debug)]
 pub struct LayoutContext {
 	current_index: usize,
 	bounds_hold: Rc<RefCell<BoundsHold>>,
-	focus_vec: Rc<RefCell<Vec<Focus>>>,
+	focus_vec: Rc<RefCell<Vec<Rc<Focus>>>>,
 }
 
 impl LayoutContext {
@@ -20,11 +83,25 @@ impl LayoutContext {
 		}
 	}
 
-	pub fn focus_id(&self) -> i32 {
-		match (*self.focus_vec).borrow().first() {
-			Option::Some(focus) => focus.yard_id,
-			_ => 0
-		}
+	pub fn pop_active_focus(&mut self, active: &ActiveFocus) -> ActiveFocus {
+		let mut all_focus = (*self.focus_vec).borrow().clone();
+		let next_active = if let ActiveFocus { focus: Some(focus), .. } = active {
+			let (mut found, peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = all_focus.into_iter().partition(|it| it.yard_id == focus.yard_id);
+			let next_focus = if found.is_empty() {
+				None
+			} else {
+				Some(found.remove(0))
+			};
+			ActiveFocus { focus: next_focus, peers }
+		} else {
+			if all_focus.is_empty() {
+				ActiveFocus { focus: None, peers: all_focus }
+			} else {
+				let focus = Some(all_focus.remove(0));
+				ActiveFocus { focus, peers: all_focus }
+			}
+		};
+		next_active
 	}
 
 	pub fn current_index(&self) -> usize {
@@ -50,10 +127,7 @@ impl LayoutContext {
 	}
 
 	pub fn add_focus(&mut self, focus: Focus) {
-		info!("FOCUS VEC: {:?}", self.focus_vec);
-		info!("ADD FOCUS: {:?}", focus);
-		(*self.focus_vec).borrow_mut().push(focus);
-		info!("FOCUS VEC: {:?}", self.focus_vec);
+		(*self.focus_vec).borrow_mut().push(Rc::new(focus));
 	}
 
 	pub fn with_index(&self, index: usize) -> LayoutContext {
