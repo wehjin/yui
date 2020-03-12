@@ -11,7 +11,7 @@ use simplelog::{Config, WriteLogger};
 
 use yui::*;
 
-use crate::ycurses::{CursesScreen, KEY_EOT};
+use crate::ycurses::{CursesScreen, KEY_EOT, KEY_SPACE};
 use crate::yui::button::button_yard;
 use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
@@ -56,6 +56,7 @@ fn main() {
 			KEY_DOWN => { screen.focus_down(); }
 			KEY_UP => { screen.focus_up(); }
 			KEY_RESIZE => { screen.resize_and_refresh(); }
+			KEY_SPACE => { screen.input_space(); }
 			KEY_EOT => {
 				screen.close();
 				done = true;

@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use std::sync::Arc;
+use std::thread;
 
 use crate::yui::bounds::Bounds;
 use crate::yui::layout::LayoutContext;
@@ -28,11 +30,38 @@ pub enum YardOption {
 	FillColor(FillColor)
 }
 
-#[derive(Clone, Debug)]
+pub enum FocusAction {
+	Go
+}
+
+#[derive(Clone)]
 pub struct Focus {
 	pub yard_id: i32,
 	pub focus_type: FocusType,
 	pub bounds: Bounds,
+	action_block: Arc<dyn Fn(&FocusActionContext) + Send + Sync>,
+}
+
+impl Focus {
+	pub fn insert_space(&self, refresh: impl Fn() + Send + 'static) {
+		match self.focus_type {
+			FocusType::Submit => {
+				let action_block = self.action_block.clone();
+				thread::spawn(move || {
+					let ctx = FocusActionContext {
+						action: FocusAction::Go,
+						refresh: Box::new(refresh),
+					};
+					action_block(&ctx);
+				})
+			}
+		};
+	}
+}
+
+pub struct FocusActionContext {
+	pub action: FocusAction,
+	pub refresh: Box<dyn Fn()>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

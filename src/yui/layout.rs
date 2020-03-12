@@ -4,7 +4,7 @@ use std::rc::Rc;
 use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::Focus;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ActiveFocus {
 	focus: Option<Rc<Focus>>,
 	peers: Vec<Rc<Focus>>,
@@ -21,6 +21,12 @@ impl ActiveFocus {
 		match self.focus {
 			Some(ref focus) => focus.yard_id,
 			None => 0
+		}
+	}
+
+	pub fn insert_space(&self, refresh: impl Fn() + Send + 'static) {
+		if let Some(ref focus) = self.focus {
+			focus.insert_space(refresh);
 		}
 	}
 
@@ -67,7 +73,7 @@ impl ActiveFocus {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct LayoutContext {
 	current_index: usize,
 	bounds_hold: Rc<RefCell<BoundsHold>>,

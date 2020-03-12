@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc::{Receiver, Sender};
 use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 
 use ncurses::*;
@@ -29,6 +29,10 @@ impl CursesScreen {
 				let action = rx.recv().unwrap();
 				info!("ACTION: {:?}", action);
 				match action {
+					ScreenAction::Space => {
+						let tx = inside_tx.clone();
+						active_focus.insert_space(move || tx.send(ScreenAction::ResizeRefresh).unwrap());
+					}
 					ScreenAction::FocusDown => {
 						active_focus = active_focus.move_down();
 						inside_tx.send(ScreenAction::ResizeRefresh).unwrap();
@@ -42,7 +46,6 @@ impl CursesScreen {
 						let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
 						let mut layout_ctx = LayoutContext::new(init_index, init_hold.clone());
 						yard.layout(&mut layout_ctx);
-						info!("LayoutContext after layout: {:?}", layout_ctx);
 						active_focus = layout_ctx.pop_active_focus(&active_focus);
 						let palette = Palette::new();
 						let mut ctx = CursesRenderContext::new(
@@ -68,6 +71,10 @@ impl CursesScreen {
 		});
 		tx.send(ScreenAction::ResizeRefresh).unwrap();
 		CursesScreen { tx }
+	}
+
+	pub fn input_space(&self) {
+		self.tx.send(ScreenAction::Space).unwrap();
 	}
 
 	pub fn resize_and_refresh(&self) {
@@ -215,7 +222,9 @@ enum ScreenAction {
 	ResizeRefresh,
 	FocusDown,
 	FocusUp,
+	Space,
 }
 
 pub const KEY_EOT: i32 = 4;
+pub const KEY_SPACE: i32 = 32;
 

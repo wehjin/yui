@@ -6,16 +6,18 @@ use ncurses::{init_color, init_pair, start_color, use_default_colors};
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum FillColor {
 	Background,
-	Primary,
 	BackgroundWithFocus,
+	BackgroundWithPress,
+	Primary,
 }
 
 impl From<FillColor> for i16 {
 	fn from(color: FillColor) -> Self {
 		match color {
 			FillColor::Background => COLOR_BASE3,
-			FillColor::Primary => COLOR_BASE02,
 			FillColor::BackgroundWithFocus => COLOR_BASE1,
+			FillColor::BackgroundWithPress => COLOR_BASE00,
+			FillColor::Primary => COLOR_BASE02,
 		}
 	}
 }
