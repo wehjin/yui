@@ -1,29 +1,28 @@
 use std::ops::Deref;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 
-use crate::yui::{Cling, Focus, FocusType, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Cling, Focus, FocusType, RenderContext, Yard, YardOption};
 use crate::yui::fill::fill_yard;
 use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn button_yard(text: &str) -> Rc<dyn Yard> {
+pub fn button_yard(text: &str) -> ArcYard {
 	ButtonYard::new(text)
 }
 
 struct ButtonYard {
 	id: i32,
-	label_yard: Rc<dyn Yard>,
-	fill_yard: Rc<dyn Yard>,
+	label_yard: ArcYard,
+	fill_yard: ArcYard,
 	is_pressed: Arc<RwLock<bool>>,
 }
 
 impl ButtonYard {
-	fn new(text: &str) -> Rc<dyn Yard> {
-		Rc::new(ButtonYard {
+	fn new(text: &str) -> ArcYard {
+		Arc::new(ButtonYard {
 			id: rand::random(),
 			label_yard: label_yard(
 				&text.to_uppercase(),

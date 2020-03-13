@@ -1,12 +1,12 @@
 use std::cmp::min;
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{PackTop, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, PackTop, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
-impl PackTop for Rc<dyn Yard> {
-	fn pack_top(self, top_rows: i32, top_yard: Rc<dyn Yard>) -> Rc<dyn Yard> {
-		Rc::new(PackYard {
+impl PackTop for ArcYard {
+	fn pack_top(self, top_rows: i32, top_yard: ArcYard) -> ArcYard {
+		Arc::new(PackYard {
 			id: rand::random(),
 			top_rows,
 			top_yard,
@@ -18,8 +18,8 @@ impl PackTop for Rc<dyn Yard> {
 struct PackYard {
 	id: i32,
 	top_rows: i32,
-	top_yard: Rc<dyn Yard>,
-	bottom_yard: Rc<dyn Yard>,
+	top_yard: ArcYard,
+	bottom_yard: ArcYard,
 }
 
 impl Yard for PackYard {

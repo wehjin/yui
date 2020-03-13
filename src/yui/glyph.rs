@@ -1,13 +1,13 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 
-pub fn glyph_yard(glyph: char, color: StrokeColor) -> Rc<dyn Yard> {
+pub fn glyph_yard(glyph: char, color: StrokeColor) -> ArcYard {
 	assert!(!glyph.is_control());
 	let id = rand::random();
-	Rc::new(GlyphYard { id, glyph, color })
+	Arc::new(GlyphYard { id, glyph, color })
 }
 
 struct GlyphYard {

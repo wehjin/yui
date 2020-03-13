@@ -1,10 +1,10 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
-pub fn empty_yard() -> Rc<dyn Yard> {
-	Rc::new(EmptyYard { id: rand::random() })
+pub fn empty_yard() -> ArcYard {
+	Arc::new(EmptyYard { id: rand::random() })
 }
 
 struct EmptyYard {

@@ -1,14 +1,14 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{Cling, Confine, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Cling, Confine, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
-impl Confine for Rc<dyn Yard> {
-	fn confine_height(self, height: i32, cling: Cling) -> Rc<dyn Yard> {
+impl Confine for ArcYard {
+	fn confine_height(self, height: i32, cling: Cling) -> ArcYard {
 		ConfineYard::new(None, Some(height), cling, self)
 	}
 
-	fn confine(self, width: i32, height: i32, cling: Cling) -> Rc<dyn Yard> {
+	fn confine(self, width: i32, height: i32, cling: Cling) -> ArcYard {
 		ConfineYard::new(Some(width), Some(height), cling, self)
 	}
 }
@@ -18,12 +18,12 @@ struct ConfineYard {
 	width: Option<i32>,
 	height: Option<i32>,
 	cling: Cling,
-	yard: Rc<dyn Yard>,
+	yard: ArcYard,
 }
 
 impl ConfineYard {
-	fn new(width: Option<i32>, height: Option<i32>, cling: Cling, yard: Rc<dyn Yard>) -> Rc<dyn Yard> {
-		Rc::new(ConfineYard {
+	fn new(width: Option<i32>, height: Option<i32>, cling: Cling, yard: ArcYard) -> ArcYard {
+		Arc::new(ConfineYard {
 			id: rand::random(),
 			width,
 			height,

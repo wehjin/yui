@@ -1,20 +1,19 @@
-use std::cell::Cell;
-use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
-use crate::yui::{RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 
-pub fn fill_yard(color: FillColor) -> Rc<dyn Yard> {
-	Rc::new(FillYard {
+pub fn fill_yard(color: FillColor) -> ArcYard {
+	Arc::new(FillYard {
 		id: rand::random(),
-		color: Cell::new(color),
+		color: RwLock::new(color),
 	})
 }
 
 struct FillYard {
 	id: i32,
-	color: Cell<FillColor>,
+	color: RwLock<FillColor>,
 }
 
 impl Yard for FillYard {
@@ -24,7 +23,7 @@ impl Yard for FillYard {
 
 	fn update(&self, option: YardOption) {
 		let YardOption::FillColor(color) = option;
-		self.color.set(color)
+		*self.color.write().unwrap() = color;
 	}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -37,7 +36,7 @@ impl Yard for FillYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_fill(self.color.get(), bounds.z)
+			ctx.set_fill(*self.color.read().unwrap(), bounds.z)
 		}
 	}
 }

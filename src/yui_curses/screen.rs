@@ -6,40 +6,43 @@ use std::thread;
 
 use ncurses::*;
 
-use crate::yui::{RenderContext, Yard};
+use crate::yui::{ArcYard, RenderContext};
 use crate::yui::bounds::{Bounds, BoundsHold};
+use crate::yui::empty::empty_yard;
 use crate::yui::layout::{ActiveFocus, LayoutContext};
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
 
-pub struct CursesScreen {
-	tx: Sender<ScreenAction>
-}
+#[derive(Clone)]
+pub(crate) struct CursesScreen {}
 
 impl CursesScreen {
-	pub fn start(gen_yard: impl FnOnce() -> Rc<dyn Yard> + std::marker::Send + 'static) -> CursesScreen {
+	pub(crate) fn start() -> Sender<ScreenAction> {
 		let (tx, rx): (Sender<ScreenAction>, Receiver<ScreenAction>) = mpsc::channel();
 		curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 		clear();
-		let inside_tx = tx.clone();
+		let loop_tx = tx.clone();
 		thread::spawn(move || {
-			let yard = gen_yard();
 			let mut active_focus: ActiveFocus = Default::default();
 			let mut done = false;
+			let mut yard = empty_yard();
 			while !done {
 				let action = rx.recv().unwrap();
-				info!("ACTION: {:?}", action);
 				match action {
+					ScreenAction::SetYard(set_yard) => {
+						yard = set_yard;
+						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+					}
 					ScreenAction::Space => {
-						let tx = inside_tx.clone();
+						let tx = loop_tx.clone();
 						active_focus.insert_space(move || tx.send(ScreenAction::ResizeRefresh).unwrap());
 					}
 					ScreenAction::FocusDown => {
 						active_focus = active_focus.move_down();
-						inside_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
 					}
 					ScreenAction::FocusUp => {
 						active_focus = active_focus.move_up();
-						inside_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
 					}
 					ScreenAction::ResizeRefresh => {
 						let (max_x, max_y) = Self::size();
@@ -70,27 +73,7 @@ impl CursesScreen {
 			}
 		});
 		tx.send(ScreenAction::ResizeRefresh).unwrap();
-		CursesScreen { tx }
-	}
-
-	pub fn input_space(&self) {
-		self.tx.send(ScreenAction::Space).unwrap();
-	}
-
-	pub fn resize_and_refresh(&self) {
-		self.tx.send(ScreenAction::ResizeRefresh).unwrap();
-	}
-
-	pub fn focus_down(&self) {
-		self.tx.send(ScreenAction::FocusDown).unwrap();
-	}
-
-	pub fn focus_up(&self) {
-		self.tx.send(ScreenAction::FocusUp).unwrap();
-	}
-
-	pub fn close(&self) {
-		self.tx.send(ScreenAction::Close).unwrap();
+		tx
 	}
 
 	fn size() -> (i32, i32) {
@@ -216,15 +199,13 @@ impl<'a> SpotStack<'a> {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-enum ScreenAction {
+#[derive(Clone)]
+pub(crate) enum ScreenAction {
 	Close,
 	ResizeRefresh,
 	FocusDown,
 	FocusUp,
 	Space,
+	SetYard(ArcYard),
 }
-
-pub const KEY_EOT: i32 = 4;
-pub const KEY_SPACE: i32 = 32;
 

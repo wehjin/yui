@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use std::sync::Arc;
 use std::thread;
 
@@ -25,6 +24,8 @@ pub trait Yard {
 	fn layout(&self, ctx: &mut LayoutContext) -> usize;
 	fn render(&self, ctx: &dyn RenderContext);
 }
+
+pub type ArcYard = Arc<dyn Yard + Sync + Send>;
 
 pub enum YardOption {
 	FillColor(FillColor)
@@ -78,20 +79,20 @@ pub trait RenderContext {
 }
 
 pub trait Padding {
-	fn pad(self, size: i32) -> Rc<dyn Yard>;
+	fn pad(self, size: i32) -> ArcYard;
 }
 
 pub trait Confine {
-	fn confine_height(self, height: i32, cling: Cling) -> Rc<dyn Yard>;
-	fn confine(self, width: i32, height: i32, cling: Cling) -> Rc<dyn Yard>;
+	fn confine_height(self, height: i32, cling: Cling) -> ArcYard;
+	fn confine(self, width: i32, height: i32, cling: Cling) -> ArcYard;
 }
 
 pub trait Before {
-	fn before(self, yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
+	fn before(self, yard: ArcYard) -> ArcYard;
 }
 
 pub trait PackTop {
-	fn pack_top(self, rows: i32, top_yard: Rc<dyn Yard>) -> Rc<dyn Yard>;
+	fn pack_top(self, rows: i32, top_yard: ArcYard) -> ArcYard;
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]

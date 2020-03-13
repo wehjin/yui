@@ -1,11 +1,11 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{Cling, RenderContext, Yard, YardOption};
-use crate::yui::palette::StrokeColor;
+use crate::yui::{ArcYard, Cling, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
+use crate::yui::palette::StrokeColor;
 
-pub fn label_yard(string: &str, color: StrokeColor, cling: Cling) -> Rc<dyn Yard> {
-	Rc::new(LabelYard { id: rand::random(), color, string: string.to_owned(), cling })
+pub fn label_yard(string: &str, color: StrokeColor, cling: Cling) -> ArcYard {
+	Arc::new(LabelYard { id: rand::random(), color, string: string.to_owned(), cling })
 }
 
 struct LabelYard {

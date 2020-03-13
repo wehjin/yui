@@ -1,23 +1,23 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{Before, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Before, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
-impl Before for Rc<dyn Yard> {
-	fn before(self, far_yard: Rc<dyn Yard>) -> Rc<dyn Yard> {
+impl Before for ArcYard {
+	fn before(self, far_yard: ArcYard) -> ArcYard {
 		BeforeYard::new(self, far_yard)
 	}
 }
 
 struct BeforeYard {
 	id: i32,
-	near_yard: Rc<dyn Yard>,
-	far_yard: Rc<dyn Yard>,
+	near_yard: ArcYard,
+	far_yard: ArcYard,
 }
 
 impl BeforeYard {
-	fn new(near_yard: Rc<dyn Yard>, far_yard: Rc<dyn  Yard>) -> Rc<dyn Yard> {
-		Rc::new(BeforeYard {
+	fn new(near_yard: ArcYard, far_yard: ArcYard) -> ArcYard {
+		Arc::new(BeforeYard {
 			id: rand::random(),
 			near_yard,
 			far_yard,

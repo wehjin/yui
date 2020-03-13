@@ -1,10 +1,10 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::yui::{Padding, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Padding, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
-impl Padding for Rc<dyn Yard> {
-	fn pad(self, size: i32) -> Rc<dyn Yard> {
+impl Padding for ArcYard {
+	fn pad(self, size: i32) -> ArcYard {
 		PadYard::new(size, self)
 	}
 }
@@ -15,14 +15,14 @@ struct PadYard {
 	right_cols: i32,
 	top_rows: i32,
 	bottom_rows: i32,
-	yard: Rc<dyn Yard>,
+	yard: ArcYard,
 }
 
 impl PadYard {
-	fn new(size: i32, yard: Rc<dyn  Yard>) -> Rc<dyn Yard> {
+	fn new(size: i32, yard: ArcYard) -> ArcYard {
 		let cols = size * 2;
 		let rows = size;
-		Rc::new(PadYard {
+		Arc::new(PadYard {
 			id: rand::random(),
 			left_cols: cols,
 			right_cols: cols,
