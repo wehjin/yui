@@ -36,12 +36,20 @@ impl CursesScreen {
 						let tx = loop_tx.clone();
 						active_focus.insert_space(move || tx.send(ScreenAction::ResizeRefresh).unwrap());
 					}
+					ScreenAction::FocusUp => {
+						active_focus = active_focus.move_up();
+						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+					}
 					ScreenAction::FocusDown => {
 						active_focus = active_focus.move_down();
 						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
 					}
-					ScreenAction::FocusUp => {
-						active_focus = active_focus.move_up();
+					ScreenAction::FocusLeft => {
+						active_focus = active_focus.move_left();
+						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+					}
+					ScreenAction::FocusRight => {
+						active_focus = active_focus.move_right();
 						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
 					}
 					ScreenAction::ResizeRefresh => {
@@ -203,8 +211,10 @@ impl<'a> SpotStack<'a> {
 pub(crate) enum ScreenAction {
 	Close,
 	ResizeRefresh,
-	FocusDown,
 	FocusUp,
+	FocusDown,
+	FocusLeft,
+	FocusRight,
 	Space,
 	SetYard(ArcYard),
 }

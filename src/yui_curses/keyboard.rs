@@ -2,7 +2,7 @@ use std::sync::mpsc::Sender;
 
 use ncurses::*;
 
-use crate::yui_curses::ScreenAction;
+use crate::yui_curses::screen::ScreenAction;
 
 pub(crate) struct Keyboard;
 
@@ -16,8 +16,10 @@ impl Keyboard {
 		while !done {
 			let ch = getch();
 			match ch {
-				KEY_DOWN => { screen_tx.send(ScreenAction::FocusDown).unwrap() }
 				KEY_UP => { screen_tx.send(ScreenAction::FocusUp).unwrap() }
+				KEY_DOWN => { screen_tx.send(ScreenAction::FocusDown).unwrap() }
+				KEY_LEFT => { screen_tx.send(ScreenAction::FocusLeft).unwrap() }
+				KEY_RIGHT => { screen_tx.send(ScreenAction::FocusRight).unwrap() }
 				KEY_RESIZE => { screen_tx.send(ScreenAction::ResizeRefresh).unwrap() }
 				KEY_SPACE => { screen_tx.send(ScreenAction::Space).unwrap() }
 				KEY_EOT => {

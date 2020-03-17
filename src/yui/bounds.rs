@@ -51,38 +51,59 @@ impl Bounds {
 		new.z = z;
 		new
 	}
+
+	pub fn is_above(&self, other: &Bounds) -> bool { self.bottom <= other.top }
 	pub fn is_below(&self, other: &Bounds) -> bool {
 		self.top >= other.bottom
 	}
-	pub fn is_above(&self, other: &Bounds) -> bool {
-		self.bottom <= other.top
+	pub fn is_left_of(&self, other: &Bounds) -> bool { self.right <= other.left }
+	pub fn is_right_of(&self, other: &Bounds) -> bool { self.left >= other.right }
+
+	pub fn up_rank(&self, start: &Bounds) -> i32 {
+		let distance = start.top - self.bottom;
+		let overlap = start.x_overlap(self);
+		distance - overlap
 	}
 	pub fn down_rank(&self, start: &Bounds) -> i32 {
 		let distance = self.top - start.bottom;
 		let overlap = start.x_overlap(self);
 		distance - overlap
 	}
-	pub fn up_rank(&self, start: &Bounds) -> i32 {
-		let distance = start.top - self.bottom;
-		let overlap = start.x_overlap(self);
+	pub fn left_rank(&self, start: &Bounds) -> i32 {
+		let distance = start.left - self.right;
+		let overlap = start.y_overlap(self);
 		distance - overlap
 	}
+	pub fn right_rank(&self, start: &Bounds) -> i32 {
+		let distance = self.left - start.right;
+		let overlap = start.y_overlap(self);
+		distance - overlap
+	}
+
 	fn x_overlap(&self, target: &Bounds) -> i32 {
-		if target.right < self.left {
-			-(self.left - target.right)
-		} else if target.right <= self.right {
-			if target.left < self.left {
-				target.right - self.left
+		Bounds::overlap(self.left, self.right, target.left, target.right)
+	}
+
+	fn y_overlap(&self, target: &Bounds) -> i32 {
+		Bounds::overlap(self.top, self.bottom, target.top, target.bottom)
+	}
+
+	fn overlap(origin_start: i32, origin_end: i32, target_start: i32, target_end: i32) -> i32 {
+		if target_end < origin_start {
+			-(origin_start - target_end)
+		} else if target_end <= origin_end {
+			if target_start < origin_start {
+				target_end - origin_start
 			} else {
-				target.width()
+				target_end - target_start
 			}
 		} else {
-			if target.left < self.left {
-				self.width()
-			} else if target.left <= self.right {
-				self.right - target.left
+			if target_start < origin_start {
+				origin_end - origin_start
+			} else if target_start <= origin_end {
+				origin_end - target_start
 			} else {
-				-(target.left - self.right)
+				-(target_start - origin_end)
 			}
 		}
 	}

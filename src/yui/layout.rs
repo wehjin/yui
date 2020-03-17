@@ -30,32 +30,45 @@ impl ActiveFocus {
 		}
 	}
 
-	pub fn move_down(&self) -> ActiveFocus {
-		self.move_y(
-			|bounds, origin| bounds.is_below(origin),
-			|bounds, origin| bounds.down_rank(origin),
-		)
-	}
-
-
 	pub fn move_up(&self) -> ActiveFocus {
-		self.move_y(
+		self.next_focus(
 			|bounds, origin| bounds.is_above(origin),
 			|bounds, origin| bounds.up_rank(origin),
 		)
 	}
 
-	fn move_y(&self,
-	          is_direction_from: impl Fn(&Bounds, &Bounds) -> bool,
-	          rank_in_direction_from: impl Fn(&Bounds, &Bounds) -> i32,
+	pub fn move_down(&self) -> ActiveFocus {
+		self.next_focus(
+			|bounds, origin| bounds.is_below(origin),
+			|bounds, origin| bounds.down_rank(origin),
+		)
+	}
+
+	pub fn move_left(&self) -> ActiveFocus {
+		self.next_focus(
+			|bounds, origin| bounds.is_left_of(origin),
+			|bounds, origin| bounds.left_rank(origin),
+		)
+	}
+
+	pub fn move_right(&self) -> ActiveFocus {
+		self.next_focus(
+			|bounds, origin| bounds.is_right_of(origin),
+			|bounds, origin| bounds.right_rank(origin),
+		)
+	}
+
+	fn next_focus(&self,
+	              include_bounds: impl Fn(&Bounds, &Bounds) -> bool,
+	              bounds_rank: impl Fn(&Bounds, &Bounds) -> i32,
 	) -> ActiveFocus {
 		if let Some(ref focus) = self.focus {
 			let bounds = focus.bounds;
 			let (mut targets, mut next_peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) =
 				self.peers.clone()
 					.into_iter()
-					.partition(|it| is_direction_from(&it.bounds, &bounds));
-			targets.sort_by_key(|it| rank_in_direction_from(&it.bounds, &bounds));
+					.partition(|it| include_bounds(&it.bounds, &bounds));
+			targets.sort_by_key(|it| bounds_rank(&it.bounds, &bounds));
 			if targets.is_empty() {
 				self.to_owned()
 			} else {
