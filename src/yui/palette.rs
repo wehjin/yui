@@ -9,6 +9,7 @@ pub enum FillColor {
 	BackgroundWithFocus,
 	BackgroundWithPress,
 	Primary,
+	PrimaryWithFocus,
 }
 
 impl From<FillColor> for i16 {
@@ -18,6 +19,7 @@ impl From<FillColor> for i16 {
 			FillColor::BackgroundWithFocus => COLOR_BASE1,
 			FillColor::BackgroundWithPress => COLOR_BASE00,
 			FillColor::Primary => COLOR_BASE02,
+			FillColor::PrimaryWithFocus => COLOR_BASE00,
 		}
 	}
 }
