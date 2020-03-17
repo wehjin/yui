@@ -2,11 +2,9 @@ use std::thread;
 
 use ncurses::*;
 
-pub use keyboard::*;
-pub use screen::*;
-
 use crate::yui::ArcYard;
-use crate::yui_curses::ScreenAction;
+use crate::yui_curses::keyboard::Keyboard;
+use crate::yui_curses::screen::{CursesScreen, ScreenAction};
 
 mod screen;
 mod keyboard;

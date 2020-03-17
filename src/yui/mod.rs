@@ -13,6 +13,7 @@ pub mod pad;
 pub mod before;
 pub mod palette;
 pub mod pack;
+pub mod place;
 pub mod label;
 pub mod button;
 pub mod confine;
@@ -91,8 +92,14 @@ pub trait Before {
 	fn before(self, yard: ArcYard) -> ArcYard;
 }
 
-pub trait PackTop {
+pub trait Pack {
 	fn pack_top(self, rows: i32, top_yard: ArcYard) -> ArcYard;
+	fn pack_bottom(self, rows: i32, bottom_yard: ArcYard) -> ArcYard;
+	fn pack_right(self, cols: i32, right_yard: ArcYard) -> ArcYard;
+}
+
+pub trait Place {
+	fn place_center(self, width: i32) -> ArcYard;
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]

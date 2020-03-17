@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -86,23 +86,29 @@ impl Bounds {
 			}
 		}
 	}
+	pub fn split_from_right(&self, right_cols: i32) -> (Bounds, Bounds) {
+		let center = max(self.right - right_cols, self.left);
+		self.split_center(center)
+	}
+	pub fn split_from_bottom(&self, bottom_rows: i32) -> (Bounds, Bounds) {
+		let middle = max(self.bottom - bottom_rows, self.top);
+		self.split_middle(middle)
+	}
 	pub fn split_from_top(&self, top_rows: i32) -> (Bounds, Bounds) {
 		let middle = min(self.top + top_rows, self.bottom);
-		let top = Bounds {
-			right: self.right,
-			bottom: middle,
-			left: self.left,
-			top: self.top,
-			z: self.z,
-		};
-		let bottom = Bounds {
-			right: self.right,
-			bottom: self.bottom,
-			left: self.left,
-			top: middle,
-			z: self.z,
-		};
+		self.split_middle(middle)
+	}
+
+	fn split_middle(&self, middle: i32) -> (Bounds, Bounds) {
+		let top = Bounds { bottom: middle, ..self.clone() };
+		let bottom = Bounds { top: middle, ..self.clone() };
 		(top, bottom)
+	}
+
+	fn split_center(&self, center: i32) -> (Bounds, Bounds) {
+		let left = Bounds { right: center, ..self.clone() };
+		let right = Bounds { left: center, ..self.clone() };
+		(left, right)
 	}
 }
 
