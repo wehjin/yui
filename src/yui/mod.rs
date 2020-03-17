@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use std::ops::Deref;
+use std::sync::{Arc, RwLock};
 use std::thread;
+use std::time::Duration;
 
 use crate::yui::bounds::Bounds;
 use crate::yui::layout::LayoutContext;
@@ -69,6 +71,18 @@ pub struct FocusActionContext {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum FocusType {
 	Submit,
+}
+
+pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext) -> () {
+	{
+		*is_pressed.write().unwrap() = true;
+	}
+	ctx.refresh.deref()();
+	thread::sleep(Duration::from_millis(100));
+	{
+		*is_pressed.write().unwrap() = false;
+	}
+	ctx.refresh.deref()();
 }
 
 pub trait RenderContext {

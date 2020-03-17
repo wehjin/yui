@@ -1,9 +1,6 @@
-use std::ops::Deref;
 use std::sync::{Arc, RwLock};
-use std::thread;
-use std::time::Duration;
 
-use crate::yui::{ArcYard, Cling, Focus, FocusType, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Cling, Focus, FocusType, render_submit, RenderContext, Yard, YardOption};
 use crate::yui::fill::fill_yard;
 use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
@@ -51,17 +48,7 @@ impl Yard for ButtonYard {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds: edge_bounds,
-			action_block: Arc::new(move |ctx| {
-				{
-					*is_pressed.write().unwrap() = true;
-				}
-				ctx.refresh.deref()();
-				thread::sleep(Duration::from_millis(100));
-				{
-					*is_pressed.write().unwrap() = false;
-				}
-				ctx.refresh.deref()();
-			}),
+			action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx)),
 		});
 		edge_index
 	}
@@ -83,3 +70,4 @@ impl Yard for ButtonYard {
 		self.label_yard.render(ctx);
 	}
 }
+

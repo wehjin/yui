@@ -195,11 +195,11 @@ impl<'a> SpotStack<'a> {
 	fn color_pair_index_and_glyph(&self) -> (i16, char) {
 		let fill_color = self.fill_color;
 		let (glyph, stroke_color) = match self.stroke_type {
-			None => (' ', StrokeColor::Body),
+			None => (' ', StrokeColor::BodyOnBackground),
 			Some((glyph, color)) => if self.stroke_z <= self.fill_z {
 				(glyph, color)
 			} else {
-				(' ', StrokeColor::Body)
+				(' ', StrokeColor::BodyOnBackground)
 			},
 		};
 		let color_pair = self.palette.color_pair_index(stroke_color, fill_color);

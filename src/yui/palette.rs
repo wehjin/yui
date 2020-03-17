@@ -10,6 +10,7 @@ pub enum FillColor {
 	BackgroundWithPress,
 	Primary,
 	PrimaryWithFocus,
+	PrimaryWithPress,
 }
 
 impl From<FillColor> for i16 {
@@ -19,26 +20,27 @@ impl From<FillColor> for i16 {
 			FillColor::BackgroundWithFocus => COLOR_BASE1,
 			FillColor::BackgroundWithPress => COLOR_BASE00,
 			FillColor::Primary => COLOR_BASE02,
-			FillColor::PrimaryWithFocus => COLOR_BASE00,
+			FillColor::PrimaryWithFocus => COLOR_BASE01,
+			FillColor::PrimaryWithPress => COLOR_BASE00
 		}
 	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum StrokeColor {
-	Body,
-	PrimaryBody,
-	Comment,
+	BodyOnBackground,
+	BodyOnPrimary,
+	CommentOnBackground,
 	EnabledOnBackground,
 }
 
 impl From<StrokeColor> for i16 {
 	fn from(color: StrokeColor) -> Self {
 		match color {
-			StrokeColor::Body => COLOR_BASE00,
-			StrokeColor::PrimaryBody => COLOR_BASE1,
-			StrokeColor::Comment => COLOR_BASE1,
 			StrokeColor::EnabledOnBackground => COLOR_BASE02,
+			StrokeColor::BodyOnBackground => COLOR_BASE00,
+			StrokeColor::CommentOnBackground => COLOR_BASE1,
+			StrokeColor::BodyOnPrimary => COLOR_BASE1,
 		}
 	}
 }

@@ -4,7 +4,8 @@ extern crate ncurses;
 extern crate simplelog;
 
 use std::fs::File;
-use std::sync::Arc;
+use std::ops::Deref;
+use std::sync::{Arc, RwLock};
 
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
@@ -68,20 +69,33 @@ enum TabType {
 }
 
 fn tab_yard(label: &str, tab_type: TabType) -> ArcYard {
-	let label = label_yard(label, StrokeColor::PrimaryBody, Cling::CenterMiddle);
+	let label = label_yard(label, StrokeColor::BodyOnPrimary, Cling::CenterMiddle);
 	let underline = if tab_type == TabType::Selected {
-		glyph_yard('-', StrokeColor::PrimaryBody)
+		glyph_yard('-', StrokeColor::BodyOnPrimary)
 	} else {
 		empty_yard()
 	};
 	let content = empty_yard().pack_bottom(1, label).pack_bottom(1, underline);
-	Arc::new(TabYard { id: rand::random(), content })
+	Arc::new(TabYard {
+		id: rand::random(),
+		content,
+		is_pressed: Arc::new(RwLock::new(false)),
+	})
 }
 
 struct TabYard {
 	id: i32,
 	content: ArcYard,
+	is_pressed: Arc<RwLock<bool>>,
 }
+
+impl TabYard {
+	fn is_pressed(&self) -> bool {
+		let is_pressed = self.is_pressed.read().unwrap().deref().to_owned();
+		is_pressed
+	}
+}
+
 
 impl Yard for TabYard {
 	fn id(&self) -> i32 { self.id }
@@ -90,11 +104,13 @@ impl Yard for TabYard {
 		let (bounds_id, bounds) = ctx.edge_bounds();
 		self.content.layout(ctx);
 		ctx.set_yard_bounds(self.id(), bounds_id);
+
+		let is_pressed = self.is_pressed.clone();
 		ctx.add_focus(Focus {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds,
-			action_block: Arc::new(move |_ctx| {}),
+			action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx)),
 		});
 		bounds_id
 	}
@@ -104,7 +120,11 @@ impl Yard for TabYard {
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
 			let fill_color = if ctx.focus_id() == self.id() {
-				FillColor::PrimaryWithFocus
+				if self.is_pressed() {
+					FillColor::PrimaryWithPress
+				} else {
+					FillColor::PrimaryWithFocus
+				}
 			} else {
 				FillColor::Primary
 			};
@@ -115,7 +135,7 @@ impl Yard for TabYard {
 }
 
 fn app_bar() -> ArcYard {
-	let tool_bar = label_yard("Components", StrokeColor::PrimaryBody, Cling::Custom { x: 0.0, y: 0.0 });
+	let tool_bar = label_yard("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
 	let header_row = tool_bar.pad(1).before(fill_yard(FillColor::Primary));
 	header_row
 }
