@@ -17,8 +17,8 @@ impl From<FillColor> for i16 {
 	fn from(color: FillColor) -> Self {
 		match color {
 			FillColor::Background => COLOR_BASE3,
-			FillColor::BackgroundWithFocus => COLOR_BASE1,
-			FillColor::BackgroundWithPress => COLOR_BASE00,
+			FillColor::BackgroundWithFocus => COLOR_BASE2,
+			FillColor::BackgroundWithPress => COLOR_BASE1,
 			FillColor::Primary => COLOR_BASE02,
 			FillColor::PrimaryWithFocus => COLOR_BASE01,
 			FillColor::PrimaryWithPress => COLOR_BASE00
@@ -28,19 +28,21 @@ impl From<FillColor> for i16 {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum StrokeColor {
-	BodyOnBackground,
-	BodyOnPrimary,
 	CommentOnBackground,
+	BodyOnBackground,
 	EnabledOnBackground,
+	BodyOnPrimary,
+	EnabledOnPrimary,
 }
 
 impl From<StrokeColor> for i16 {
 	fn from(color: StrokeColor) -> Self {
 		match color {
-			StrokeColor::EnabledOnBackground => COLOR_BASE02,
-			StrokeColor::BodyOnBackground => COLOR_BASE00,
 			StrokeColor::CommentOnBackground => COLOR_BASE1,
+			StrokeColor::BodyOnBackground => COLOR_BASE00,
+			StrokeColor::EnabledOnBackground => COLOR_MAGENTA,
 			StrokeColor::BodyOnPrimary => COLOR_BASE1,
+			StrokeColor::EnabledOnPrimary => COLOR_MAGENTA,
 		}
 	}
 }
@@ -63,6 +65,10 @@ impl Palette {
 		init_color_by_parts(COLOR_BASE01, BASE01);
 		init_color_by_parts(COLOR_BASE02, BASE02);
 		init_color_by_parts(COLOR_BASE03, BASE03);
+		init_color_by_parts(COLOR_YELLOW, YELLOW);
+		init_color_by_parts(COLOR_MAGENTA, MAGENTA);
+		init_color_by_parts(COLOR_VIOLET, VIOLET);
+		init_color_by_parts(COLOR_GREEN, GREEN);
 		Palette {
 			indices: RefCell::new(HashMap::new()),
 			next_index: Cell::new(1),
@@ -101,6 +107,10 @@ const COLOR_BASE0: i16 = 4;
 const COLOR_BASE1: i16 = 5;
 const COLOR_BASE2: i16 = 6;
 const COLOR_BASE3: i16 = 7;
+const COLOR_YELLOW: i16 = 8;
+const COLOR_MAGENTA: i16 = 9;
+const COLOR_VIOLET: i16 = 10;
+const COLOR_GREEN: i16 = 11;
 
 const BASE03: [i32; 3] = [0, 43, 54];
 const BASE02: [i32; 3] = [7, 54, 66];
@@ -110,6 +120,11 @@ const BASE0: [i32; 3] = [131, 148, 150];
 const BASE1: [i32; 3] = [147, 161, 161];
 const BASE2: [i32; 3] = [238, 232, 213];
 const BASE3: [i32; 3] = [253, 246, 227];
+const YELLOW: [i32; 3] = [181, 137, 0];
+const MAGENTA: [i32; 3] = [211, 54, 130];
+const VIOLET: [i32; 3] = [108, 113, 196];
+const GREEN: [i32; 3] = [133, 153, 0];
+
 
 fn init_color_by_parts(color: i16, parts: [i32; 3]) {
 	init_color(

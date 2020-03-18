@@ -36,7 +36,7 @@ fn main() {
 			.before(fill_yard(FillColor::Background));
 
 		let yard = content_row
-			.pack_top(3, tabbar_yard(&vec!["Home", "Merchandise", "About Us"], 0))
+			.pack_top(3, tabbar_yard(&vec!["Button", "Merchandise", "About Us"], 0))
 			.pack_top(3, header_row);
 		ctx.set_yard(yard);
 	});

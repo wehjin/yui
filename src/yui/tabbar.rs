@@ -29,8 +29,8 @@ pub fn tabbar_yard(labels: &Vec<&str>, selected_index: usize) -> ArcYard {
 }
 
 fn tab_yard(label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
-	let label = label_yard(label, StrokeColor::BodyOnPrimary, Cling::CenterMiddle);
-	let underline = glyph_yard(StrokeColor::BodyOnPrimary, move || {
+	let label = label_yard(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
+	let underline = glyph_yard(StrokeColor::EnabledOnPrimary, move || {
 		let selected_index = *selected.read().unwrap();
 		if selected_index == index { '-' } else { '\0' }
 	});
