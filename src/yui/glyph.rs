@@ -4,22 +4,22 @@ use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 
-pub fn glyph_yard(glyph: char, color: StrokeColor) -> ArcYard {
-	assert!(!glyph.is_control());
-	let id = rand::random();
-	Arc::new(GlyphYard { id, glyph, color })
+pub fn glyph_yard(color: StrokeColor, glyph: impl Fn() -> char + Send + Sync + 'static) -> ArcYard {
+	Arc::new(GlyphYard {
+		id: rand::random(),
+		color,
+		glyph: Arc::new(glyph),
+	})
 }
 
 struct GlyphYard {
 	id: i32,
-	glyph: char,
 	color: StrokeColor,
+	glyph: Arc<dyn Fn() -> char + Send + Sync>,
 }
 
 impl Yard for GlyphYard {
-	fn id(&self) -> i32 {
-		self.id
-	}
+	fn id(&self) -> i32 { self.id }
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -32,7 +32,10 @@ impl Yard for GlyphYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_glyph(self.glyph, self.color, bounds.z);
+			let glyph = (*self.glyph)();
+			if !glyph.is_control() {
+				ctx.set_glyph(glyph, self.color, bounds.z);
+			}
 		}
 	}
 }

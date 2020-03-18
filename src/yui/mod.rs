@@ -20,6 +20,7 @@ pub mod label;
 pub mod button;
 pub mod confine;
 pub mod empty;
+pub mod tabbar;
 
 pub trait Yard {
 	fn id(&self) -> i32;
