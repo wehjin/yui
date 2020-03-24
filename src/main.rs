@@ -24,9 +24,15 @@ use crate::yui_curses::Projector;
 mod yui;
 mod yui_curses;
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+enum MainTab {
+	Button,
+	TextField,
+}
+
 #[derive(Clone, Debug)]
-enum MainVision {
-	Button
+struct MainVision {
+	main_tab: MainTab
 }
 
 #[derive(Clone, Debug)]
@@ -43,7 +49,7 @@ impl Story {
 		let (action_sender, action_receiver) = channel();
 		thread::spawn(move || {
 			let mut vision_senders: HashMap<i32, Sender<MainVision>> = HashMap::new();
-			let vision = MainVision::Button;
+			let vision = MainVision { main_tab: MainTab::Button };
 			loop {
 				let action = action_receiver.recv().unwrap();
 				match action {
@@ -69,32 +75,41 @@ fn main() {
 
 	let story = Story::new();
 	Projector::run_blocking(move |ctx| {
+		let tab_labels = vec!["Button", "Text Field", "About Us"];
 		let visions = story.subscribe();
 		loop {
-			let vision = visions.recv().unwrap();
-			match vision {
-				MainVision::Button => {
-					let header_row = app_bar();
+			let MainVision { main_tab } = visions.recv().unwrap();
+			match main_tab {
+				MainTab::Button => {
+					let active_tab = 0;
 					let focused_button = button_yard("Focused");
 					let enabled_button = button_yard("Enabled");
 					let button_pole = enabled_button
 						.pack_top(1, empty_yard())
 						.pack_top(1, focused_button);
-
-					let content_row = button_pole.confine(32, 3, Cling::CenterMiddle)
+					let content = button_pole.confine(32, 3, Cling::CenterMiddle)
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
-
-					let yard = content_row
-						.pack_top(3, tabbar_yard(&vec!["Button", "Text Field", "About Us"], 0))
-						.pack_top(3, header_row);
-					ctx.set_yard(yard);
+					ctx.set_yard(content
+						.pack_top(3, tabbar_yard(&tab_labels, active_tab))
+						.pack_top(3, app_bar())
+					);
+				}
+				MainTab::TextField => {
+					let active_tab = 1;
+					let label = label_yard("Text Field", StrokeColor::BodyOnBackground, Cling::CenterMiddle);
+					let content = label
+						.pad(1)
+						.before(fill_yard(FillColor::Background));
+					ctx.set_yard(content
+						.pack_top(3, tabbar_yard(&tab_labels, active_tab))
+						.pack_top(3, app_bar())
+					);
 				}
 			}
 		}
 	});
 }
-
 
 fn app_bar() -> ArcYard {
 	let tool_bar = label_yard("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
