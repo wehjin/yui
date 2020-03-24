@@ -5,6 +5,7 @@ extern crate simplelog;
 
 use std::collections::HashMap;
 use std::fs::File;
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 
@@ -13,6 +14,7 @@ use simplelog::{Config, WriteLogger};
 
 use yui::*;
 
+use crate::MainAction::{ShowTab, Subscribe};
 use crate::yui::button::button_yard;
 use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
@@ -37,36 +39,56 @@ struct MainVision {
 
 #[derive(Clone, Debug)]
 enum MainAction {
-	Subscribe(i32, Sender<MainVision>)
+	Subscribe(i32, Sender<MainVision>),
+	ShowTab(MainTab),
 }
 
 struct Story {
-	action_sender: Sender<MainAction>
+	send_actions: Arc<Mutex<Sender<MainAction>>>
 }
 
 impl Story {
 	fn new() -> Self {
-		let (action_sender, action_receiver) = channel();
+		let (send_actions, action_receiver) = channel();
 		thread::spawn(move || {
 			let mut vision_senders: HashMap<i32, Sender<MainVision>> = HashMap::new();
-			let vision = MainVision { main_tab: MainTab::Button };
+			fn post_vision(vision: MainVision, vision_senders: &HashMap<i32, Sender<MainVision>>) {
+				vision_senders.iter().for_each(|(_, sender)| {
+					sender.send(vision.clone()).unwrap()
+				})
+			}
+			let mut vision = MainVision { main_tab: MainTab::Button };
 			loop {
 				let action = action_receiver.recv().unwrap();
 				match action {
-					MainAction::Subscribe(subscriber_id, vision_sender) => {
+					Subscribe(subscriber_id, vision_sender) => {
 						vision_sender.send(vision.clone()).unwrap();
 						vision_senders.insert(subscriber_id, vision_sender);
+					}
+
+					ShowTab(tab) => {
+						vision = MainVision { main_tab: tab, ..vision };
+						post_vision(vision.clone(), &vision_senders)
 					}
 				}
 			}
 		});
-		Story { action_sender }
+		Story { send_actions: Arc::new(Mutex::new(send_actions)) }
 	}
 
 	fn subscribe(&self) -> Receiver<MainVision> {
 		let (send_vision, receive_vision) = channel::<MainVision>();
-		self.action_sender.send(MainAction::Subscribe(rand::random(), send_vision)).unwrap();
+		let guard = self.send_actions.lock().unwrap();
+		(*guard).send(MainAction::Subscribe(rand::random(), send_vision)).unwrap();
 		receive_vision
+	}
+
+	fn select_tab(&self, into_tab: impl Fn(usize) -> MainTab + Send + Sync) -> impl Fn(usize) + Send + Sync {
+		let send_actions = self.send_actions.clone();
+		move |index| {
+			let tab = into_tab(index);
+			(*send_actions.lock().unwrap()).send(ShowTab(tab)).unwrap()
+		}
 	}
 }
 
@@ -75,9 +97,15 @@ fn main() {
 
 	let story = Story::new();
 	Projector::run_blocking(move |ctx| {
-		let tab_labels = vec!["Button", "Text Field", "About Us"];
 		let visions = story.subscribe();
 		loop {
+			let tab_labels = vec!["Button", "Text Field"];
+			let select_tab = story.select_tab(|index| {
+				match index {
+					0 => MainTab::Button,
+					_ => MainTab::TextField,
+				}
+			});
 			let MainVision { main_tab } = visions.recv().unwrap();
 			match main_tab {
 				MainTab::Button => {
@@ -91,7 +119,7 @@ fn main() {
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
-						.pack_top(3, tabbar_yard(&tab_labels, active_tab))
+						.pack_top(3, tabbar_yard(&tab_labels, active_tab, select_tab))
 						.pack_top(3, app_bar())
 					);
 				}
@@ -102,7 +130,7 @@ fn main() {
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
-						.pack_top(3, tabbar_yard(&tab_labels, active_tab))
+						.pack_top(3, tabbar_yard(&tab_labels, active_tab, select_tab))
 						.pack_top(3, app_bar())
 					);
 				}

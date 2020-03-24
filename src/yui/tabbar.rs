@@ -9,13 +9,19 @@ use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn tabbar_yard(labels: &Vec<&str>, selected_index: usize) -> ArcYard {
+pub fn tabbar_yard(labels: &Vec<&str>, selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
+	let on_select = Arc::new(on_select);
 	let tabs: Vec<(i32, ArcYard)> = labels.iter().enumerate().map(|(index, label)| {
 		let tab_width = (label.chars().count() + 2 * 2) as i32;
 		let tab_selected_index = selected_index.clone();
-		let tab_yard = tab_yard(label, index, selected_index.clone(), move || {
-			*(tab_selected_index.write().unwrap()) = index;
+		let tab_on_select = on_select.clone();
+		let tab_yard = tab_yard(label, index, tab_selected_index.clone(), move || {
+			let old_index = *(tab_selected_index.read().unwrap());
+			if index != old_index {
+				*(tab_selected_index.write().unwrap()) = index;
+				(*tab_on_select)(index)
+			}
 		});
 		(tab_width, tab_yard)
 	}).collect();
