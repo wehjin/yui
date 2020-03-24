@@ -19,7 +19,7 @@ impl Projector {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn run_blocking(block: impl Fn(Projector) + Sync + Send + 'static) {
+	pub fn run_blocking(block: impl Fn(Projector) + Send + 'static) {
 		initscr();
 		if !has_colors() {
 			endwin();
