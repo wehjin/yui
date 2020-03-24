@@ -9,14 +9,14 @@ use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn tabbar_yard(labels: &Vec<&str>, selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+pub fn tabbar_yard(tabs: &Vec<(i32, &str)>, selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
 	let on_select = Arc::new(on_select);
-	let tabs: Vec<(i32, ArcYard)> = labels.iter().enumerate().map(|(index, label)| {
+	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map(|(index, (id, label))| {
 		let tab_width = (label.chars().count() + 2 * 2) as i32;
 		let tab_selected_index = selected_index.clone();
 		let tab_on_select = on_select.clone();
-		let tab_yard = tab_yard(label, index, tab_selected_index.clone(), move || {
+		let tab_yard = tab_yard(id.to_owned(), label, index, tab_selected_index.clone(), move || {
 			let old_index = *(tab_selected_index.read().unwrap());
 			if index != old_index {
 				*(tab_selected_index.write().unwrap()) = index;
@@ -34,13 +34,12 @@ pub fn tabbar_yard(labels: &Vec<&str>, selected_index: usize, on_select: impl Fn
 	centered_bar.before(fill)
 }
 
-fn tab_yard(label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
+fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
 	let label = label_yard(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
 	let underline = glyph_yard(StrokeColor::EnabledOnPrimary, move || {
 		let selected_index = *selected.read().unwrap();
 		if selected_index == index { '-' } else { '\0' }
 	});
-	let id = rand::random();
 	let content = empty_yard().pack_bottom(1, label).pack_bottom(1, underline);
 	let is_pressed = Arc::new(RwLock::new(false));
 	let select = Arc::new(select);

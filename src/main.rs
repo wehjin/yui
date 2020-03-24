@@ -5,8 +5,7 @@ extern crate simplelog;
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, Sender, sync_channel, SyncSender};
 use std::thread;
 
 use log::LevelFilter;
@@ -44,12 +43,12 @@ enum MainAction {
 }
 
 struct Story {
-	send_actions: Arc<Mutex<Sender<MainAction>>>
+	send_actions: SyncSender<MainAction>
 }
 
 impl Story {
 	fn new() -> Self {
-		let (send_actions, action_receiver) = channel();
+		let (send_actions, action_receiver) = sync_channel(100);
 		thread::spawn(move || {
 			let mut vision_senders: HashMap<i32, Sender<MainVision>> = HashMap::new();
 			fn post_vision(vision: MainVision, vision_senders: &HashMap<i32, Sender<MainVision>>) {
@@ -73,13 +72,12 @@ impl Story {
 				}
 			}
 		});
-		Story { send_actions: Arc::new(Mutex::new(send_actions)) }
+		Story { send_actions }
 	}
 
 	fn subscribe(&self) -> Receiver<MainVision> {
 		let (send_vision, receive_vision) = channel::<MainVision>();
-		let guard = self.send_actions.lock().unwrap();
-		(*guard).send(MainAction::Subscribe(rand::random(), send_vision)).unwrap();
+		self.send_actions.send(MainAction::Subscribe(rand::random(), send_vision)).unwrap();
 		receive_vision
 	}
 
@@ -87,7 +85,7 @@ impl Story {
 		let send_actions = self.send_actions.clone();
 		move |index| {
 			let tab = into_tab(index);
-			(*send_actions.lock().unwrap()).send(ShowTab(tab)).unwrap()
+			send_actions.send(ShowTab(tab)).unwrap()
 		}
 	}
 }
@@ -97,9 +95,12 @@ fn main() {
 
 	let story = Story::new();
 	Projector::run_blocking(move |ctx| {
+		let tabs = vec![
+			(rand::random(), "Button"),
+			(rand::random(), "Text Field")
+		];
 		let visions = story.subscribe();
 		loop {
-			let tab_labels = vec!["Button", "Text Field"];
 			let select_tab = story.select_tab(|index| {
 				match index {
 					0 => MainTab::Button,
@@ -119,7 +120,7 @@ fn main() {
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
-						.pack_top(3, tabbar_yard(&tab_labels, active_tab, select_tab))
+						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
 						.pack_top(3, app_bar())
 					);
 				}
@@ -130,7 +131,7 @@ fn main() {
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
-						.pack_top(3, tabbar_yard(&tab_labels, active_tab, select_tab))
+						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
 						.pack_top(3, app_bar())
 					);
 				}
