@@ -3,8 +3,9 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 
+pub use yard::*;
+
 use crate::yui::bounds::Bounds;
-use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
@@ -21,23 +22,9 @@ pub mod button;
 pub mod confine;
 pub mod empty;
 pub mod tabbar;
+mod yard;
 
-pub trait Yard {
-	fn id(&self) -> i32;
-	fn update(&self, option: YardOption);
-	fn layout(&self, ctx: &mut LayoutContext) -> usize;
-	fn render(&self, ctx: &dyn RenderContext);
-}
-
-pub type ArcYard = Arc<dyn Yard + Sync + Send>;
-
-pub enum YardOption {
-	FillColor(FillColor)
-}
-
-pub enum FocusAction {
-	Go
-}
+pub enum FocusAction { Go }
 
 #[derive(Clone)]
 pub struct Focus {
