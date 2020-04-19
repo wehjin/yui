@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
+pub use label::*;
+
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 use crate::yui::RenderContext;
+
+mod label;
 
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;
 

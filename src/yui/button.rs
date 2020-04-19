@@ -1,8 +1,7 @@
 use std::sync::{Arc, RwLock};
 
-use crate::yui::{ArcYard, Cling, Focus, FocusType, render_submit, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Cling, Focus, FocusType, label, render_submit, RenderContext, Yard, YardOption};
 use crate::yui::fill::fill_yard;
-use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
@@ -21,7 +20,7 @@ impl ButtonYard {
 	fn new(text: &str) -> ArcYard {
 		Arc::new(ButtonYard {
 			id: rand::random(),
-			label_yard: label_yard(
+			label_yard: label(
 				&text.to_uppercase(),
 				StrokeColor::EnabledOnBackground,
 				Cling::CenterMiddle,

@@ -17,7 +17,6 @@ use crate::MainAction::{ShowTab, Subscribe};
 use crate::yui::button::button_yard;
 use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
-use crate::yui::label::label_yard;
 use crate::yui::palette::{FillColor, StrokeColor};
 use crate::yui::tabbar::tabbar_yard;
 use crate::yui_curses::Projector;
@@ -126,7 +125,7 @@ fn main() {
 				}
 				MainTab::TextField => {
 					let active_tab = 1;
-					let label = label_yard("Text Field", StrokeColor::BodyOnBackground, Cling::CenterMiddle);
+					let label = yard::label("Text Field", StrokeColor::BodyOnBackground, Cling::CenterMiddle);
 					let content = label
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
@@ -141,7 +140,7 @@ fn main() {
 }
 
 fn app_bar() -> ArcYard {
-	let tool_bar = label_yard("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
+	let tool_bar = yard::label("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
 	let header_row = tool_bar.pad(1).before(fill_yard(FillColor::Primary));
 	header_row
 }

@@ -17,12 +17,11 @@ pub mod before;
 pub mod palette;
 pub mod pack;
 pub mod place;
-pub mod label;
 pub mod button;
 pub mod confine;
 pub mod empty;
 pub mod tabbar;
-mod yard;
+pub(crate) mod yard;
 
 pub enum FocusAction { Go }
 

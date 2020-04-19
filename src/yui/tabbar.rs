@@ -5,7 +5,6 @@ use crate::yui::*;
 use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
 use crate::yui::glyph::glyph_yard;
-use crate::yui::label::label_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
@@ -35,7 +34,7 @@ pub fn tabbar_yard(tabs: &Vec<(i32, &str)>, selected_index: usize, on_select: im
 }
 
 fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
-	let label = label_yard(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
+	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
 	let underline = glyph_yard(StrokeColor::EnabledOnPrimary, move || {
 		let selected_index = *selected.read().unwrap();
 		if selected_index == index { '-' } else { '\0' }
