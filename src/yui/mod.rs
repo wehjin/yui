@@ -107,6 +107,8 @@ pub trait Place {
 pub enum Cling {
 	Custom { x: f32, y: f32 },
 	CenterMiddle,
+	Left,
+	LeftTop,
 }
 
 impl Cling {
@@ -114,12 +116,16 @@ impl Cling {
 		match self {
 			Cling::Custom { x, .. } => { x.to_owned() }
 			Cling::CenterMiddle => { 0.5 }
+			Cling::Left => { 0.0 }
+			Cling::LeftTop => { 0.0 }
 		}
 	}
 	fn y(&self) -> f32 {
 		match self {
 			Cling::Custom { y, .. } => { y.to_owned() }
 			Cling::CenterMiddle => { 0.5 }
+			Cling::Left => { 0.5 }
+			Cling::LeftTop => { 0.0 }
 		}
 	}
 }

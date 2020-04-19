@@ -125,8 +125,8 @@ fn main() {
 				}
 				MainTab::TextField => {
 					let active_tab = 1;
-					let label = yard::label("Text Field", StrokeColor::BodyOnBackground, Cling::CenterMiddle);
-					let content = label
+					let textfield = yard::textfield("Label");
+					let content = textfield
 						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
