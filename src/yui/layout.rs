@@ -1,8 +1,9 @@
 use std::cell::RefCell;
+use std::ops::Deref;
 use std::rc::Rc;
 
+use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
 use crate::yui::bounds::{Bounds, BoundsHold};
-use crate::yui::Focus;
 
 #[derive(Clone)]
 pub struct ActiveFocus {
@@ -37,31 +38,58 @@ impl ActiveFocus {
 	}
 
 	pub fn move_up(&self) -> ActiveFocus {
-		self.next_focus(
-			|bounds, origin| bounds.is_above(origin),
-			|bounds, origin| bounds.up_rank(origin),
-		)
+		if self.send_motion(FocusMotion::Up) == FocusMotionFuture::Default {
+			self.next_focus(
+				|bounds, origin| bounds.is_above(origin),
+				|bounds, origin| bounds.up_rank(origin),
+			)
+		} else {
+			self.to_owned()
+		}
+	}
+
+	fn send_motion(&self, motion: FocusMotion) -> FocusMotionFuture {
+		if let Some(ref focus) = self.focus {
+			match &focus.focus_type {
+				FocusType::Submit => FocusMotionFuture::Default,
+				FocusType::Edit(on_motion) => on_motion.deref()(motion),
+			}
+		} else {
+			FocusMotionFuture::Default
+		}
 	}
 
 	pub fn move_down(&self) -> ActiveFocus {
-		self.next_focus(
-			|bounds, origin| bounds.is_below(origin),
-			|bounds, origin| bounds.down_rank(origin),
-		)
+		if self.send_motion(FocusMotion::Down) == FocusMotionFuture::Default {
+			self.next_focus(
+				|bounds, origin| bounds.is_below(origin),
+				|bounds, origin| bounds.down_rank(origin),
+			)
+		} else {
+			self.to_owned()
+		}
 	}
 
 	pub fn move_left(&self) -> ActiveFocus {
-		self.next_focus(
-			|bounds, origin| bounds.is_left_of(origin),
-			|bounds, origin| bounds.left_rank(origin),
-		)
+		if self.send_motion(FocusMotion::Left) == FocusMotionFuture::Default {
+			self.next_focus(
+				|bounds, origin| bounds.is_left_of(origin),
+				|bounds, origin| bounds.left_rank(origin),
+			)
+		} else {
+			self.to_owned()
+		}
 	}
 
 	pub fn move_right(&self) -> ActiveFocus {
-		self.next_focus(
-			|bounds, origin| bounds.is_right_of(origin),
-			|bounds, origin| bounds.right_rank(origin),
-		)
+		if self.send_motion(FocusMotion::Right) == FocusMotionFuture::Default {
+			self.next_focus(
+				|bounds, origin| bounds.is_right_of(origin),
+				|bounds, origin| bounds.right_rank(origin),
+			)
+		} else {
+			self.to_owned()
+		}
 	}
 
 	fn next_focus(&self,

@@ -1,6 +1,7 @@
+use std::{fmt, thread};
+use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
-use std::thread;
 use std::time::Duration;
 
 pub use multi_layout::*;
@@ -42,7 +43,7 @@ impl Focus {
 	pub fn insert_char(&self, char: char, refresh: impl Fn() + Send + 'static) {
 		match self.focus_type {
 			FocusType::Submit => {}
-			FocusType::Edit => {
+			FocusType::Edit(_) => {
 				let action_block = self.action_block.clone();
 				thread::spawn(move || {
 					let ctx = FocusActionContext {
@@ -57,7 +58,7 @@ impl Focus {
 
 	pub fn insert_space(&self, refresh: impl Fn() + Send + 'static) {
 		match self.focus_type {
-			FocusType::Edit => {
+			FocusType::Edit(_) => {
 				let action_block = self.action_block.clone();
 				thread::spawn(move || {
 					let ctx = FocusActionContext {
@@ -86,11 +87,35 @@ pub struct FocusActionContext {
 	pub refresh: Box<dyn Fn()>,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone)]
 pub enum FocusType {
 	Submit,
-	Edit,
+	Edit(Arc<dyn Fn(FocusMotion) -> FocusMotionFuture + Send + Sync>),
 }
+
+impl fmt::Debug for FocusType {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		match self {
+			FocusType::Submit => f.write_str("FocusType::Submit"),
+			FocusType::Edit(_) => f.write_str("FocusType::Edit(Arc<dyn Fn(&FocusMotion) -> AfterMotion>)"),
+		}
+	}
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum FocusMotion {
+	Left,
+	Right,
+	Up,
+	Down,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum FocusMotionFuture {
+	Default,
+	Skip,
+}
+
 
 pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext) -> () {
 	{

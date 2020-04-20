@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 
 use stringedit::StringEdit;
 
-use crate::yui::{ArcYard, Before, Focus, FocusAction, FocusType, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext, Yard, YardOption};
 use crate::yui::fill::fill_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
@@ -32,9 +32,38 @@ impl Yard for TextfieldYard {
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
 		let edit = self.edit.clone();
+		let motion_edit = edit.clone();
 		ctx.add_focus(Focus {
 			yard_id: self.id,
-			focus_type: FocusType::Edit,
+			focus_type: FocusType::Edit(Arc::new(move |motion| {
+				match motion {
+					FocusMotion::Left => {
+						let cursor_at_left = { motion_edit.read().unwrap().cursor_index == 0 };
+						if cursor_at_left {
+							FocusMotionFuture::Default
+						} else {
+							let new_edit = { motion_edit.read().unwrap().move_cursor_left() };
+							*motion_edit.write().unwrap() = new_edit;
+							FocusMotionFuture::Skip
+						}
+					}
+					FocusMotion::Right => {
+						let cursor_at_right = {
+							let guard = motion_edit.read().unwrap();
+							guard.cursor_index == guard.char_count()
+						};
+						if cursor_at_right {
+							FocusMotionFuture::Default
+						} else {
+							let new_edit = { motion_edit.read().unwrap().move_cursor_right() };
+							*motion_edit.write().unwrap() = new_edit;
+							FocusMotionFuture::Skip
+						}
+					}
+					FocusMotion::Up => FocusMotionFuture::Default,
+					FocusMotion::Down => FocusMotionFuture::Default,
+				}
+			})),
 			bounds: edge_bounds.clone(),
 			action_block: Arc::new(move |ctx| {
 				match ctx.action {
