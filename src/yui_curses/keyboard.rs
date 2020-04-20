@@ -24,6 +24,7 @@ impl Keyboard {
 				KEY_EOT => Some(ScreenAction::Close),
 				KEY_SPACE => { Some(ScreenAction::Space) }
 				KEY_BACKSPACE => { Some(ScreenAction::AsciiChar('\x08')) }
+				KEY_DC => { Some(ScreenAction::AsciiChar('\x7f')) }
 				_ => {
 					let name = keyname(ch).unwrap_or("".to_string());
 					let chars: Vec<char> = name.chars().collect();

@@ -76,6 +76,9 @@ impl Yard for TextfieldYard {
 						} else if c == '\x08' {
 							*edit.write().unwrap() = old_edit.delete_char_before_cursor();
 							ctx.refresh.deref()();
+						} else if c == '\x7f' {
+							*edit.write().unwrap() = old_edit.delete_char_at_cursor();
+							ctx.refresh.deref()();
 						}
 					}
 				}
@@ -124,19 +127,19 @@ impl Yard for TextfieldYard {
 					ctx.set_glyph(self.label_chars[char_index], StrokeColor::CommentOnBackground, body_bounds.z)
 				}
 			} else {
-				let raw_char_count = edit.char_count();
+				let char_count = edit.char_count();
 				let visible_chars = body_bounds.width() as usize;
-				let cursor_from_left = if raw_char_count < visible_chars {
+				let cursor_from_left = if char_count < visible_chars {
 					edit.cursor_index as i32
 				} else {
-					let cursor_fraction = edit.cursor_index as f32 / raw_char_count as f32;
+					let cursor_fraction = edit.cursor_index as f32 / char_count as f32;
 					let range = (visible_chars - 1) as f32;
-					(cursor_fraction * range) as i32
+					(cursor_fraction * range).ceil() as i32
 				};
 				let cursor_x = body_bounds.left + cursor_from_left;
 				let cursor_to_col = col - cursor_x;
 				let char_index = (edit.cursor_index as i32) + cursor_to_col;
-				if char_index >= 0 && char_index <= raw_char_count as i32 {
+				if char_index >= 0 && char_index <= char_count as i32 {
 					if let Some(spot) = edit.read_spot(char_index as usize) {
 						if spot.is_cursor && ctx.focus_id() == self.id {
 							ctx.set_fill(FillColor::BackgroundWithPress, body_bounds.z);
