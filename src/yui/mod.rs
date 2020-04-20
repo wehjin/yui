@@ -25,7 +25,10 @@ pub mod tabbar;
 pub(crate) mod yard;
 mod multi_layout;
 
-pub enum FocusAction { Go }
+pub enum FocusAction {
+	Go,
+	Change(char),
+}
 
 #[derive(Clone)]
 pub struct Focus {
@@ -36,8 +39,34 @@ pub struct Focus {
 }
 
 impl Focus {
+	pub fn insert_char(&self, char: char, refresh: impl Fn() + Send + 'static) {
+		match self.focus_type {
+			FocusType::Submit => {}
+			FocusType::Edit => {
+				let action_block = self.action_block.clone();
+				thread::spawn(move || {
+					let ctx = FocusActionContext {
+						action: FocusAction::Change(char),
+						refresh: Box::new(refresh),
+					};
+					action_block(&ctx);
+				});
+			}
+		};
+	}
+
 	pub fn insert_space(&self, refresh: impl Fn() + Send + 'static) {
 		match self.focus_type {
+			FocusType::Edit => {
+				let action_block = self.action_block.clone();
+				thread::spawn(move || {
+					let ctx = FocusActionContext {
+						action: FocusAction::Change(' '),
+						refresh: Box::new(refresh),
+					};
+					action_block(&ctx);
+				});
+			}
 			FocusType::Submit => {
 				let action_block = self.action_block.clone();
 				thread::spawn(move || {
@@ -48,7 +77,6 @@ impl Focus {
 					action_block(&ctx);
 				});
 			}
-			FocusType::Edit => {}
 		};
 	}
 }

@@ -33,8 +33,14 @@ impl CursesScreen {
 						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
 					}
 					ScreenAction::Space => {
-						let tx = loop_tx.clone();
-						active_focus.insert_space(move || tx.send(ScreenAction::ResizeRefresh).unwrap());
+						let screen = loop_tx.clone();
+						active_focus.insert_space(move || screen.send(ScreenAction::ResizeRefresh).unwrap());
+					}
+					ScreenAction::AsciiChar(char) => {
+						let screen = loop_tx.clone();
+						active_focus.insert_char(char, move || {
+							screen.send(ScreenAction::ResizeRefresh).unwrap()
+						});
 					}
 					ScreenAction::FocusUp => {
 						active_focus = active_focus.move_up();
@@ -217,5 +223,6 @@ pub(crate) enum ScreenAction {
 	FocusRight,
 	Space,
 	SetYard(ArcYard),
+	AsciiChar(char),
 }
 

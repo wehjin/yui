@@ -15,20 +15,45 @@ impl Keyboard {
 		let mut done = false;
 		while !done {
 			let ch = getch();
-			match ch {
-				KEY_UP => { screen_tx.send(ScreenAction::FocusUp).unwrap() }
-				KEY_DOWN => { screen_tx.send(ScreenAction::FocusDown).unwrap() }
-				KEY_LEFT => { screen_tx.send(ScreenAction::FocusLeft).unwrap() }
-				KEY_RIGHT => { screen_tx.send(ScreenAction::FocusRight).unwrap() }
-				KEY_RESIZE => { screen_tx.send(ScreenAction::ResizeRefresh).unwrap() }
-				KEY_SPACE => { screen_tx.send(ScreenAction::Space).unwrap() }
-				KEY_EOT => {
-					screen_tx.send(ScreenAction::Close).unwrap();
-					done = true;
-				}
+			let action: Option<ScreenAction> = match ch {
+				KEY_UP => Some(ScreenAction::FocusUp),
+				KEY_DOWN => Some(ScreenAction::FocusDown),
+				KEY_LEFT => Some(ScreenAction::FocusLeft),
+				KEY_RIGHT => Some(ScreenAction::FocusRight),
+				KEY_RESIZE => Some(ScreenAction::ResizeRefresh),
+				KEY_EOT => Some(ScreenAction::Close),
+				KEY_SPACE => { Some(ScreenAction::Space) }
+				KEY_BACKSPACE => { Some(ScreenAction::AsciiChar('\x08')) }
 				_ => {
-					info!("KEY: {}", ch);
+					let name = keyname(ch).unwrap_or("".to_string());
+					let chars: Vec<char> = name.chars().collect();
+					match chars.len() {
+						1 => Some(ScreenAction::AsciiChar(chars[0])),
+						2 if chars[0] == '^' => {
+							match chars[1] {
+								'?' => Some(ScreenAction::AsciiChar('\x08')),
+								_ => {
+									info!("UNHANDLED CTRL-KEY: {}, {}", ch, name);
+									None
+								}
+							}
+						}
+						_ => {
+							info!("UNHANDLED KEY: {}, {}", ch, name);
+							None
+						}
+					}
 				}
+			};
+			match action {
+				Some(action) => {
+					done = match &action {
+						ScreenAction::Close => true,
+						_ => false
+					};
+					screen_tx.send(action).unwrap()
+				}
+				None => {}
 			}
 		}
 		use_default_colors();

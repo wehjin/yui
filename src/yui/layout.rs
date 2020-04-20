@@ -30,6 +30,12 @@ impl ActiveFocus {
 		}
 	}
 
+	pub fn insert_char(&self, char: char, refresh: impl Fn() + Send + 'static) {
+		if let Some(ref focus) = self.focus {
+			focus.insert_char(char, refresh);
+		}
+	}
+
 	pub fn move_up(&self) -> ActiveFocus {
 		self.next_focus(
 			|bounds, origin| bounds.is_above(origin),
