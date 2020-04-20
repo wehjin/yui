@@ -7,6 +7,10 @@ impl Padding for ArcYard {
 	fn pad(self, size: i32) -> ArcYard {
 		PadYard::new(size, self)
 	}
+
+	fn pad_cols(self, cols: i32) -> ArcYard {
+		PadYard::pad_cols(cols, self)
+	}
 }
 
 struct PadYard {
@@ -19,6 +23,16 @@ struct PadYard {
 }
 
 impl PadYard {
+	fn pad_cols(cols: i32, yard: ArcYard) -> ArcYard {
+		Arc::new(PadYard {
+			id: rand::random(),
+			left_cols: cols,
+			right_cols: cols,
+			top_rows: 0,
+			bottom_rows: 0,
+			yard,
+		})
+	}
 	fn new(size: i32, yard: ArcYard) -> ArcYard {
 		let cols = size * 2;
 		let rows = size;

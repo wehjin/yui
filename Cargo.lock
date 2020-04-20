@@ -262,6 +262,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "stringedit"
+version = "0.1.0"
+source = "git+https://github.com/wehjin/stringedit.git#936505925861907f4824cbe8dcde29adf5493f40"
+
+[[package]]
 name = "term"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -318,4 +323,5 @@ dependencies = [
  "ncurses",
  "rand",
  "simplelog",
+ "stringedit",
 ]

@@ -2,6 +2,7 @@
 extern crate log;
 extern crate ncurses;
 extern crate simplelog;
+extern crate stringedit;
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -127,7 +128,7 @@ fn main() {
 					let active_tab = 1;
 					let textfield = yard::textfield("Label");
 					let content = textfield
-						.pad(1)
+						.pad(1).confine_height(5, Cling::Left)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))

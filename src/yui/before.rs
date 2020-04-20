@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::yui::{ArcYard, Before, RenderContext, Yard, YardOption};
+use crate::yui::{ArcYard, Before, MultiLayout, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
 impl Before for ArcYard {
@@ -30,19 +30,11 @@ impl Yard for BeforeYard {
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		let (edge_index, edge_bounds) = ctx.edge_bounds();
-		let far_index = self.far_yard.layout(ctx);
-		let far_z = if far_index == edge_index {
-			edge_bounds.z
-		} else {
-			ctx.bounds(far_index).z
-		};
-		let near_z = far_z - 1;
-		let near_bounds = edge_bounds.with_z(near_z);
-		let near_index = ctx.push_bounds(&near_bounds);
-		let mut near_ctx = ctx.with_index(near_index);
-		let final_index = self.near_yard.layout(&mut near_ctx);
-		final_index
+		let (_edge_index, edge_bounds) = ctx.edge_bounds();
+		let mut multi_layout = MultiLayout::new(ctx);
+		multi_layout.layout(&self.far_yard, &edge_bounds);
+		multi_layout.layout(&self.near_yard, &edge_bounds.with_z(multi_layout.near_z() - 1));
+		multi_layout.finish()
 	}
 
 	fn render(&self, ctx: &dyn RenderContext) {

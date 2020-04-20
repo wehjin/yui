@@ -3,6 +3,7 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 
+pub use multi_layout::*;
 pub use yard::*;
 
 use crate::yui::bounds::Bounds;
@@ -22,6 +23,7 @@ pub mod confine;
 pub mod empty;
 pub mod tabbar;
 pub(crate) mod yard;
+mod multi_layout;
 
 pub enum FocusAction { Go }
 
@@ -82,6 +84,7 @@ pub trait RenderContext {
 
 pub trait Padding {
 	fn pad(self, size: i32) -> ArcYard;
+	fn pad_cols(self, cols: i32) -> ArcYard;
 }
 
 pub trait Confine {
@@ -109,6 +112,7 @@ pub enum Cling {
 	CenterMiddle,
 	Left,
 	LeftTop,
+	Top,
 }
 
 impl Cling {
@@ -118,6 +122,7 @@ impl Cling {
 			Cling::CenterMiddle => { 0.5 }
 			Cling::Left => { 0.0 }
 			Cling::LeftTop => { 0.0 }
+			Cling::Top => { 0.5 }
 		}
 	}
 	fn y(&self) -> f32 {
@@ -126,6 +131,7 @@ impl Cling {
 			Cling::CenterMiddle => { 0.5 }
 			Cling::Left => { 0.5 }
 			Cling::LeftTop => { 0.0 }
+			Cling::Top => { 0.0 }
 		}
 	}
 }

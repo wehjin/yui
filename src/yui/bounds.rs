@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::yui::Cling;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Bounds {
 	pub right: i32,
 	pub bottom: i32,
