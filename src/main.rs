@@ -128,7 +128,8 @@ fn main() {
 					let active_tab = 1;
 					let textfield = yard::textfield("Label");
 					let content = textfield
-						.pad(1).confine_height(5, Cling::Left)
+						.confine(50, 3, Cling::CenterMiddle)
+						.pad(1)
 						.before(fill_yard(FillColor::Background));
 					ctx.set_yard(content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))

@@ -46,8 +46,9 @@ impl Focus {
 						refresh: Box::new(refresh),
 					};
 					action_block(&ctx);
-				})
+				});
 			}
+			FocusType::Edit => {}
 		};
 	}
 }
@@ -60,6 +61,7 @@ pub struct FocusActionContext {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum FocusType {
 	Submit,
+	Edit,
 }
 
 pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext) -> () {

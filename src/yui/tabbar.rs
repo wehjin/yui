@@ -37,7 +37,7 @@ fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, se
 	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
 	let underline = glyph_yard(StrokeColor::EnabledOnPrimary, move || {
 		let selected_index = *selected.read().unwrap();
-		if selected_index == index { '-' } else { '\0' }
+		if selected_index == index { '_' } else { '\0' }
 	});
 	let content = empty_yard().pack_bottom(1, label).pack_bottom(1, underline);
 	let is_pressed = Arc::new(RwLock::new(false));
