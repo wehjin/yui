@@ -4,7 +4,7 @@ use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 
-pub fn fill_yard(color: FillColor) -> ArcYard {
+pub fn fill(color: FillColor) -> ArcYard {
 	Arc::new(FillYard {
 		id: rand::random(),
 		color: RwLock::new(color),

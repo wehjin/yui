@@ -4,9 +4,9 @@ use std::sync::{Arc, RwLock};
 use stringedit::StringEdit;
 
 use crate::yui::{ArcYard, Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext, Yard, YardOption};
-use crate::yui::fill::fill_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
+use crate::yui::yard;
 
 pub fn textfield(label: &str) -> ArcYard {
 	let yard = TextfieldYard {
@@ -15,7 +15,7 @@ pub fn textfield(label: &str) -> ArcYard {
 		edit: Arc::new(RwLock::new(StringEdit::empty())),
 	};
 	let arc_yard = Arc::new(yard) as ArcYard;
-	arc_yard.before(fill_yard(FillColor::BackgroundWithFocus))
+	arc_yard.before(yard::fill(FillColor::BackgroundWithFocus))
 }
 
 struct TextfieldYard {

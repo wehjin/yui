@@ -3,10 +3,10 @@ use std::sync::{Arc, RwLock};
 
 use crate::yui::*;
 use crate::yui::empty::empty_yard;
-use crate::yui::fill::fill_yard;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
+use crate::yui::yard;
 
 pub fn tabbar_yard(tabs: &Vec<(i32, &str)>, selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
@@ -29,7 +29,7 @@ pub fn tabbar_yard(tabs: &Vec<(i32, &str)>, selected_index: usize, on_select: im
 			(bar_width + width, bar.pack_right(width, tab))
 		});
 	let centered_bar = bar.place_center(width);
-	let fill = fill_yard(FillColor::Primary);
+	let fill = yard::fill(FillColor::Primary);
 	centered_bar.before(fill)
 }
 

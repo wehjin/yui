@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+pub use fill::*;
 pub use label::*;
 pub use textfield::*;
 
@@ -9,6 +10,8 @@ use crate::yui::RenderContext;
 
 mod label;
 mod textfield;
+mod fill;
+
 
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;
 

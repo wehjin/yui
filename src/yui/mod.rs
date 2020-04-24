@@ -13,7 +13,6 @@ use crate::yui::palette::{FillColor, StrokeColor};
 pub mod bounds;
 pub mod layout;
 pub mod glyph;
-pub mod fill;
 pub mod pad;
 pub mod before;
 pub mod palette;

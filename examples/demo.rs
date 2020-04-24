@@ -15,10 +15,10 @@ use yui::*;
 use crate::Action::ShowTab;
 use crate::yui::button::button_yard;
 use crate::yui::empty::empty_yard;
-use crate::yui::fill::fill_yard;
 use crate::yui::palette::{FillColor, StrokeColor};
 use crate::yui::Projector;
 use crate::yui::tabbar::tabbar_yard;
+use crate::yui::yard;
 
 fn main() {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
@@ -49,7 +49,7 @@ fn main() {
 						.pack_top(1, focused_button);
 					let content = button_pole.confine(32, 3, Cling::CenterMiddle)
 						.pad(1)
-						.before(fill_yard(FillColor::Background));
+						.before(fill(FillColor::Background));
 					ctx.set_yard(content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
 						.pack_top(3, app_bar()));
@@ -60,7 +60,7 @@ fn main() {
 					let content = textfield
 						.confine(50, 3, Cling::CenterMiddle)
 						.pad(1)
-						.before(fill_yard(FillColor::Background));
+						.before(fill(FillColor::Background));
 					ctx.set_yard(content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
 						.pack_top(3, app_bar())
@@ -106,6 +106,6 @@ enum MainTab {
 
 fn app_bar() -> ArcYard {
 	let tool_bar = yard::label("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
-	let header_row = tool_bar.pad(1).before(fill_yard(FillColor::Primary));
+	let header_row = tool_bar.pad(1).before(fill(FillColor::Primary));
 	header_row
 }
