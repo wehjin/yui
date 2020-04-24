@@ -39,7 +39,7 @@ fn main() {
 				})
 			});
 			let Vision { main_tab } = visions.recv().unwrap();
-			match main_tab {
+			let yard = match main_tab {
 				MainTab::Button => {
 					let active_tab = 0;
 					let focused_button = button_yard("Focused");
@@ -50,9 +50,9 @@ fn main() {
 					let content = button_pole.confine(32, 3, Cling::CenterMiddle)
 						.pad(1)
 						.before(fill(FillColor::Background));
-					ctx.set_yard(content
+					content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
-						.pack_top(3, app_bar()));
+						.pack_top(3, app_bar())
 				}
 				MainTab::TextField => {
 					let active_tab = 1;
@@ -61,12 +61,12 @@ fn main() {
 						.confine(50, 3, Cling::CenterMiddle)
 						.pad(1)
 						.before(fill(FillColor::Background));
-					ctx.set_yard(content
+					content
 						.pack_top(3, tabbar_yard(&tabs, active_tab, select_tab))
 						.pack_top(3, app_bar())
-					);
 				}
-			}
+			};
+			ctx.set_yard(yard)
 		}
 	});
 }

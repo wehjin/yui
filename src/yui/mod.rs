@@ -134,6 +134,7 @@ pub trait RenderContext {
 	fn yard_bounds(&self, yard_id: i32) -> Bounds;
 	fn set_fill(&self, color: FillColor, z: i32);
 	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32);
+	fn set_dark(&self, z: i32);
 }
 
 pub trait Padding {
@@ -144,6 +145,10 @@ pub trait Padding {
 pub trait Confine {
 	fn confine_height(self, height: i32, cling: Cling) -> ArcYard;
 	fn confine(self, width: i32, height: i32, cling: Cling) -> ArcYard;
+}
+
+pub trait Fade {
+	fn fade(self, indents: (i32, i32)) -> ArcYard;
 }
 
 pub trait Before {

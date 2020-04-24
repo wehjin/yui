@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+pub use fade::*;
 pub use fill::*;
 pub use label::*;
 pub use textfield::*;
@@ -8,9 +9,10 @@ use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 use crate::yui::RenderContext;
 
+mod fade;
+mod fill;
 mod label;
 mod textfield;
-mod fill;
 
 
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;

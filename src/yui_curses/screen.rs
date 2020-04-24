@@ -135,8 +135,14 @@ impl<'a> CursesRenderContext<'a> {
 	fn publish(&self) {
 		mv(self.row as i32, self.col as i32);
 		let stack = self.spot_stack();
-		let (color_pair_index, glyph) = stack.borrow().color_pair_index_and_glyph();
-		attrset(COLOR_PAIR(color_pair_index));
+		let (color_pair_index, glyph, darken) = stack.borrow().color_details();
+		let color_attr = COLOR_PAIR(color_pair_index);
+		let attr = if darken {
+			color_attr | A_DIM()
+		} else {
+			color_attr
+		};
+		attrset(attr);
 		addch(glyph as chtype);
 	}
 }
@@ -161,6 +167,10 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32) {
 		self.spot_stack().borrow_mut().set_stroke(glyph, color, z);
 	}
+
+	fn set_dark(&self, z: i32) {
+		self.spot_stack().borrow_mut().set_dark(z);
+	}
 }
 
 
@@ -170,6 +180,7 @@ struct SpotStack<'a> {
 	fill_z: i32,
 	stroke_type: Option<(char, StrokeColor)>,
 	stroke_z: i32,
+	dark_z: i32,
 	palette: &'a Palette,
 }
 
@@ -180,7 +191,14 @@ impl<'a> SpotStack<'a> {
 			fill_z: i32::max_value(),
 			stroke_type: Option::None,
 			stroke_z: i32::max_value(),
+			dark_z: i32::max_value(),
 			palette,
+		}
+	}
+
+	fn set_dark(&mut self, z: i32) {
+		if z <= self.dark_z {
+			self.dark_z = z;
 		}
 	}
 
@@ -198,18 +216,20 @@ impl<'a> SpotStack<'a> {
 		}
 	}
 
-	fn color_pair_index_and_glyph(&self) -> (i16, char) {
+	fn color_details(&self) -> (i16, char, bool) {
 		let fill_color = self.fill_color;
 		let (glyph, stroke_color) = match self.stroke_type {
 			None => (' ', StrokeColor::BodyOnBackground),
-			Some((glyph, color)) => if self.stroke_z <= self.fill_z {
-				(glyph, color)
-			} else {
-				(' ', StrokeColor::BodyOnBackground)
-			},
+			Some((glyph, color)) =>
+				if self.stroke_z <= self.fill_z {
+					(glyph, color)
+				} else {
+					(' ', StrokeColor::BodyOnBackground)
+				},
 		};
-		let color_pair = self.palette.color_pair_index(stroke_color, fill_color);
-		(color_pair, glyph)
+		let darken = self.dark_z < self.fill_z;
+		let color_pair = self.palette.color_pair_index(stroke_color, fill_color, darken);
+		(color_pair, glyph, darken)
 	}
 }
 

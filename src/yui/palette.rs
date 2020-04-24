@@ -13,17 +13,16 @@ pub enum FillColor {
 	PrimaryWithPress,
 }
 
-impl From<FillColor> for i16 {
-	fn from(color: FillColor) -> Self {
-		match color {
-			FillColor::Background => COLOR_BASE3,
-			FillColor::BackgroundWithFocus => COLOR_BASE2,
-			FillColor::BackgroundWithPress => COLOR_BASE1,
-			FillColor::Primary => COLOR_BASE02,
-			FillColor::PrimaryWithFocus => COLOR_BASE01,
-			FillColor::PrimaryWithPress => COLOR_BASE00
-		}
-	}
+fn fill_i16((color, dimmed): (FillColor, bool)) -> i16 {
+	let color = match color {
+		FillColor::Background => COLOR_BASE3,
+		FillColor::BackgroundWithFocus => COLOR_BASE2,
+		FillColor::BackgroundWithPress => COLOR_BASE1,
+		FillColor::Primary => COLOR_BASE02,
+		FillColor::PrimaryWithFocus => COLOR_BASE01,
+		FillColor::PrimaryWithPress => COLOR_BASE00,
+	};
+	if dimmed { darken(color) } else { color }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -35,21 +34,21 @@ pub enum StrokeColor {
 	EnabledOnPrimary,
 }
 
-impl From<StrokeColor> for i16 {
-	fn from(color: StrokeColor) -> Self {
-		match color {
-			StrokeColor::CommentOnBackground => COLOR_BASE1,
-			StrokeColor::BodyOnBackground => COLOR_BASE00,
-			StrokeColor::EnabledOnBackground => COLOR_MAGENTA,
-			StrokeColor::BodyOnPrimary => COLOR_BASE1,
-			StrokeColor::EnabledOnPrimary => COLOR_MAGENTA,
-		}
-	}
+fn stroke_i16((color, dimmed): (StrokeColor, bool)) -> i16 {
+	let color = match color {
+		StrokeColor::CommentOnBackground => COLOR_BASE1,
+		StrokeColor::BodyOnBackground => COLOR_BASE00,
+		StrokeColor::EnabledOnBackground => COLOR_MAGENTA,
+		StrokeColor::BodyOnPrimary => COLOR_BASE1,
+		StrokeColor::EnabledOnPrimary => COLOR_MAGENTA,
+	};
+	if dimmed { darken(color) } else { color }
 }
+
 
 #[derive(Debug)]
 pub struct Palette {
-	indices: RefCell<HashMap<(StrokeColor, FillColor), i16>>,
+	indices: RefCell<HashMap<(StrokeColor, FillColor, bool), i16>>,
 	next_index: Cell<i16>,
 }
 
@@ -75,21 +74,25 @@ impl Palette {
 		}
 	}
 
-	pub fn color_pair_index(&self, stroke: StrokeColor, fill: FillColor) -> i16 {
-		let stroke_fill = (stroke, fill);
-		match self.existing_index(&stroke_fill) {
+	pub fn color_pair_index(&self, stroke: StrokeColor, fill: FillColor, dimmed: bool) -> i16 {
+		let index_key = (stroke, fill, dimmed);
+		match self.existing_index(&index_key) {
 			None => {
 				let index = self.advance_index();
-				init_pair(index, i16::from(stroke), i16::from(fill));
-				self.indices.borrow_mut().insert(stroke_fill, index);
+				init_pair(
+					index,
+					stroke_i16((stroke, dimmed)),
+					fill_i16((fill, dimmed)),
+				);
+				self.indices.borrow_mut().insert(index_key, index);
 				index
 			}
 			Some(index) => index
 		}
 	}
 
-	fn existing_index(&self, stroke_fill: &(StrokeColor, FillColor)) -> Option<i16> {
-		self.indices.borrow().get(&stroke_fill).map(|it| it.to_owned())
+	fn existing_index(&self, index_key: &(StrokeColor, FillColor, bool)) -> Option<i16> {
+		self.indices.borrow().get(&index_key).map(|it| it.to_owned())
 	}
 
 	fn advance_index(&self) -> i16 {
@@ -111,6 +114,17 @@ const COLOR_YELLOW: i16 = 8;
 const COLOR_MAGENTA: i16 = 9;
 const COLOR_VIOLET: i16 = 10;
 const COLOR_GREEN: i16 = 11;
+
+fn darken(color_i16: i16) -> i16 {
+	let delta = 3;
+	if color_i16 < delta {
+		0
+	} else if color_i16 <= COLOR_BASE3 {
+		color_i16 - delta
+	} else {
+		color_i16
+	}
+}
 
 const BASE03: [i32; 3] = [0, 43, 54];
 const BASE02: [i32; 3] = [7, 54, 66];
