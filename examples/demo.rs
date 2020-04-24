@@ -3,6 +3,7 @@ extern crate log;
 extern crate ncurses;
 extern crate simplelog;
 extern crate stringedit;
+extern crate yui;
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -19,11 +20,8 @@ use crate::yui::button::button_yard;
 use crate::yui::empty::empty_yard;
 use crate::yui::fill::fill_yard;
 use crate::yui::palette::{FillColor, StrokeColor};
+use crate::yui::Projector;
 use crate::yui::tabbar::tabbar_yard;
-use crate::yui_curses::Projector;
-
-mod yui;
-mod yui_curses;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum MainTab {

@@ -23,7 +23,7 @@ pub mod button;
 pub mod confine;
 pub mod empty;
 pub mod tabbar;
-pub(crate) mod yard;
+pub mod yard;
 mod multi_layout;
 
 pub enum FocusAction {
