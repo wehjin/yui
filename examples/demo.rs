@@ -66,7 +66,7 @@ fn main() {
 						.pack_top(3, app_bar())
 				}
 			};
-			ctx.set_yard(yard)
+			ctx.set_yard(yard.fade((60, 38)))
 		}
 	});
 }

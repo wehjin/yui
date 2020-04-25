@@ -125,6 +125,7 @@ pub struct LayoutContext {
 	current_index: usize,
 	bounds_hold: Rc<RefCell<BoundsHold>>,
 	focus_vec: Rc<RefCell<Vec<Rc<Focus>>>>,
+	focus_max: i32,
 }
 
 impl LayoutContext {
@@ -133,28 +134,34 @@ impl LayoutContext {
 			current_index,
 			bounds_hold,
 			focus_vec: Rc::new(RefCell::new(Vec::new())),
+			focus_max: i32::max_value(),
 		}
 	}
 
 	pub fn pop_active_focus(&mut self, active: &ActiveFocus) -> ActiveFocus {
-		let mut all_focus = (*self.focus_vec).borrow().clone();
+		let mut all_in_range = self.all_focus_in_range();
 		let next_active = if let ActiveFocus { focus: Some(focus), .. } = active {
-			let (mut found, peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = all_focus.into_iter().partition(|it| it.yard_id == focus.yard_id);
-			let next_focus = if found.is_empty() {
+			let (mut candidates, peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = all_in_range.into_iter().partition(|it| it.yard_id == focus.yard_id);
+			let next_focus = if candidates.is_empty() {
 				None
 			} else {
-				Some(found.remove(0))
+				Some(candidates.remove(0))
 			};
 			ActiveFocus { focus: next_focus, peers }
 		} else {
-			if all_focus.is_empty() {
-				ActiveFocus { focus: None, peers: all_focus }
+			if all_in_range.is_empty() {
+				ActiveFocus { focus: None, peers: all_in_range }
 			} else {
-				let focus = Some(all_focus.remove(0));
-				ActiveFocus { focus, peers: all_focus }
+				let focus = Some(all_in_range.remove(0));
+				ActiveFocus { focus, peers: all_in_range }
 			}
 		};
 		next_active
+	}
+
+	pub fn all_focus_in_range(&self) -> Vec<Rc<Focus>> {
+		let all_focus = (*self.focus_vec).borrow().clone();
+		all_focus.into_iter().filter(|it| it.is_in_range(self.focus_max)).collect()
 	}
 
 	pub fn current_index(&self) -> usize {
@@ -181,6 +188,10 @@ impl LayoutContext {
 
 	pub fn add_focus(&mut self, focus: Focus) {
 		(*self.focus_vec).borrow_mut().push(Rc::new(focus));
+	}
+
+	pub fn set_focus_max(&mut self, focus_max: i32) {
+		self.focus_max = focus_max
 	}
 
 	pub fn with_index(&self, index: usize) -> LayoutContext {

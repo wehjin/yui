@@ -35,6 +35,7 @@ impl Yard for FadeYard {
 		let fore_bounds = bounds.with_z(rear_z - 1);
 		let fore_id = ctx.push_bounds(&fore_bounds);
 		ctx.set_yard_bounds(self.id(), fore_id);
+		ctx.set_focus_max(fore_bounds.z);
 		fore_id
 	}
 

@@ -39,6 +39,10 @@ pub struct Focus {
 }
 
 impl Focus {
+	pub fn is_in_range(&self, focus_max: i32) -> bool {
+		self.bounds.z <= focus_max
+	}
+
 	pub fn insert_char(&self, char: char, refresh: impl Fn() + Send + 'static) {
 		match self.focus_type {
 			FocusType::Submit => {}
