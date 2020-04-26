@@ -11,7 +11,7 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{Link, Projector, Teller};
+use yui::{Link, Projector, Teller, UpdateContext};
 use yui::{AfterUpdate, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::button::button_yard;
 use yui::empty::empty_yard;
@@ -36,7 +36,7 @@ impl story::Teller for Demo {
 		DemoVision { main_tab: MainTab::Button }
 	}
 
-	fn update(_vision: &DemoVision, action: DemoAction) -> AfterUpdate<DemoVision> {
+	fn update(_ctx: &impl UpdateContext<Self::V>, action: DemoAction) -> AfterUpdate<DemoVision> {
 		match action {
 			DemoAction::ShowTab(tab) => AfterUpdate::Revise(DemoVision { main_tab: tab }),
 		}
