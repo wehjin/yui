@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use crate::yui::{ArcYard, Cling, RenderContext, Yard, YardOption};
+use crate::{Cling, RenderContext};
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 

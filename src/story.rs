@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
 use std::thread;
 
-use crate::ArcYard;
+use crate::yard::ArcYard;
 
 pub trait Teller {
 	type V: Send + Clone;

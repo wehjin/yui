@@ -6,8 +6,8 @@ use ncurses::*;
 use keyboard::Keyboard;
 use screen::{CursesScreen, ScreenAction};
 
-use crate::{Publisher, Story, story};
-use crate::yui::ArcYard;
+use crate::{Story, story};
+use crate::yard::{ArcYard, Publisher};
 
 mod screen;
 mod keyboard;

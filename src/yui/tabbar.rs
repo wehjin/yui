@@ -6,7 +6,8 @@ use crate::yui::empty::empty_yard;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
-use crate::yui::yard;
+use crate::yard;
+use crate::yard::{ArcYard, Yard, YardOption};
 
 pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));

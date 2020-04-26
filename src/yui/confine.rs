@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use crate::yui::{ArcYard, Cling, Confine, RenderContext, Yard, YardOption};
+use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yui::{Cling, Confine, RenderContext};
 use crate::yui::layout::LayoutContext;
 
 impl Confine for ArcYard {

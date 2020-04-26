@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use crate::yui::{ArcYard, Padding, RenderContext, Yard, YardOption};
+use crate::{Padding, RenderContext};
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 
 impl Padding for ArcYard {

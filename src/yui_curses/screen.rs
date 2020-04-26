@@ -6,11 +6,12 @@ use std::thread;
 
 use ncurses::*;
 
-use crate::yui::{ArcYard, RenderContext};
+use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::empty::empty_yard;
 use crate::yui::layout::{ActiveFocus, LayoutContext};
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
+use crate::yui::RenderContext;
 
 #[derive(Clone)]
 pub(crate) struct CursesScreen {}

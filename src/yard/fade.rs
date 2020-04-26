@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::Fade;
-use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
+use crate::{Fade, RenderContext};
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 

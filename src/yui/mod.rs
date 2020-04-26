@@ -5,8 +5,8 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 pub use multi_layout::*;
-pub use yard::*;
 
+use crate::yard::ArcYard;
 use crate::yui::bounds::Bounds;
 use crate::yui::palette::{FillColor, StrokeColor};
 
@@ -22,7 +22,6 @@ pub mod button;
 pub mod confine;
 pub mod empty;
 pub mod tabbar;
-pub mod yard;
 mod multi_layout;
 
 pub enum FocusAction {

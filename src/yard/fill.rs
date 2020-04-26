@@ -1,6 +1,7 @@
 use std::sync::{Arc, RwLock};
 
-use crate::yui::{ArcYard, RenderContext, Yard, YardOption};
+use crate::RenderContext;
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 
