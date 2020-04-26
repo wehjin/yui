@@ -8,7 +8,7 @@ use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 use crate::yui::yard;
 
-pub fn tabbar_yard(tabs: &Vec<(i32, &str)>, selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
 	let on_select = Arc::new(on_select);
 	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map(|(index, (id, label))| {

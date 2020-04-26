@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::thread;
 
 use ncurses::*;
@@ -5,6 +6,7 @@ use ncurses::*;
 use keyboard::Keyboard;
 use screen::{CursesScreen, ScreenAction};
 
+use crate::{Publisher, Story, story};
 use crate::yui::ArcYard;
 
 mod screen;
@@ -17,6 +19,20 @@ pub struct Projector {
 impl Projector {
 	pub fn set_yard(&self, yard: ArcYard) {
 		(*self.set_yard_fn)(yard)
+	}
+
+	pub fn project_blocking<T: story::Teller + 'static>(story: &Story<T>) -> Result<(), Box<dyn Error>> {
+		let yards = story.yards()?;
+		Self::run_blocking(move |ctx| {
+			loop {
+				if let Ok(yard) = yards.recv() {
+					ctx.set_yard(yard)
+				} else {
+					break;
+				}
+			}
+		});
+		Ok(())
 	}
 
 	pub fn run_blocking(block: impl Fn(Projector) + Send + 'static) {
