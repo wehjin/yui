@@ -56,6 +56,10 @@ pub struct Story<T: Teller> {
 }
 
 impl<T: Teller + 'static> Story<T> {
+	pub(crate) fn dup(&self) -> Self {
+		Story { sender: self.sender.clone() }
+	}
+
 	pub fn link(&self) -> Link<T::A> {
 		let sender = self.sender.to_owned();
 		let tx = Arc::new(move |action: T::A| {

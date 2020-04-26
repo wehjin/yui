@@ -11,7 +11,7 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{Link, Projector, Teller, UpdateContext};
+use yui::{App, Link, Projector, UpdateContext};
 use yui::{AfterUpdate, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::button::button_yard;
 use yui::empty::empty_yard;
@@ -21,8 +21,8 @@ use yui::tabbar::tabbar_yard;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	let story = Demo::begin_story();
-	Projector::project_blocking(&story)?;
+	let app = App::start::<Demo>()?;
+	Projector::project_app(&app)?;
 	Ok(())
 }
 

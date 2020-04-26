@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::sync::mpsc::Receiver;
 use std::thread;
 
 use ncurses::*;
@@ -6,8 +7,8 @@ use ncurses::*;
 use keyboard::Keyboard;
 use screen::{CursesScreen, ScreenAction};
 
-use crate::{Story, story};
-use crate::yard::{ArcYard, Publisher};
+use crate::App;
+use crate::yard::ArcYard;
 
 mod screen;
 mod keyboard;
@@ -21,8 +22,12 @@ impl Projector {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn project_blocking<T: story::Teller + 'static>(story: &Story<T>) -> Result<(), Box<dyn Error>> {
-		let yards = story.yards()?;
+	pub fn project_app(app: &App) -> Result<(), Box<dyn Error>> {
+		let yards = app.subscribe_yards()?;
+		Self::project_yards(yards)
+	}
+
+	fn project_yards(yards: Receiver<ArcYard>) -> Result<(), Box<dyn Error>> {
 		Self::run_blocking(move |ctx| {
 			loop {
 				if let Ok(yard) = yards.recv() {
