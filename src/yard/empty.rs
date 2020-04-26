@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::RenderContext;
 use crate::yui::layout::LayoutContext;
+use crate::yui::RenderContext;
 
-pub fn empty_yard() -> ArcYard {
+pub fn empty() -> ArcYard {
 	Arc::new(EmptyYard { id: rand::random() })
 }
 

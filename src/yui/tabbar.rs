@@ -1,13 +1,12 @@
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
+use crate::yard;
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::*;
-use crate::yui::empty::empty_yard;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
-use crate::yard;
-use crate::yard::{ArcYard, Yard, YardOption};
 
 pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
@@ -26,7 +25,7 @@ pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl 
 		(tab_width, tab_yard)
 	}).collect();
 	let (width, bar) = tabs.into_iter()
-		.fold((0, empty_yard()), |(bar_width, bar), (width, tab)| {
+		.fold((0, yard::empty()), |(bar_width, bar), (width, tab)| {
 			(bar_width + width, bar.pack_right(width, tab))
 		});
 	let centered_bar = bar.place_center(width);
@@ -40,7 +39,7 @@ fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, se
 		let selected_index = *selected.read().unwrap();
 		if selected_index == index { '_' } else { '\0' }
 	});
-	let content = empty_yard().pack_bottom(1, label).pack_bottom(1, underline);
+	let content = yard::empty().pack_bottom(1, label).pack_bottom(1, underline);
 	let is_pressed = Arc::new(RwLock::new(false));
 	let select = Arc::new(select);
 	Arc::new(TabYard { id, content, is_pressed, select })

@@ -20,7 +20,6 @@ pub mod pack;
 pub mod place;
 pub mod button;
 pub mod confine;
-pub mod empty;
 pub mod tabbar;
 mod multi_layout;
 
@@ -151,7 +150,7 @@ pub trait Confine {
 }
 
 pub trait Fade {
-	fn fade(self, indents: (i32, i32)) -> ArcYard;
+	fn fade(self, indents: (i32, i32), fore_yard: ArcYard) -> ArcYard;
 }
 
 pub trait Before {

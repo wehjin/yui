@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
 
@@ -6,9 +7,9 @@ use crate::{ArcYard, Story, Teller};
 use crate::yard::{YardObservable, YardObservableSource};
 
 impl<T: Teller + 'static> YardObservableSource for Story<T> {
-	fn yards(&self) -> Box<dyn YardObservable> {
+	fn yards(&self) -> Arc<dyn YardObservable> {
 		let publisher = StoryYardPublisher { story: self.dup() };
-		Box::new(publisher)
+		Arc::new(publisher)
 	}
 }
 

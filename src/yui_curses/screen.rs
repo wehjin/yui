@@ -6,9 +6,9 @@ use std::thread;
 
 use ncurses::*;
 
+use crate::yard;
 use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
-use crate::yui::empty::empty_yard;
 use crate::yui::layout::{ActiveFocus, LayoutContext};
 use crate::yui::palette::{FillColor, Palette, StrokeColor};
 use crate::yui::RenderContext;
@@ -25,7 +25,7 @@ impl CursesScreen {
 		thread::spawn(move || {
 			let mut active_focus: ActiveFocus = Default::default();
 			let mut done = false;
-			let mut yard = empty_yard();
+			let mut yard = yard::empty();
 			while !done {
 				let action = rx.recv().unwrap();
 				match action {

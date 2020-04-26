@@ -14,7 +14,6 @@ use simplelog::{Config, WriteLogger};
 use yui::{App, Link, Projector, UpdateContext};
 use yui::{AfterUpdate, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::button::button_yard;
-use yui::empty::empty_yard;
 use yui::palette::{FillColor, StrokeColor};
 use yui::tabbar::tabbar_yard;
 
@@ -36,7 +35,7 @@ impl story::Teller for Demo {
 		DemoVision { main_tab: MainTab::Button }
 	}
 
-	fn update(_ctx: &impl UpdateContext<Self::V>, action: DemoAction) -> AfterUpdate<DemoVision> {
+	fn update(_ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<DemoVision> {
 		match action {
 			DemoAction::ShowTab(tab) => AfterUpdate::Revise(DemoVision { main_tab: tab }),
 		}
@@ -56,7 +55,7 @@ impl story::Teller for Demo {
 				let focused_button = button_yard("Focused");
 				let enabled_button = button_yard("Enabled");
 				let button_pole = enabled_button
-					.pack_top(1, empty_yard())
+					.pack_top(1, yard::empty())
 					.pack_top(1, focused_button);
 				let content = button_pole.confine(32, 3, Cling::CenterMiddle)
 					.pad(1)
@@ -77,7 +76,6 @@ impl story::Teller for Demo {
 					.pack_top(3, app_bar())
 			}
 		};
-		//let yard = yard.fade((60, 38));
 		Some(yard)
 	}
 }

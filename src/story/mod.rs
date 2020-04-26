@@ -14,14 +14,16 @@ pub trait Teller {
 
 	fn create() -> Self::V;
 
-	fn update(ctx: &impl UpdateContext<Self::V>, action: Self::A) -> AfterUpdate<Self::V>;
+	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: Self::A) -> AfterUpdate<Self::V>;
 
 	fn yard(_vision: &Self::V, _link: &Link<Self::A>) -> Option<ArcYard> { None }
 
 	fn begin_story() -> Story<Self> where Self: std::marker::Sized + 'static {
 		let (msg_sender, msg_receiver) = sync_channel::<Msg<Self>>(100);
+		let story = Story { sender: msg_sender };
+		let link = story.link();
 		thread::spawn(move || {
-			let mut ctx = StoryScope::new(Self::create());
+			let mut ctx = StoryScope::new(Self::create(), link);
 			for msg in msg_receiver {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) => {
@@ -29,19 +31,21 @@ pub trait Teller {
 					}
 					Msg::Update(action) => {
 						match Self::update(&ctx, action) {
-							AfterUpdate::Revise(next) => ctx.set_vision(next),
+							AfterUpdate::ReviseQuietly(next) => ctx.set_vision(next, false),
+							AfterUpdate::Revise(next) => ctx.set_vision(next, true),
 							AfterUpdate::Ignore => (),
 						}
 					}
 				}
 			}
 		});
-		Story { sender: msg_sender }
+		story
 	}
 }
 
-pub trait UpdateContext<V> {
+pub trait UpdateContext<V, A> {
 	fn vision(&self) -> &V;
+	fn link(&self) -> &Link<A>;
 }
 
 
@@ -80,11 +84,17 @@ impl<T: Teller + 'static> Story<T> {
 pub enum AfterUpdate<Vision> {
 	Ignore,
 	Revise(Vision),
+	ReviseQuietly(Vision),
 }
 
-#[derive(Clone)]
 pub struct Link<A> {
 	tx: Arc<dyn Fn(A) + Send + Sync>,
+}
+
+impl<A> Clone for Link<A> {
+	fn clone(&self) -> Self {
+		Link { tx: self.tx.clone() }
+	}
 }
 
 impl<A: Send> Link<A> {
@@ -94,5 +104,8 @@ impl<A: Send> Link<A> {
 			let action = into_action(ctx);
 			(*tx)(action);
 		}
+	}
+	pub fn send(&self, action: A) {
+		self.callback(|a| a)(action);
 	}
 }

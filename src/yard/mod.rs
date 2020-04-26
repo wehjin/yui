@@ -1,14 +1,14 @@
-use std::error::Error;
 use std::sync::Arc;
-use std::sync::mpsc::Receiver;
 
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 use crate::yui::RenderContext;
 
+pub use self::empty::*;
 pub use self::fade::*;
 pub use self::fill::*;
 pub use self::label::*;
+pub use self::observable::*;
 pub use self::story::*;
 pub use self::textfield::*;
 
@@ -17,14 +17,8 @@ mod fade;
 mod fill;
 mod label;
 mod textfield;
-
-pub trait YardObservableSource {
-	fn yards(&self) -> Box<dyn YardObservable>;
-}
-
-pub trait YardObservable {
-	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>>;
-}
+mod empty;
+mod observable;
 
 pub trait Yard {
 	fn id(&self) -> i32;
