@@ -24,23 +24,26 @@ fn main() -> Result<(), Box<dyn Error>> {
 	Ok(())
 }
 
-pub struct Demo;
+#[derive(Clone, Debug)]
+pub struct Demo {
+	main_tab: MainTab
+}
 
 impl story::Teller for Demo {
-	type V = DemoVision;
+	type V = Self;
 	type A = DemoAction;
 
-	fn create() -> DemoVision {
-		DemoVision { main_tab: MainTab::Button }
+	fn create() -> Self::V {
+		Demo { main_tab: MainTab::Button }
 	}
 
-	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<DemoVision> {
+	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<Demo> {
 		match action {
 			DemoAction::ShowTab(tab) => {
-				AfterUpdate::Revise(DemoVision { main_tab: tab })
+				AfterUpdate::Revise(Demo { main_tab: tab })
 			}
 			DemoAction::OpenDialog => {
-				ctx.start_prequel::<Demo>();
+				ctx.start_prequel::<Self>();
 				AfterUpdate::Ignore
 			}
 			DemoAction::CloseDialog => {
@@ -50,8 +53,8 @@ impl story::Teller for Demo {
 		}
 	}
 
-	fn yard(vision: &DemoVision, link: &Link<DemoAction>) -> Option<ArcYard> {
-		let DemoVision { main_tab } = vision;
+	fn yard(vision: &Demo, link: &Link<DemoAction>) -> Option<ArcYard> {
+		let Demo { main_tab } = vision;
 		let select_tab = link.callback(|index| {
 			DemoAction::ShowTab(match index {
 				0 => MainTab::Button,
@@ -89,10 +92,6 @@ impl story::Teller for Demo {
 	}
 }
 
-#[derive(Clone, Debug)]
-pub struct DemoVision {
-	main_tab: MainTab
-}
 
 #[derive(Clone, Debug)]
 pub enum DemoAction {
