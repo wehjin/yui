@@ -6,7 +6,7 @@ use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn button_yard(text: &str) -> ArcYard {
+pub fn button(text: &str) -> ArcYard {
 	ButtonYard::new(text)
 }
 

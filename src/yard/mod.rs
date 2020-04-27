@@ -4,6 +4,7 @@ use crate::yui::layout::LayoutContext;
 use crate::yui::palette::FillColor;
 use crate::yui::RenderContext;
 
+pub use self::button::*;
 pub use self::empty::*;
 pub use self::fade::*;
 pub use self::fill::*;
@@ -12,6 +13,7 @@ pub use self::observable::*;
 pub use self::story::*;
 pub use self::textfield::*;
 
+mod button;
 mod story;
 mod fade;
 mod fill;

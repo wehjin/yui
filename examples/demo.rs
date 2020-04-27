@@ -13,7 +13,6 @@ use simplelog::{Config, WriteLogger};
 
 use yui::{App, Link, Projector, UpdateContext};
 use yui::{AfterUpdate, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
-use yui::button::button_yard;
 use yui::palette::{FillColor, StrokeColor};
 use yui::tabbar::tabbar_yard;
 
@@ -52,8 +51,8 @@ impl story::Teller for Demo {
 		let yard = match main_tab {
 			MainTab::Button => {
 				let active_tab = 0;
-				let focused_button = button_yard("Focused");
-				let enabled_button = button_yard("Enabled");
+				let focused_button = yard::button("Focused");
+				let enabled_button = yard::button("Enabled");
 				let button_pole = enabled_button
 					.pack_top(1, yard::empty())
 					.pack_top(1, focused_button);

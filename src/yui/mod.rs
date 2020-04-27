@@ -18,7 +18,6 @@ pub mod before;
 pub mod palette;
 pub mod pack;
 pub mod place;
-pub mod button;
 pub mod confine;
 pub mod tabbar;
 mod multi_layout;
