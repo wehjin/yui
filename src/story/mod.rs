@@ -9,13 +9,13 @@ use crate::yard::ArcYard;
 
 mod scope;
 
-pub trait Teller: 'static {
+pub trait Plot: 'static {
 	type V: Send + Clone;
 	type A: Send;
 
 	fn create() -> Self::V;
 
-	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: Self::A) -> AfterUpdate<Self::V>;
+	fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Self::A) -> AfterAction<Self::V>;
 
 	fn yard(_vision: &Self::V, _link: &Link<Self::A>) -> Option<ArcYard> { None }
 
@@ -31,10 +31,10 @@ pub trait Teller: 'static {
 						ctx.add_watcher(subscriber_id, watcher)
 					}
 					Msg::Update(action) => {
-						match Self::update(&ctx, action) {
-							AfterUpdate::ReviseQuietly(next) => ctx.set_vision(next, false),
-							AfterUpdate::Revise(next) => ctx.set_vision(next, true),
-							AfterUpdate::Ignore => (),
+						match Self::action(&ctx, action) {
+							AfterAction::ReviseQuietly(next) => ctx.set_vision(next, false),
+							AfterAction::Revise(next) => ctx.set_vision(next, true),
+							AfterAction::Ignore => (),
 						}
 					}
 				}
@@ -44,31 +44,31 @@ pub trait Teller: 'static {
 	}
 }
 
-pub trait UpdateContext<V, A> {
+pub trait ActionContext<V, A> {
 	fn vision(&self) -> &V;
 	fn link(&self) -> &Link<A>;
-	fn start_prequel<T: Teller>(&self) -> Story<T>;
+	fn start_prequel<T: Plot>(&self) -> Story<T>;
 	fn end_prequel(&self);
 }
 
 
-enum Msg<T: Teller> {
+enum Msg<T: Plot> {
 	Subscribe(i32, SyncSender<T::V>),
 	Update(T::A),
 }
 
 #[derive(Debug)]
-pub struct Story<T: Teller> {
+pub struct Story<T: Plot> {
 	sender: SyncSender<Msg<T>>
 }
 
-impl<T: Teller> Clone for Story<T> {
+impl<T: Plot> Clone for Story<T> {
 	fn clone(&self) -> Self {
 		Story { sender: self.sender.clone() }
 	}
 }
 
-impl<T: Teller> Story<T> {
+impl<T: Plot> Story<T> {
 	pub fn link(&self) -> Link<T::A> {
 		let sender = self.sender.to_owned();
 		let tx = Arc::new(move |action: T::A| {
@@ -86,7 +86,7 @@ impl<T: Teller> Story<T> {
 	}
 }
 
-pub enum AfterUpdate<Vision> {
+pub enum AfterAction<Vision> {
 	Ignore,
 	Revise(Vision),
 	ReviseQuietly(Vision),

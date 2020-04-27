@@ -21,7 +21,7 @@ mod app {
 	use std::sync::Arc;
 	use std::sync::mpsc::Receiver;
 
-	use crate::{ArcYard, Link, story, Story, Teller};
+	use crate::{ArcYard, Link, story, Story, Plot};
 	use crate::app::yard_stack::YardStack;
 	use crate::yard::{YardObservable, YardObservableSource};
 
@@ -34,7 +34,7 @@ mod app {
 	}
 
 	impl AppContext {
-		pub fn start_dialog<T: Teller>(&self) -> Story<T> {
+		pub fn start_dialog<T: Plot>(&self) -> Story<T> {
 			let story = T::begin_story(Some(self.clone()));
 			let yards = story.yards();
 			self.link.send(yard_stack::Action::PushFront(yards));
@@ -54,7 +54,7 @@ mod app {
 		pub fn subscribe_yards(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 			self.front_yards.subscribe()
 		}
-		pub fn start<T: story::Teller>() -> Result<Self, Box<dyn Error>> {
+		pub fn start<T: story::Plot>() -> Result<Self, Box<dyn Error>> {
 			let yard_stack = YardStack::begin_story(None);
 			let app_context = AppContext { link: yard_stack.link() };
 			let teller_story = T::begin_story(Some(app_context));
@@ -71,7 +71,7 @@ mod app {
 		use std::sync::Arc;
 		use std::thread;
 
-		use crate::{AfterUpdate, ArcYard, Link, story, UpdateContext, yard};
+		use crate::{AfterAction, ArcYard, Link, story, ActionContext, yard};
 		use crate::yard::{overlay, YardObservable};
 
 		pub(crate) struct YardStack;
@@ -89,7 +89,7 @@ mod app {
 			PopFront,
 		}
 
-		impl story::Teller for YardStack {
+		impl story::Plot for YardStack {
 			type V = Vision;
 			type A = Action;
 
@@ -97,18 +97,18 @@ mod app {
 				Vision { era: 0, yard: yard::empty(), back_to_front: Vec::new() }
 			}
 
-			fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: Self::A) -> AfterUpdate<Self::V> {
+			fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Self::A) -> AfterAction<Self::V> {
 				match action {
 					Action::PopFront => {
 						if ctx.vision().back_to_front.len() <= 1 {
-							AfterUpdate::Ignore
+							AfterAction::Ignore
 						} else {
 							let mut back_to_front = ctx.vision().back_to_front.to_vec();
 							back_to_front.pop();
 							let yard = ctx.vision().yard.to_owned();
 							let era = ctx.vision().era + 1;
 							spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-							AfterUpdate::ReviseQuietly(Vision { era, yard, back_to_front })
+							AfterAction::ReviseQuietly(Vision { era, yard, back_to_front })
 						}
 					}
 					Action::PushFront(front) => {
@@ -117,14 +117,14 @@ mod app {
 						let yard = ctx.vision().yard.to_owned();
 						let era = ctx.vision().era + 1;
 						spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-						AfterUpdate::ReviseQuietly(Vision { era, yard, back_to_front })
+						AfterAction::ReviseQuietly(Vision { era, yard, back_to_front })
 					}
 					Action::SetYard { era, yard } => {
 						if era == ctx.vision().era {
 							let back_to_front = ctx.vision().back_to_front.to_vec();
-							AfterUpdate::Revise(Vision { era, yard, back_to_front })
+							AfterAction::Revise(Vision { era, yard, back_to_front })
 						} else {
-							AfterUpdate::Ignore
+							AfterAction::Ignore
 						}
 					}
 				}

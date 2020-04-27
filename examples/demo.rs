@@ -11,8 +11,8 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{App, Link, Projector, UpdateContext};
-use yui::{AfterUpdate, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
+use yui::{ActionContext, App, Link, Projector};
+use yui::{AfterAction, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::tabbar::tabbar_yard;
 
@@ -29,34 +29,34 @@ pub struct Demo {
 	main_tab: MainTab
 }
 
-impl story::Teller for Demo {
+impl story::Plot for Demo {
 	type V = Self;
-	type A = DemoAction;
+	type A = Action;
 
 	fn create() -> Self::V {
 		Demo { main_tab: MainTab::Button }
 	}
 
-	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<Demo> {
+	fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Action) -> AfterAction<Demo> {
 		match action {
-			DemoAction::ShowTab(tab) => {
-				AfterUpdate::Revise(Demo { main_tab: tab })
+			Action::ShowTab(tab) => {
+				AfterAction::Revise(Demo { main_tab: tab })
 			}
-			DemoAction::OpenDialog => {
-				ctx.start_prequel::<Self>();
-				AfterUpdate::Ignore
+			Action::OpenDialog => {
+				ctx.start_prequel::<Demo>();
+				AfterAction::Ignore
 			}
-			DemoAction::CloseDialog => {
+			Action::CloseDialog => {
 				ctx.end_prequel();
-				AfterUpdate::Ignore
+				AfterAction::Ignore
 			}
 		}
 	}
 
-	fn yard(vision: &Demo, link: &Link<DemoAction>) -> Option<ArcYard> {
+	fn yard(vision: &Demo, link: &Link<Action>) -> Option<ArcYard> {
 		let Demo { main_tab } = vision;
 		let select_tab = link.callback(|index| {
-			DemoAction::ShowTab(match index {
+			Action::ShowTab(match index {
 				0 => MainTab::Button,
 				_ => MainTab::TextField,
 			})
@@ -64,8 +64,8 @@ impl story::Teller for Demo {
 		let yard = match main_tab {
 			MainTab::Button => {
 				let active_tab = 0;
-				let focused_button = yard::button("Close Dialog", link.callback(|_| DemoAction::CloseDialog));
-				let enabled_button = yard::button("Open  Dialog", link.callback(|_| DemoAction::OpenDialog));
+				let focused_button = yard::button("Close Dialog", link.callback(|_| Action::CloseDialog));
+				let enabled_button = yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog));
 				let button_pole = enabled_button
 					.pack_top(1, yard::empty())
 					.pack_top(1, focused_button);
@@ -94,7 +94,7 @@ impl story::Teller for Demo {
 
 
 #[derive(Clone, Debug)]
-pub enum DemoAction {
+pub enum Action {
 	ShowTab(MainTab),
 	OpenDialog,
 	CloseDialog,

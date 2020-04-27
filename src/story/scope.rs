@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Link, Story, Teller, UpdateContext};
+use crate::{Link, Story, Plot, ActionContext};
 use crate::app::AppContext;
 
 pub(super) struct StoryScope<V, A> {
@@ -32,14 +32,14 @@ impl<V: Clone, A> StoryScope<V, A> {
 	}
 }
 
-impl<V, A> UpdateContext<V, A> for StoryScope<V, A> {
+impl<V, A> ActionContext<V, A> for StoryScope<V, A> {
 	fn vision(&self) -> &V {
 		&self.vision
 	}
 
 	fn link(&self) -> &Link<A> { &self.link }
 
-	fn start_prequel<T: Teller>(&self) -> Story<T> {
+	fn start_prequel<T: Plot>(&self) -> Story<T> {
 		match &self.ctx {
 			None => panic!("No context"),
 			Some(ctx) => ctx.start_dialog::<T>(),
