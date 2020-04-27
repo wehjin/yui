@@ -6,7 +6,7 @@ use std::time::Duration;
 
 pub use multi_layout::*;
 
-use crate::yard::ArcYard;
+use crate::yard::{ArcTouch, ArcYard};
 use crate::yui::bounds::Bounds;
 use crate::yui::palette::{FillColor, StrokeColor};
 
@@ -117,7 +117,7 @@ pub enum FocusMotionFuture {
 }
 
 
-pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext) -> () {
+pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext, touch: &ArcTouch) -> () {
 	{
 		*is_pressed.write().unwrap() = true;
 	}
@@ -126,6 +126,8 @@ pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext) -
 	{
 		*is_pressed.write().unwrap() = false;
 	}
+	ctx.refresh.deref()();
+	touch.deref()();
 	ctx.refresh.deref()();
 }
 

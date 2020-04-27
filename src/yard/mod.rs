@@ -29,9 +29,13 @@ pub trait Yard {
 	fn render(&self, ctx: &dyn RenderContext);
 }
 
+pub type ArcYard = Arc<dyn Yard + Sync + Send>;
+
 pub enum YardOption {
 	FillColor(FillColor)
 }
 
-pub type ArcYard = Arc<dyn Yard + Sync + Send>;
+pub type ArcEvent<T> = Arc<dyn Fn(T) + Send + Sync + 'static>;
+pub type ArcTouch = Arc<dyn Fn() + Send + Sync + 'static>;
 
+pub fn ignore_touch() -> ArcTouch { Arc::new(|| ()) }

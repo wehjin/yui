@@ -1,13 +1,24 @@
 use std::sync::{Arc, RwLock};
 
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcTouch, ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn button(text: &str) -> ArcYard {
-	ButtonYard::new(text)
+pub fn button(text: &str, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+	let id = rand::random();
+	Arc::new(ButtonYard {
+		id,
+		label_yard: yard::label(
+			&text.to_uppercase(),
+			StrokeColor::EnabledOnBackground,
+			Cling::CenterMiddle,
+		),
+		fill_yard: yard::fill(FillColor::BackgroundWithFocus),
+		is_pressed: Arc::new(RwLock::new(false)),
+		on_click: Arc::new(move || on_click(id)),
+	})
 }
 
 struct ButtonYard {
@@ -15,27 +26,11 @@ struct ButtonYard {
 	label_yard: ArcYard,
 	fill_yard: ArcYard,
 	is_pressed: Arc<RwLock<bool>>,
-}
-
-impl ButtonYard {
-	fn new(text: &str) -> ArcYard {
-		Arc::new(ButtonYard {
-			id: rand::random(),
-			label_yard: yard::label(
-				&text.to_uppercase(),
-				StrokeColor::EnabledOnBackground,
-				Cling::CenterMiddle,
-			),
-			fill_yard: yard::fill(FillColor::BackgroundWithFocus),
-			is_pressed: Arc::new(RwLock::new(false)),
-		})
-	}
+	on_click: ArcTouch,
 }
 
 impl Yard for ButtonYard {
-	fn id(&self) -> i32 {
-		self.id
-	}
+	fn id(&self) -> i32 { self.id }
 
 	fn update(&self, _option: YardOption) {}
 
@@ -44,11 +39,12 @@ impl Yard for ButtonYard {
 		self.fill_yard.layout(ctx);
 		self.label_yard.layout(ctx);
 		let is_pressed = self.is_pressed.clone();
+		let on_click = self.on_click.to_owned();
 		ctx.add_focus(Focus {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds: edge_bounds,
-			action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx)),
+			action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx, &on_click)),
 		});
 		edge_index
 	}

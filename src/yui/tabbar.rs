@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
 use crate::yard;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, ignore_touch, Yard, YardOption};
 use crate::yui::*;
 use crate::yui::glyph::glyph_yard;
 use crate::yui::layout::LayoutContext;
@@ -74,7 +74,7 @@ impl Yard for TabYard {
 			focus_type: FocusType::Submit,
 			bounds,
 			action_block: Arc::new(move |ctx| {
-				render_submit(&is_pressed, ctx);
+				render_submit(&is_pressed, ctx, &ignore_touch());
 				(*select)();
 			}),
 		});

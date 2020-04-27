@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Link, UpdateContext};
+use crate::{Link, Story, Teller, UpdateContext};
+use crate::app::AppContext;
 
 pub(super) struct StoryScope<V, A> {
 	vision: V,
 	watchers: HashMap<i32, SyncSender<V>>,
 	link: Link<A>,
+	ctx: Option<AppContext>,
 }
 
 impl<V: Clone, A> StoryScope<V, A> {
@@ -25,12 +27,8 @@ impl<V: Clone, A> StoryScope<V, A> {
 		watcher.send(self.vision.clone()).unwrap();
 	}
 
-	pub fn new(vision: V, link: Link<A>) -> Self {
-		StoryScope {
-			vision,
-			watchers: HashMap::new(),
-			link,
-		}
+	pub fn new(vision: V, link: Link<A>, ctx: Option<AppContext>) -> Self {
+		StoryScope { vision, watchers: HashMap::new(), link, ctx }
 	}
 }
 
@@ -40,4 +38,18 @@ impl<V, A> UpdateContext<V, A> for StoryScope<V, A> {
 	}
 
 	fn link(&self) -> &Link<A> { &self.link }
+
+	fn start_prequel<T: Teller>(&self) -> Story<T> {
+		match &self.ctx {
+			None => panic!("No context"),
+			Some(ctx) => ctx.start_dialog::<T>(),
+		}
+	}
+
+	fn end_prequel(&self) {
+		match &self.ctx {
+			None => panic!("No context"),
+			Some(ctx) => ctx.end_dialog(),
+		}
+	}
 }

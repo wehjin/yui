@@ -34,9 +34,19 @@ impl story::Teller for Demo {
 		DemoVision { main_tab: MainTab::Button }
 	}
 
-	fn update(_ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<DemoVision> {
+	fn update(ctx: &impl UpdateContext<Self::V, Self::A>, action: DemoAction) -> AfterUpdate<DemoVision> {
 		match action {
-			DemoAction::ShowTab(tab) => AfterUpdate::Revise(DemoVision { main_tab: tab }),
+			DemoAction::ShowTab(tab) => {
+				AfterUpdate::Revise(DemoVision { main_tab: tab })
+			}
+			DemoAction::OpenDialog => {
+				ctx.start_prequel::<Demo>();
+				AfterUpdate::Ignore
+			}
+			DemoAction::CloseDialog => {
+				ctx.end_prequel();
+				AfterUpdate::Ignore
+			}
 		}
 	}
 
@@ -51,8 +61,8 @@ impl story::Teller for Demo {
 		let yard = match main_tab {
 			MainTab::Button => {
 				let active_tab = 0;
-				let focused_button = yard::button("Focused");
-				let enabled_button = yard::button("Enabled");
+				let focused_button = yard::button("Close Dialog", link.callback(|_| DemoAction::CloseDialog));
+				let enabled_button = yard::button("Open  Dialog", link.callback(|_| DemoAction::OpenDialog));
 				let button_pole = enabled_button
 					.pack_top(1, yard::empty())
 					.pack_top(1, focused_button);
@@ -87,6 +97,8 @@ pub struct DemoVision {
 #[derive(Clone, Debug)]
 pub enum DemoAction {
 	ShowTab(MainTab),
+	OpenDialog,
+	CloseDialog,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
