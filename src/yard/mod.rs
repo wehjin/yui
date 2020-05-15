@@ -12,15 +12,17 @@ pub use self::label::*;
 pub use self::observable::*;
 pub use self::story::*;
 pub use self::textfield::*;
+pub use self::trellis::*;
 
 mod button;
-mod story;
+mod empty;
 mod fade;
 mod fill;
 mod label;
-mod textfield;
-mod empty;
 mod observable;
+mod story;
+mod textfield;
+mod trellis;
 
 pub trait Yard {
 	fn id(&self) -> i32;

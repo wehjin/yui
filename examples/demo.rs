@@ -66,10 +66,8 @@ impl story::Plot for Demo {
 				let active_tab = 0;
 				let focused_button = yard::button("Close Dialog", link.callback(|_| Action::CloseDialog));
 				let enabled_button = yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog));
-				let button_pole = enabled_button
-					.pack_top(1, yard::empty())
-					.pack_top(1, focused_button);
-				let content = button_pole.confine(32, 3, Cling::CenterMiddle)
+				let trellis = yard::trellis(3, 2, vec![focused_button, enabled_button]);
+				let content = trellis.confine(32, 8, Cling::CenterMiddle)
 					.pad(1)
 					.before(yard::fill(FillColor::Background));
 				content
