@@ -175,6 +175,7 @@ pub enum Cling {
 	CenterMiddle,
 	Left,
 	LeftTop,
+	LeftBottom,
 	Top,
 }
 
@@ -183,8 +184,7 @@ impl Cling {
 		match self {
 			Cling::Custom { x, .. } => { x.to_owned() }
 			Cling::CenterMiddle => { 0.5 }
-			Cling::Left => { 0.0 }
-			Cling::LeftTop => { 0.0 }
+			Cling::Left | Cling::LeftTop | Cling::LeftBottom => { 0.0 }
 			Cling::Top => { 0.5 }
 		}
 	}
@@ -194,6 +194,7 @@ impl Cling {
 			Cling::CenterMiddle => { 0.5 }
 			Cling::Left => { 0.5 }
 			Cling::LeftTop => { 0.0 }
+			Cling::LeftBottom => { 1.0 }
 			Cling::Top => { 0.0 }
 		}
 	}
