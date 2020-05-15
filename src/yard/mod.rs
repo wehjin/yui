@@ -8,20 +8,24 @@ pub use self::button::*;
 pub use self::empty::*;
 pub use self::fade::*;
 pub use self::fill::*;
+pub use self::glyph::*;
 pub use self::label::*;
 pub use self::observable::*;
 pub use self::story::*;
 pub use self::textfield::*;
+pub use self::title::*;
 pub use self::trellis::*;
 
 mod button;
 mod empty;
 mod fade;
 mod fill;
+mod glyph;
 mod label;
 mod observable;
 mod story;
 mod textfield;
+mod title;
 mod trellis;
 
 pub trait Yard {

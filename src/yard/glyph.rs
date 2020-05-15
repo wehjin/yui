@@ -5,7 +5,7 @@ use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 
-pub fn glyph_yard(color: StrokeColor, glyph: impl Fn() -> char + Send + Sync + 'static) -> ArcYard {
+pub fn glyph(color: StrokeColor, glyph: impl Fn() -> char + Send + Sync + 'static) -> ArcYard {
 	Arc::new(GlyphYard {
 		id: rand::random(),
 		color,

@@ -13,7 +13,6 @@ use self::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
 pub mod layout;
-pub mod glyph;
 pub mod pad;
 pub mod before;
 pub mod palette;

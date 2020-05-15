@@ -105,7 +105,7 @@ pub enum MainTab {
 }
 
 fn app_bar() -> ArcYard {
-	let tool_bar = yard::label("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
+	let tool_bar = yard::title("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
 	let header_row = tool_bar.pad(1).before(yard::fill(FillColor::Primary));
 	header_row
 }
