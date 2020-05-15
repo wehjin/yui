@@ -21,7 +21,7 @@ mod app {
 	use std::sync::Arc;
 	use std::sync::mpsc::Receiver;
 
-	use crate::{ArcYard, Link, story, Story, Plot};
+	use crate::{ArcYard, Link, Plot, story, Story};
 	use crate::app::yard_stack::YardStack;
 	use crate::yard::{YardObservable, YardObservableSource};
 
@@ -71,7 +71,7 @@ mod app {
 		use std::sync::Arc;
 		use std::thread;
 
-		use crate::{AfterAction, ArcYard, Link, story, ActionContext, yard};
+		use crate::{ActionContext, AfterAction, ArcYard, Link, story, yard};
 		use crate::yard::{overlay, YardObservable};
 
 		pub(crate) struct YardStack;

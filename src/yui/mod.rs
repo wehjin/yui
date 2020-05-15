@@ -7,8 +7,9 @@ use std::time::Duration;
 pub use multi_layout::*;
 
 use crate::yard::{ArcTouch, ArcYard};
-use crate::yui::bounds::Bounds;
-use crate::yui::palette::{FillColor, StrokeColor};
+
+use self::bounds::Bounds;
+use self::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
 pub mod layout;
