@@ -45,10 +45,10 @@ pub trait RollContext<State, Action> {
 }
 
 
-pub enum AfterRoll<Vision> {
+pub enum AfterRoll<State> {
 	Ignore,
-	Revise(Vision),
-	ReviseQuietly(Vision),
+	Revise(State),
+	ReviseQuietly(State),
 }
 
 
