@@ -7,6 +7,9 @@ use crate::app::Edge;
 use crate::story::scope::StoryScope;
 use crate::yard::ArcYard;
 
+pub use self::link::*;
+
+mod link;
 mod scope;
 
 pub trait Wheel: 'static {
@@ -52,10 +55,6 @@ pub enum AfterRoll<State> {
 }
 
 
-pub struct Link<A> {
-	tx: Arc<dyn Fn(A) + Send + Sync>,
-}
-
 enum Msg<T: Wheel> {
 	Subscribe(i32, SyncSender<T::State>),
 	Update(T::Action),
@@ -90,21 +89,3 @@ impl<T: Wheel> Story<T> {
 	}
 }
 
-impl<A> Clone for Link<A> {
-	fn clone(&self) -> Self {
-		Link { tx: self.tx.clone() }
-	}
-}
-
-impl<A: Send> Link<A> {
-	pub fn callback<Ctx>(&self, into_action: impl Fn(Ctx) -> A + Send) -> impl Fn(Ctx) {
-		let tx = self.tx.to_owned();
-		move |ctx: Ctx| {
-			let action = into_action(ctx);
-			(*tx)(action);
-		}
-	}
-	pub fn send(&self, action: A) {
-		self.callback(|a| a)(action);
-	}
-}
