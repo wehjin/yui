@@ -34,10 +34,7 @@ struct CallOnWrite<T: Clone + Send + 'static> {
 impl<T: Clone + Send + 'static> CallOnWrite<T> {
 	fn set_value(&self, value: T) {
 		(*self.value.write().unwrap()) = value.to_owned();
-		let change = self.change.to_owned();
-		thread::spawn(move || {
-			(change)(value)
-		});
+		(self.change)(value)
 	}
 	fn value(&self) -> RwLockReadGuard<T> { self.value.read().unwrap() }
 	fn new(value: T, on_change: impl Fn(T) + 'static + Send + Sync) -> Self {
