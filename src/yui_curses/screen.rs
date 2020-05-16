@@ -5,6 +5,7 @@ use std::sync::mpsc::{Receiver, RecvError, Sender};
 use std::thread;
 
 use ncurses::*;
+pub use stringedit::*;
 
 use crate::yard;
 use crate::yard::ArcYard;
