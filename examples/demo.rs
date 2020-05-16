@@ -11,11 +11,11 @@ use std::iter::FromIterator;
 
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
-use stringedit::StringEdit;
 
 use yui::{ActionContext, App, Link, Projector};
 use yui::{AfterAction, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
+use yui::StringEdit;
 use yui::tabbar::tabbar_yard;
 
 fn main() -> Result<(), Box<dyn Error>> {

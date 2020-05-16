@@ -4,6 +4,8 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
+pub use stringedit::*;
+
 pub use multi_layout::*;
 
 use crate::yard::{ArcTouch, ArcYard};

@@ -2,13 +2,12 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::thread;
 
-use stringedit::StringEdit;
-
 use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext};
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
+use crate::yui::StringEdit;
 
 pub fn textfield(id: i32, label: &str, edit: StringEdit, on_change: impl Fn(StringEdit) + 'static + Send + Sync) -> ArcYard {
 	let yard = TextfieldYard {
