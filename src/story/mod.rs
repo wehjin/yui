@@ -38,7 +38,7 @@ pub trait Wheel: 'static {
 }
 
 pub trait RollContext<State, Action> {
-	fn vision(&self) -> &State;
+	fn state(&self) -> &State;
 	fn link(&self) -> &Link<Action>;
 	fn start_prequel<T: Wheel>(&self) -> Story<T>;
 	fn end_prequel(&self);

@@ -33,7 +33,7 @@ impl<V: Clone, A> StoryScope<V, A> {
 }
 
 impl<V, A> RollContext<V, A> for StoryScope<V, A> {
-	fn vision(&self) -> &V {
+	fn state(&self) -> &V {
 		&self.vision
 	}
 

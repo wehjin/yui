@@ -30,28 +30,28 @@ impl story::Wheel for YardStack {
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State> {
 		match action {
 			Action::PopFront => {
-				if ctx.vision().back_to_front.len() <= 1 {
+				if ctx.state().back_to_front.len() <= 1 {
 					AfterRoll::Ignore
 				} else {
-					let mut back_to_front = ctx.vision().back_to_front.to_vec();
+					let mut back_to_front = ctx.state().back_to_front.to_vec();
 					back_to_front.pop();
-					let yard = ctx.vision().yard.to_owned();
-					let era = ctx.vision().era + 1;
+					let yard = ctx.state().yard.to_owned();
+					let era = ctx.state().era + 1;
 					spawn_yard_builder(&back_to_front, era, ctx.link().clone());
 					AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
 				}
 			}
 			Action::PushFront(front) => {
-				let mut back_to_front = ctx.vision().back_to_front.to_vec();
+				let mut back_to_front = ctx.state().back_to_front.to_vec();
 				back_to_front.push(front);
-				let yard = ctx.vision().yard.to_owned();
-				let era = ctx.vision().era + 1;
+				let yard = ctx.state().yard.to_owned();
+				let era = ctx.state().era + 1;
 				spawn_yard_builder(&back_to_front, era, ctx.link().clone());
 				AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
 			}
 			Action::SetYard { era, yard } => {
-				if era == ctx.vision().era {
-					let back_to_front = ctx.vision().back_to_front.to_vec();
+				if era == ctx.state().era {
+					let back_to_front = ctx.state().back_to_front.to_vec();
 					AfterRoll::Turn(Vision { era, yard, back_to_front })
 				} else {
 					AfterRoll::Ignore
