@@ -25,7 +25,18 @@ impl<T: Wheel> YardObservable for StoryYardPublisher<T> {
 		thread::spawn(move || {
 			let mut done = false;
 			while !done {
-				let vision = visions.recv().unwrap();
+				let vision = {
+					let mut first = visions.recv().unwrap();
+					loop {
+						let second = visions.try_recv();
+						if second.is_err() {
+							break;
+						} else {
+							first = second.unwrap();
+						}
+					}
+					first
+				};
 				if let Some(yard) = T::yard(&vision, &link) {
 					if let Err(_) = tx_yard.send(yard) {
 						done = true;
