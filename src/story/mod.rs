@@ -13,15 +13,21 @@ mod scope;
 pub trait Wheel: 'static {
 	type State: Send + Clone;
 	type Action: Send;
-	fn build() -> Self::State;
+	type Report: Send;
+
+	fn build(link: Option<Link<Self::Report>>) -> Self::State;
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State>;
 	fn yard(_vision: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-	fn launch(edge: Option<Edge>) -> Story<Self> where Self: std::marker::Sized + 'static {
+	fn launch(edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self> where Self: std::marker::Sized + 'static {
 		let (tx, rx) = sync_channel::<Msg<Self>>(100);
 		let story = Story { tx };
-		let link = story.link();
+		let action_link = story.link().clone();
 		thread::spawn(move || {
-			let mut ctx = StoryScope::new(Self::build(), link, edge);
+			let mut ctx = StoryScope::new(
+				Self::build(report_link),
+				action_link,
+				edge,
+			);
 			for msg in rx {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) =>

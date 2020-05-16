@@ -7,10 +7,42 @@ use crate::yard::{overlay, YardObservable};
 pub(crate) struct YardStack;
 
 #[derive(Clone)]
-pub(crate) struct Vision {
+pub(crate) struct State {
 	era: usize,
 	yard: ArcYard,
 	back_to_front: Vec<Arc<dyn YardObservable>>,
+	report_link: Option<Link<()>>,
+}
+
+impl State {
+	pub fn pop_front(&self) -> Self {
+		let mut back_to_front = self.back_to_front.to_vec();
+		back_to_front.pop();
+		State {
+			era: self.era + 1,
+			yard: self.yard.to_owned(),
+			back_to_front,
+			report_link: self.report_link.to_owned(),
+		}
+	}
+	pub fn push_front(&self, front: Arc<dyn YardObservable>) -> Self {
+		let mut back_to_front = self.back_to_front.to_vec();
+		back_to_front.push(front);
+		State {
+			era: self.era + 1,
+			yard: self.yard.to_owned(),
+			back_to_front,
+			report_link: self.report_link.to_owned(),
+		}
+	}
+	pub fn set_yard(&self, yard: ArcYard) -> Self {
+		State {
+			era: self.era,
+			yard,
+			back_to_front: self.back_to_front.to_vec(),
+			report_link: self.report_link.to_owned(),
+		}
+	}
 }
 
 pub(crate) enum Action {
@@ -20,11 +52,17 @@ pub(crate) enum Action {
 }
 
 impl story::Wheel for YardStack {
-	type State = Vision;
+	type State = State;
 	type Action = Action;
+	type Report = ();
 
-	fn build() -> Self::State {
-		Vision { era: 0, yard: yard::empty(), back_to_front: Vec::new() }
+	fn build(link: Option<Link<()>>) -> Self::State {
+		State {
+			era: 0,
+			yard: yard::empty(),
+			back_to_front: Vec::new(),
+			report_link: link,
+		}
 	}
 
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State> {
@@ -33,26 +71,20 @@ impl story::Wheel for YardStack {
 				if ctx.state().back_to_front.len() <= 1 {
 					AfterRoll::Ignore
 				} else {
-					let mut back_to_front = ctx.state().back_to_front.to_vec();
-					back_to_front.pop();
-					let yard = ctx.state().yard.to_owned();
-					let era = ctx.state().era + 1;
-					spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-					AfterRoll::ReviseQuietly(Vision { era, yard, back_to_front })
+					let state = ctx.state().pop_front();
+					spawn_yard_builder(&state.back_to_front, state.era, ctx.link().clone());
+					AfterRoll::ReviseQuietly(state)
 				}
 			}
 			Action::PushFront(front) => {
-				let mut back_to_front = ctx.state().back_to_front.to_vec();
-				back_to_front.push(front);
-				let yard = ctx.state().yard.to_owned();
-				let era = ctx.state().era + 1;
-				spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-				AfterRoll::ReviseQuietly(Vision { era, yard, back_to_front })
+				let state = ctx.state().push_front(front);
+				spawn_yard_builder(&state.back_to_front, state.era, ctx.link().clone());
+				AfterRoll::ReviseQuietly(state)
 			}
 			Action::SetYard { era, yard } => {
 				if era == ctx.state().era {
-					let back_to_front = ctx.state().back_to_front.to_vec();
-					AfterRoll::Revise(Vision { era, yard, back_to_front })
+					let state = ctx.state().set_yard(yard);
+					AfterRoll::Revise(state)
 				} else {
 					AfterRoll::Ignore
 				}

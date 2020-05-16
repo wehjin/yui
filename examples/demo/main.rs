@@ -46,8 +46,9 @@ impl Demo {
 impl story::Wheel for Demo {
 	type State = Self;
 	type Action = Action;
+	type Report = ();
 
-	fn build() -> Self::State { Demo::new() }
+	fn build(_link: Option<Link<Self::Report>>) -> Self::State { Demo::new() }
 
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {

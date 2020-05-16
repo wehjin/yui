@@ -12,7 +12,7 @@ impl Clone for Edge {
 
 impl Edge {
 	pub fn start_dialog<W: Wheel>(&self) -> Story<W> {
-		let story = W::launch(Some(self.clone()));
+		let story = W::launch(Some(self.clone()), None);
 		self.link.send(yard_stack::Action::PushFront(story.yards()));
 		story
 	}
