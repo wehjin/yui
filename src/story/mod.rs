@@ -26,8 +26,8 @@ pub trait Wheel: 'static {
 					Msg::Subscribe(subscriber_id, watcher) =>
 						ctx.add_watcher(subscriber_id, watcher),
 					Msg::Update(action) => match Self::roll(&ctx, action) {
-						AfterRoll::TurnQuietly(next) => ctx.set_vision(next, false),
-						AfterRoll::Turn(next) => ctx.set_vision(next, true),
+						AfterRoll::ReviseQuietly(next) => ctx.set_vision(next, false),
+						AfterRoll::Revise(next) => ctx.set_vision(next, true),
 						AfterRoll::Ignore => (),
 					},
 				}
@@ -47,8 +47,8 @@ pub trait RollContext<State, Action> {
 
 pub enum AfterRoll<Vision> {
 	Ignore,
-	Turn(Vision),
-	TurnQuietly(Vision),
+	Revise(Vision),
+	ReviseQuietly(Vision),
 }
 
 

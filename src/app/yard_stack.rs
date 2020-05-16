@@ -38,7 +38,7 @@ impl story::Wheel for YardStack {
 					let yard = ctx.state().yard.to_owned();
 					let era = ctx.state().era + 1;
 					spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-					AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
+					AfterRoll::ReviseQuietly(Vision { era, yard, back_to_front })
 				}
 			}
 			Action::PushFront(front) => {
@@ -47,12 +47,12 @@ impl story::Wheel for YardStack {
 				let yard = ctx.state().yard.to_owned();
 				let era = ctx.state().era + 1;
 				spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-				AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
+				AfterRoll::ReviseQuietly(Vision { era, yard, back_to_front })
 			}
 			Action::SetYard { era, yard } => {
 				if era == ctx.state().era {
 					let back_to_front = ctx.state().back_to_front.to_vec();
-					AfterRoll::Turn(Vision { era, yard, back_to_front })
+					AfterRoll::Revise(Vision { era, yard, back_to_front })
 				} else {
 					AfterRoll::Ignore
 				}

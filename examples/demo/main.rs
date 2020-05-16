@@ -51,10 +51,10 @@ impl story::Wheel for Demo {
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {
 			Action::SetEdit(edit) => {
-				AfterRoll::Turn(ctx.state().with_edit(edit))
+				AfterRoll::Revise(ctx.state().with_edit(edit))
 			}
 			Action::ShowTab(tab) => {
-				AfterRoll::Turn(ctx.state().with_tab(tab))
+				AfterRoll::Revise(ctx.state().with_tab(tab))
 			}
 			Action::OpenDialog => {
 				ctx.start_prequel::<Demo>();
