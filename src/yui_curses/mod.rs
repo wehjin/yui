@@ -7,7 +7,6 @@ use ncurses::*;
 use keyboard::Keyboard;
 use screen::{CursesScreen, ScreenAction};
 
-use crate::App;
 use crate::yard::ArcYard;
 
 mod screen;
@@ -22,12 +21,7 @@ impl Projector {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn project_app(app: &App) -> Result<(), Box<dyn Error>> {
-		let yards = app.subscribe_yards()?;
-		Self::project_yards(yards)
-	}
-
-	fn project_yards(yards: Receiver<ArcYard>) -> Result<(), Box<dyn Error>> {
+	pub fn project_yards(yards: Receiver<ArcYard>) -> Result<(), Box<dyn Error>> {
 		Self::run_blocking(move |ctx| {
 			loop {
 				if let Ok(yard) = yards.recv() {

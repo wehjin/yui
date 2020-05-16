@@ -12,7 +12,7 @@ use std::iter::FromIterator;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{RollContext, App, Link, Projector};
+use yui::{app, Link, RollContext};
 use yui::{AfterRoll, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
@@ -21,9 +21,7 @@ use yui::tabbar::tabbar_yard;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	let app = App::start::<Demo>()?;
-	Projector::project_app(&app)?;
-	Ok(())
+	app::run::<Demo>()
 }
 
 #[derive(Clone, Debug)]
@@ -39,7 +37,7 @@ impl Demo {
 	fn with_tab(&self, main_tab: MainTab) -> Self {
 		Demo { main_tab, edit: self.edit.clone() }
 	}
-	fn start() -> Self {
+	fn new() -> Self {
 		Demo { main_tab: MainTab::Button, edit: StringEdit::empty() }
 	}
 }
@@ -48,7 +46,7 @@ impl story::Wheel for Demo {
 	type State = Self;
 	type Action = Action;
 
-	fn build() -> Self::State { Demo::start() }
+	fn build() -> Self::State { Demo::new() }
 
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {

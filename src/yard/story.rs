@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
 
-use crate::{ArcYard, Wheel, Story};
+use crate::{ArcYard, Story, Wheel};
 use crate::yard::{YardObservable, YardObservableSource};
 
 impl<T: Wheel> YardObservableSource for Story<T> {
