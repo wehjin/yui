@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "stringedit"
 version = "0.1.0"
-source = "git+https://github.com/wehjin/stringedit.git#7cf6d7176a7381aa1c0f6ce6403d02a43e0e9a29"
+source = "git+https://github.com/wehjin/stringedit.git#e35847d96e261fbf4fa20dcd05d49f5d5e9da099"
 
 [[package]]
 name = "term"

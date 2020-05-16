@@ -1,5 +1,6 @@
 use std::ops::Deref;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::thread;
 
 use stringedit::StringEdit;
 
@@ -9,11 +10,11 @@ use crate::yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn textfield(label: &str) -> ArcYard {
+pub fn textfield(id: i32, label: &str, edit: StringEdit, on_change: impl Fn(StringEdit) + 'static + Send + Sync) -> ArcYard {
 	let yard = TextfieldYard {
-		id: rand::random(),
+		id,
 		label_chars: label.chars().collect(),
-		edit: Arc::new(RwLock::new(StringEdit::empty())),
+		cow: Arc::new(CallOnWrite::new(edit, on_change)),
 	};
 	let arc_yard = Arc::new(yard) as ArcYard;
 	arc_yard.before(yard::fill(FillColor::BackgroundWithFocus))
@@ -22,7 +23,30 @@ pub fn textfield(label: &str) -> ArcYard {
 struct TextfieldYard {
 	id: i32,
 	label_chars: Vec<char>,
-	edit: Arc<RwLock<StringEdit>>,
+	cow: Arc<CallOnWrite<StringEdit>>,
+}
+
+struct CallOnWrite<T: Clone + Send + 'static> {
+	value: RwLock<T>,
+	change: Arc<dyn Fn(T) + 'static + Send + Sync>,
+}
+
+
+impl<T: Clone + Send + 'static> CallOnWrite<T> {
+	fn set_value(&self, value: T) {
+		(*self.value.write().unwrap()) = value.to_owned();
+		let change = self.change.to_owned();
+		thread::spawn(move || {
+			(change)(value)
+		});
+	}
+	fn value(&self) -> RwLockReadGuard<T> { self.value.read().unwrap() }
+	fn new(value: T, on_change: impl Fn(T) + 'static + Send + Sync) -> Self {
+		CallOnWrite {
+			value: RwLock::new(value),
+			change: Arc::new(on_change),
+		}
+	}
 }
 
 impl Yard for TextfieldYard {
@@ -32,32 +56,32 @@ impl Yard for TextfieldYard {
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
-		let edit = self.edit.clone();
-		let motion_edit = edit.clone();
+		let action_cow = self.cow.clone();
+		let motion_cow = action_cow.clone();
 		ctx.add_focus(Focus {
 			yard_id: self.id,
 			focus_type: FocusType::Edit(Arc::new(move |motion| {
 				match motion {
 					FocusMotion::Left => {
-						let cursor_at_left = { motion_edit.read().unwrap().cursor_index == 0 };
+						let cursor_at_left = { motion_cow.value().cursor_index == 0 };
 						if cursor_at_left {
 							FocusMotionFuture::Default
 						} else {
-							let new_edit = { motion_edit.read().unwrap().move_cursor_left() };
-							*motion_edit.write().unwrap() = new_edit;
+							let new_edit = { motion_cow.value().move_cursor_left() };
+							motion_cow.set_value(new_edit);
 							FocusMotionFuture::Skip
 						}
 					}
 					FocusMotion::Right => {
 						let cursor_at_right = {
-							let guard = motion_edit.read().unwrap();
-							guard.cursor_index == guard.char_count()
+							let guard = motion_cow.value();
+							guard.cursor_index == guard.chars.len()
 						};
 						if cursor_at_right {
 							FocusMotionFuture::Default
 						} else {
-							let new_edit = { motion_edit.read().unwrap().move_cursor_right() };
-							*motion_edit.write().unwrap() = new_edit;
+							let new_edit = { motion_cow.value().move_cursor_right() };
+							motion_cow.set_value(new_edit);
 							FocusMotionFuture::Skip
 						}
 					}
@@ -70,15 +94,17 @@ impl Yard for TextfieldYard {
 				match ctx.action {
 					FocusAction::Go => {}
 					FocusAction::Change(c) => {
-						let old_edit = { (*edit.read().unwrap()).clone() };
+						let old_edit = {
+							(*action_cow.value()).clone()
+						};
 						if !c.is_control() {
-							*edit.write().unwrap() = old_edit.insert_char(c);
+							action_cow.set_value(old_edit.insert_char(c));
 							ctx.refresh.deref()();
 						} else if c == '\x08' {
-							*edit.write().unwrap() = old_edit.delete_char_before_cursor();
+							action_cow.set_value(old_edit.delete_char_before_cursor());
 							ctx.refresh.deref()();
 						} else if c == '\x7f' {
-							*edit.write().unwrap() = old_edit.delete_char_at_cursor();
+							action_cow.set_value(old_edit.delete_char_at_cursor());
 							ctx.refresh.deref()();
 						}
 					}
@@ -91,7 +117,7 @@ impl Yard for TextfieldYard {
 
 	fn render(&self, ctx: &dyn RenderContext) {
 		let (row, col) = ctx.spot();
-		let edit = self.edit.read().unwrap();
+		let edit = self.cow.value();
 		let edge_bounds = ctx.yard_bounds(self.id);
 		let (head_bounds, lower_bounds) = edge_bounds.split_from_top(1);
 		let head_bounds = head_bounds.pad(1, 1, 0, 0);
@@ -102,7 +128,7 @@ impl Yard for TextfieldYard {
 				if ctx.focus_id() == self.id {
 					ctx.set_glyph(self.label_chars[char_index], StrokeColor::EnabledOnBackground, head_bounds.z)
 				} else {
-					if edit.char_count() > 0 {
+					if edit.chars.len() > 0 {
 						ctx.set_glyph(self.label_chars[char_index], StrokeColor::CommentOnBackground, head_bounds.z)
 					}
 				}
@@ -121,14 +147,14 @@ impl Yard for TextfieldYard {
 
 		let body_bounds = body_bounds.pad(1, 1, 0, 0);
 		if body_bounds.intersects(row, col) {
-			if ctx.focus_id() != self.id && edit.char_count() == 0 {
+			if ctx.focus_id() != self.id && edit.chars.len() == 0 {
 				let char_index = col - body_bounds.left;
 				if char_index >= 0 && (char_index as usize) < self.label_chars.len() {
 					let char_index = char_index as usize;
 					ctx.set_glyph(self.label_chars[char_index], StrokeColor::CommentOnBackground, body_bounds.z)
 				}
 			} else {
-				let char_count = edit.char_count();
+				let char_count = edit.chars.len();
 				let visible_chars = body_bounds.width() as usize;
 				let cursor_from_left = if char_count < visible_chars {
 					edit.cursor_index as i32

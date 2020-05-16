@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, RecvError, Sender};
 use std::thread;
 
 use ncurses::*;
@@ -24,10 +24,12 @@ impl CursesScreen {
 		let loop_tx = tx.clone();
 		thread::spawn(move || {
 			let mut active_focus: ActiveFocus = Default::default();
-			let mut done = false;
 			let mut yard = yard::empty();
-			while !done {
-				let action = rx.recv().unwrap();
+			loop {
+				let action = match next_screen_action(&rx, &loop_tx) {
+					Ok(action) => action,
+					Err(_) => break
+				};
 				match action {
 					ScreenAction::SetYard(set_yard) => {
 						yard = set_yard;
@@ -83,7 +85,7 @@ impl CursesScreen {
 						}
 						refresh();
 					}
-					ScreenAction::Close => { done = true }
+					ScreenAction::Close => break
 				}
 			}
 		});
@@ -97,6 +99,30 @@ impl CursesScreen {
 		getmaxyx(stdscr(), &mut max_y, &mut max_x);
 		(max_x, max_y)
 	}
+}
+
+fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) -> Result<ScreenAction, RecvError> {
+	let mut first = rx.recv()?;
+	if let ScreenAction::ResizeRefresh = &first {
+		let mut done_trying_second = false;
+		while !done_trying_second {
+			match rx.try_recv() {
+				Err(_) => {
+					done_trying_second = true
+				}
+				Ok(second) => match second {
+					ScreenAction::ResizeRefresh => {}
+					_ => {
+						let last = first;
+						first = second;
+						tx.send(last).unwrap();
+						done_trying_second = true
+					}
+				},
+			}
+		}
+	}
+	Ok(first)
 }
 
 

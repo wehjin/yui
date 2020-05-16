@@ -5,8 +5,8 @@ use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::StrokeColor;
 
-pub fn label(string: &str, color: StrokeColor, cling: Cling) -> ArcYard {
-	Arc::new(LabelYard { id: rand::random(), color, string: string.to_owned(), cling })
+pub fn label<S: AsRef<str>>(string: S, color: StrokeColor, cling: Cling) -> ArcYard {
+	Arc::new(LabelYard { id: rand::random(), color, string: string.as_ref().to_string(), cling })
 }
 
 struct LabelYard {

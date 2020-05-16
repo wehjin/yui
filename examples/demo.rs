@@ -7,9 +7,11 @@ extern crate yui;
 
 use std::error::Error;
 use std::fs::File;
+use std::iter::FromIterator;
 
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
+use stringedit::StringEdit;
 
 use yui::{ActionContext, App, Link, Projector};
 use yui::{AfterAction, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
@@ -26,21 +28,35 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[derive(Clone, Debug)]
 pub struct Demo {
-	main_tab: MainTab
+	main_tab: MainTab,
+	edit: StringEdit,
+}
+
+impl Demo {
+	fn with_edit(&self, edit: StringEdit) -> Self {
+		Demo { main_tab: self.main_tab, edit }
+	}
+	fn with_tab(&self, main_tab: MainTab) -> Self {
+		Demo { main_tab, edit: self.edit.clone() }
+	}
+	fn start() -> Self {
+		Demo { main_tab: MainTab::Button, edit: StringEdit::empty() }
+	}
 }
 
 impl story::Plot for Demo {
 	type V = Self;
 	type A = Action;
 
-	fn create() -> Self::V {
-		Demo { main_tab: MainTab::Button }
-	}
+	fn create() -> Self::V { Demo::start() }
 
 	fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Action) -> AfterAction<Demo> {
 		match action {
+			Action::SetEdit(edit) => {
+				AfterAction::Revise(ctx.vision().with_edit(edit))
+			}
 			Action::ShowTab(tab) => {
-				AfterAction::Revise(Demo { main_tab: tab })
+				AfterAction::Revise(ctx.vision().with_tab(tab))
 			}
 			Action::OpenDialog => {
 				ctx.start_prequel::<Demo>();
@@ -54,7 +70,7 @@ impl story::Plot for Demo {
 	}
 
 	fn yard(vision: &Demo, link: &Link<Action>) -> Option<ArcYard> {
-		let Demo { main_tab } = vision;
+		let Demo { main_tab, edit } = vision;
 		let select_tab = link.callback(|index| {
 			Action::ShowTab(match index {
 				0 => MainTab::Button,
@@ -76,11 +92,25 @@ impl story::Plot for Demo {
 			}
 			MainTab::TextField => {
 				let active_tab = 1;
-				let textfield = yard::textfield("Label");
-				let content = textfield
-					.confine(50, 3, Cling::CenterMiddle)
-					.pad(1)
-					.before(yard::fill(FillColor::Background));
+				let link = link.clone();
+				let trellis = yard::trellis(3, 1, vec![
+					yard::label(
+						&String::from_iter(edit.chars.to_vec()),
+						StrokeColor::BodyOnBackground,
+						Cling::Left,
+					),
+					yard::textfield(
+						1932,
+						"Label".into(),
+						edit.clone(),
+						move |new_edit| link.send(Action::SetEdit(new_edit)),
+					),
+				]);
+				let content =
+					trellis
+						.confine(50, 7, Cling::CenterMiddle)
+						.pad(1)
+						.before(yard::fill(FillColor::Background));
 				content
 					.pack_top(3, tabbar_yard(TABS, active_tab, select_tab))
 					.pack_top(3, app_bar())
@@ -93,6 +123,7 @@ impl story::Plot for Demo {
 
 #[derive(Clone, Debug)]
 pub enum Action {
+	SetEdit(StringEdit),
 	ShowTab(MainTab),
 	OpenDialog,
 	CloseDialog,

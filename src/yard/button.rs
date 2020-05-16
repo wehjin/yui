@@ -6,12 +6,12 @@ use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
 
-pub fn button(text: &str, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+pub fn button<S: AsRef<str>>(text: S, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
 	let id = rand::random();
 	Arc::new(ButtonYard {
 		id,
 		label_yard: yard::label(
-			&text.to_uppercase(),
+			&text.as_ref().to_uppercase(),
 			StrokeColor::EnabledOnBackground,
 			Cling::CenterMiddle,
 		),
