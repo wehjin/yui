@@ -4,12 +4,10 @@ use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
 use std::thread;
 
 use crate::app::Edge;
+use crate::Link;
 use crate::story::scope::StoryScope;
 use crate::yard::ArcYard;
 
-pub use self::link::*;
-
-mod link;
 mod scope;
 
 pub trait Wheel: 'static {
