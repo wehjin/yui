@@ -1,19 +1,20 @@
 use std::ops::Deref;
-use std::sync::{Arc, RwLock, RwLockReadGuard};
-use std::thread;
+use std::sync::Arc;
+
+use stringedit::StringEdit;
 
 use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext};
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::layout::LayoutContext;
 use crate::yui::palette::{FillColor, StrokeColor};
-use crate::yui::StringEdit;
 
-pub fn textfield(id: i32, label: &str, edit: StringEdit, on_change: impl Fn(StringEdit) + 'static + Send + Sync) -> ArcYard {
+pub fn textfield(id: i32, label: &str, edit: StringEdit, update: impl Fn(stringedit::Action) + 'static + Send + Sync) -> ArcYard {
 	let yard = TextfieldYard {
 		id,
 		label_chars: label.chars().collect(),
-		cow: Arc::new(CallOnWrite::new(edit, on_change)),
+		edit: Arc::new(edit),
+		update: Arc::new(update),
 	};
 	let arc_yard = Arc::new(yard) as ArcYard;
 	arc_yard.before(yard::fill(FillColor::BackgroundWithFocus))
@@ -22,27 +23,8 @@ pub fn textfield(id: i32, label: &str, edit: StringEdit, on_change: impl Fn(Stri
 struct TextfieldYard {
 	id: i32,
 	label_chars: Vec<char>,
-	cow: Arc<CallOnWrite<StringEdit>>,
-}
-
-struct CallOnWrite<T: Clone + Send + 'static> {
-	value: RwLock<T>,
-	change: Arc<dyn Fn(T) + 'static + Send + Sync>,
-}
-
-
-impl<T: Clone + Send + 'static> CallOnWrite<T> {
-	fn set_value(&self, value: T) {
-		(*self.value.write().unwrap()) = value.to_owned();
-		(self.change)(value)
-	}
-	fn value(&self) -> RwLockReadGuard<T> { self.value.read().unwrap() }
-	fn new(value: T, on_change: impl Fn(T) + 'static + Send + Sync) -> Self {
-		CallOnWrite {
-			value: RwLock::new(value),
-			change: Arc::new(on_change),
-		}
-	}
+	edit: Arc<StringEdit>,
+	update: Arc<dyn Fn(stringedit::Action) + 'static + Send + Sync>,
 }
 
 impl Yard for TextfieldYard {
@@ -52,32 +34,28 @@ impl Yard for TextfieldYard {
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
-		let action_cow = self.cow.clone();
-		let motion_cow = action_cow.clone();
+		let focus_update = self.update.clone();
+		let focus_edit = self.edit.clone();
+		let action_update = self.update.clone();
 		ctx.add_focus(Focus {
 			yard_id: self.id,
 			focus_type: FocusType::Edit(Arc::new(move |motion| {
 				match motion {
 					FocusMotion::Left => {
-						let cursor_at_left = { motion_cow.value().cursor_index == 0 };
+						let cursor_at_left = focus_edit.cursor_index == 0;
 						if cursor_at_left {
 							FocusMotionFuture::Default
 						} else {
-							let new_edit = { motion_cow.value().move_cursor_left() };
-							motion_cow.set_value(new_edit);
+							(focus_update)(stringedit::Action::MoveCursorLeft);
 							FocusMotionFuture::Skip
 						}
 					}
 					FocusMotion::Right => {
-						let cursor_at_right = {
-							let guard = motion_cow.value();
-							guard.cursor_index == guard.chars.len()
-						};
+						let cursor_at_right = focus_edit.cursor_index == focus_edit.chars.len();
 						if cursor_at_right {
 							FocusMotionFuture::Default
 						} else {
-							let new_edit = { motion_cow.value().move_cursor_right() };
-							motion_cow.set_value(new_edit);
+							(focus_update)(stringedit::Action::MoveCursorRight);
 							FocusMotionFuture::Skip
 						}
 					}
@@ -90,17 +68,14 @@ impl Yard for TextfieldYard {
 				match ctx.action {
 					FocusAction::Go => {}
 					FocusAction::Change(c) => {
-						let old_edit = {
-							(*action_cow.value()).clone()
-						};
 						if !c.is_control() {
-							action_cow.set_value(old_edit.insert_char(c));
+							(action_update)(stringedit::Action::InsertChar(c));
 							ctx.refresh.deref()();
 						} else if c == '\x08' {
-							action_cow.set_value(old_edit.delete_char_before_cursor());
+							(action_update)(stringedit::Action::DeleteCharBeforeCursor);
 							ctx.refresh.deref()();
 						} else if c == '\x7f' {
-							action_cow.set_value(old_edit.delete_char_at_cursor());
+							(action_update)(stringedit::Action::DeleteCharAtCursor);
 							ctx.refresh.deref()();
 						}
 					}
@@ -113,7 +88,7 @@ impl Yard for TextfieldYard {
 
 	fn render(&self, ctx: &dyn RenderContext) {
 		let (row, col) = ctx.spot();
-		let edit = self.cow.value();
+		let edit = self.edit.clone();
 		let edge_bounds = ctx.yard_bounds(self.id);
 		let (head_bounds, lower_bounds) = edge_bounds.split_from_top(1);
 		let head_bounds = head_bounds.pad(1, 1, 0, 0);

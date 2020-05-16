@@ -31,7 +31,8 @@ pub struct Demo {
 }
 
 impl Demo {
-	fn with_edit(&self, edit: StringEdit) -> Self {
+	fn with_edit(&self, action: stringedit::Action) -> Self {
+		let edit = self.edit.edit(action);
 		Demo { main_tab: self.main_tab, edit }
 	}
 	fn with_tab(&self, main_tab: MainTab) -> Self {
@@ -50,7 +51,7 @@ impl story::Wheel for Demo {
 
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {
-			Action::SetEdit(edit) => {
+			Action::StringEdit(edit) => {
 				AfterRoll::Revise(ctx.state().with_edit(edit))
 			}
 			Action::ShowTab(tab) => {
@@ -101,7 +102,7 @@ impl story::Wheel for Demo {
 						1932,
 						"Label".into(),
 						edit.clone(),
-						move |new_edit| link.send(Action::SetEdit(new_edit)),
+						move |new_edit| link.send(Action::StringEdit(new_edit)),
 					),
 				]);
 				let content =
@@ -121,7 +122,7 @@ impl story::Wheel for Demo {
 
 #[derive(Clone, Debug)]
 pub enum Action {
-	SetEdit(StringEdit),
+	StringEdit(stringedit::Action),
 	ShowTab(MainTab),
 	OpenDialog,
 	CloseDialog,
