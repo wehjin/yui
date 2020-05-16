@@ -21,21 +21,21 @@ mod app {
 	use std::sync::Arc;
 	use std::sync::mpsc::Receiver;
 
-	use crate::{ArcYard, Link, Plot, story, Story};
+	use crate::{ArcYard, Link, story, Story, Wheel};
 	use crate::app::yard_stack::YardStack;
 	use crate::yard::{YardObservable, YardObservableSource};
 
-	pub struct AppContext {
+	pub struct Edge {
 		link: Link<yard_stack::Action>
 	}
 
-	impl Clone for AppContext {
-		fn clone(&self) -> Self { AppContext { link: self.link.clone() } }
+	impl Clone for Edge {
+		fn clone(&self) -> Self { Edge { link: self.link.clone() } }
 	}
 
-	impl AppContext {
-		pub fn start_dialog<T: Plot>(&self) -> Story<T> {
-			let story = T::begin_story(Some(self.clone()));
+	impl Edge {
+		pub fn start_dialog<W: Wheel>(&self) -> Story<W> {
+			let story = W::launch(Some(self.clone()));
 			let yards = story.yards();
 			self.link.send(yard_stack::Action::PushFront(yards));
 			story
@@ -54,10 +54,10 @@ mod app {
 		pub fn subscribe_yards(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 			self.front_yards.subscribe()
 		}
-		pub fn start<T: story::Plot>() -> Result<Self, Box<dyn Error>> {
-			let yard_stack = YardStack::begin_story(None);
-			let app_context = AppContext { link: yard_stack.link() };
-			let teller_story = T::begin_story(Some(app_context));
+		pub fn start<T: story::Wheel>() -> Result<Self, Box<dyn Error>> {
+			let yard_stack = YardStack::launch(None);
+			let edge = Edge { link: yard_stack.link() };
+			let teller_story = T::launch(Some(edge));
 			let teller_yards = teller_story.yards();
 			yard_stack.link().send(yard_stack::Action::PushFront(teller_yards));
 
@@ -71,7 +71,7 @@ mod app {
 		use std::sync::Arc;
 		use std::thread;
 
-		use crate::{ActionContext, AfterAction, ArcYard, Link, story, yard};
+		use crate::{AfterRoll, ArcYard, Link, RollContext, story, yard};
 		use crate::yard::{overlay, YardObservable};
 
 		pub(crate) struct YardStack;
@@ -89,26 +89,26 @@ mod app {
 			PopFront,
 		}
 
-		impl story::Plot for YardStack {
-			type V = Vision;
-			type A = Action;
+		impl story::Wheel for YardStack {
+			type State = Vision;
+			type Action = Action;
 
-			fn create() -> Self::V {
+			fn build() -> Self::State {
 				Vision { era: 0, yard: yard::empty(), back_to_front: Vec::new() }
 			}
 
-			fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Self::A) -> AfterAction<Self::V> {
+			fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State> {
 				match action {
 					Action::PopFront => {
 						if ctx.vision().back_to_front.len() <= 1 {
-							AfterAction::Ignore
+							AfterRoll::Ignore
 						} else {
 							let mut back_to_front = ctx.vision().back_to_front.to_vec();
 							back_to_front.pop();
 							let yard = ctx.vision().yard.to_owned();
 							let era = ctx.vision().era + 1;
 							spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-							AfterAction::ReviseQuietly(Vision { era, yard, back_to_front })
+							AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
 						}
 					}
 					Action::PushFront(front) => {
@@ -117,20 +117,20 @@ mod app {
 						let yard = ctx.vision().yard.to_owned();
 						let era = ctx.vision().era + 1;
 						spawn_yard_builder(&back_to_front, era, ctx.link().clone());
-						AfterAction::ReviseQuietly(Vision { era, yard, back_to_front })
+						AfterRoll::TurnQuietly(Vision { era, yard, back_to_front })
 					}
 					Action::SetYard { era, yard } => {
 						if era == ctx.vision().era {
 							let back_to_front = ctx.vision().back_to_front.to_vec();
-							AfterAction::Revise(Vision { era, yard, back_to_front })
+							AfterRoll::Turn(Vision { era, yard, back_to_front })
 						} else {
-							AfterAction::Ignore
+							AfterRoll::Ignore
 						}
 					}
 				}
 			}
 
-			fn yard(vision: &Self::V, _link: &Link<Self::A>) -> Option<ArcYard> {
+			fn yard(vision: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
 				Some(vision.yard.to_owned())
 			}
 		}

@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Link, Story, Plot, ActionContext};
-use crate::app::AppContext;
+use crate::{Link, RollContext, Story, Wheel};
+use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A> {
 	vision: V,
 	watchers: HashMap<i32, SyncSender<V>>,
 	link: Link<A>,
-	ctx: Option<AppContext>,
+	edge: Option<Edge>,
 }
 
 impl<V: Clone, A> StoryScope<V, A> {
@@ -27,27 +27,27 @@ impl<V: Clone, A> StoryScope<V, A> {
 		watcher.send(self.vision.clone()).unwrap();
 	}
 
-	pub fn new(vision: V, link: Link<A>, ctx: Option<AppContext>) -> Self {
-		StoryScope { vision, watchers: HashMap::new(), link, ctx }
+	pub fn new(vision: V, link: Link<A>, ctx: Option<Edge>) -> Self {
+		StoryScope { vision, watchers: HashMap::new(), link, edge: ctx }
 	}
 }
 
-impl<V, A> ActionContext<V, A> for StoryScope<V, A> {
+impl<V, A> RollContext<V, A> for StoryScope<V, A> {
 	fn vision(&self) -> &V {
 		&self.vision
 	}
 
 	fn link(&self) -> &Link<A> { &self.link }
 
-	fn start_prequel<T: Plot>(&self) -> Story<T> {
-		match &self.ctx {
+	fn start_prequel<T: Wheel>(&self) -> Story<T> {
+		match &self.edge {
 			None => panic!("No context"),
 			Some(ctx) => ctx.start_dialog::<T>(),
 		}
 	}
 
 	fn end_prequel(&self) {
-		match &self.ctx {
+		match &self.edge {
 			None => panic!("No context"),
 			Some(ctx) => ctx.end_dialog(),
 		}

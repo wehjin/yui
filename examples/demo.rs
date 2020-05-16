@@ -12,8 +12,8 @@ use std::iter::FromIterator;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{ActionContext, App, Link, Projector};
-use yui::{AfterAction, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
+use yui::{RollContext, App, Link, Projector};
+use yui::{AfterRoll, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
 use yui::tabbar::tabbar_yard;
@@ -44,27 +44,27 @@ impl Demo {
 	}
 }
 
-impl story::Plot for Demo {
-	type V = Self;
-	type A = Action;
+impl story::Wheel for Demo {
+	type State = Self;
+	type Action = Action;
 
-	fn create() -> Self::V { Demo::start() }
+	fn build() -> Self::State { Demo::start() }
 
-	fn action(ctx: &impl ActionContext<Self::V, Self::A>, action: Action) -> AfterAction<Demo> {
+	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {
 			Action::SetEdit(edit) => {
-				AfterAction::Revise(ctx.vision().with_edit(edit))
+				AfterRoll::Turn(ctx.vision().with_edit(edit))
 			}
 			Action::ShowTab(tab) => {
-				AfterAction::Revise(ctx.vision().with_tab(tab))
+				AfterRoll::Turn(ctx.vision().with_tab(tab))
 			}
 			Action::OpenDialog => {
 				ctx.start_prequel::<Demo>();
-				AfterAction::Ignore
+				AfterRoll::Ignore
 			}
 			Action::CloseDialog => {
 				ctx.end_prequel();
-				AfterAction::Ignore
+				AfterRoll::Ignore
 			}
 		}
 	}
