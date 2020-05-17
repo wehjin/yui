@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 pub struct Link<A> {
-	pub tx: Arc<dyn Fn(A) + Send + Sync>,
+	tx: Arc<dyn Fn(A) + Send + Sync>,
 }
 
 impl<A> Clone for Link<A> {
@@ -21,4 +21,5 @@ impl<A: Send> Link<A> {
 	pub fn send(&self, action: A) {
 		self.callback(|a| a)(action);
 	}
+	pub fn new(tx: impl Fn(A) + 'static + Send + Sync) -> Self { Link { tx: Arc::new(tx) } }
 }

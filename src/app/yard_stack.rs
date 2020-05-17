@@ -69,6 +69,9 @@ impl story::Wheel for YardStack {
 		match action {
 			Action::PopFront => {
 				if ctx.state().back_to_front.len() <= 1 {
+					if let Some(report_link) = &ctx.state().report_link {
+						report_link.send(())
+					}
 					AfterRoll::Ignore
 				} else {
 					let state = ctx.state().pop_front();

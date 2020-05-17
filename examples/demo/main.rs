@@ -80,9 +80,10 @@ impl story::Wheel for Demo {
 		let yard = match main_tab {
 			MainTab::Button => {
 				let active_tab = 0;
-				let focused_button = yard::button("Close Dialog", link.callback(|_| Action::CloseDialog));
-				let enabled_button = yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog));
-				let trellis = yard::trellis(3, 2, vec![focused_button, enabled_button]);
+				let trellis = yard::trellis(3, 2, vec![
+					yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog)),
+					yard::button("Close", link.callback(|_| Action::CloseDialog)),
+				]);
 				let content = trellis.confine(32, 8, Cling::CenterMiddle)
 					.pad(1)
 					.before(yard::fill(FillColor::Background));

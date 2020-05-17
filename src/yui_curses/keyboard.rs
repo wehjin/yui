@@ -1,4 +1,4 @@
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Receiver, Sender};
 
 use ncurses::*;
 
@@ -7,15 +7,17 @@ use crate::yui_curses::screen::ScreenAction;
 pub(crate) struct Keyboard;
 
 impl Keyboard {
-	pub(crate) fn read_blocking(screen_tx: Sender<ScreenAction>) {
+	pub(crate) fn read_blocking(screen_tx: Sender<ScreenAction>, stop_rx: Receiver<()>) {
 		raw();
 		keypad(stdscr(), true);
 		cbreak();
 		noecho();
+		timeout(300);
 		let mut done = false;
 		while !done {
 			let ch = getch();
 			let action: Option<ScreenAction> = match ch {
+				ERR => if stop_rx.try_recv().is_ok() { Some(ScreenAction::Close) } else { None },
 				KEY_UP => Some(ScreenAction::FocusUp),
 				KEY_DOWN => Some(ScreenAction::FocusDown),
 				KEY_LEFT => Some(ScreenAction::FocusLeft),
@@ -46,15 +48,12 @@ impl Keyboard {
 					}
 				}
 			};
-			match action {
-				Some(action) => {
-					done = match &action {
-						ScreenAction::Close => true,
-						_ => false
-					};
-					screen_tx.send(action).unwrap()
-				}
-				None => {}
+			if let Some(action) = action {
+				done = match &action {
+					ScreenAction::Close => true,
+					_ => false
+				};
+				screen_tx.send(action).unwrap()
 			}
 		}
 		use_default_colors();

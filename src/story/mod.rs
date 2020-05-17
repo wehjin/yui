@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
 use std::thread;
 
@@ -78,10 +77,7 @@ impl<T: Wheel> Clone for Story<T> {
 impl<T: Wheel> Story<T> {
 	pub fn link(&self) -> Link<T::Action> {
 		let sender = self.tx.to_owned();
-		let tx = Arc::new(move |action: T::Action| {
-			sender.send(Msg::Update(action)).unwrap();
-		});
-		Link { tx }
+		Link::new(move |action: T::Action| { sender.send(Msg::Update(action)).unwrap(); })
 	}
 
 	pub fn visions(&self, id: i32) -> Result<Receiver<T::State>, Box<dyn Error>> {

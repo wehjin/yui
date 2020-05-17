@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
 
 use ncurses::*;
@@ -17,24 +17,31 @@ pub struct Projector {
 }
 
 impl Projector {
+	fn new(f: impl Fn(ArcYard) + 'static) -> Self {
+		Projector { set_yard_fn: Box::new(f) }
+	}
+}
+
+impl Projector {
 	pub fn set_yard(&self, yard: ArcYard) {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn project_yards(yards: Receiver<ArcYard>) -> Result<(), Box<dyn Error>> {
-		Self::run_blocking(move |ctx| {
-			loop {
-				if let Ok(yard) = yards.recv() {
-					ctx.set_yard(yard)
-				} else {
-					break;
+	pub fn project_yards(yards: Receiver<Option<ArcYard>>) -> Result<(), Box<dyn Error>> {
+		let (stop_tx, stop_rx) = sync_channel(1);
+		Self::run_blocking(stop_rx, move |ctx| {
+			for yard in &yards {
+				match yard {
+					Some(yard) => ctx.set_yard(yard),
+					None => break,
 				}
 			}
+			stop_tx.send(()).unwrap();
 		});
 		Ok(())
 	}
 
-	pub fn run_blocking(block: impl Fn(Projector) + Send + 'static) {
+	pub fn run_blocking(stop_rx: Receiver<()>, block: impl Fn(Projector) + Send + 'static) {
 		initscr();
 		if !has_colors() {
 			endwin();
@@ -42,15 +49,16 @@ impl Projector {
 			std::process::exit(1);
 		}
 		let screen_tx = CursesScreen::start();
-		let block_tx = screen_tx.clone();
-		thread::spawn(move || {
-			let projector = Projector {
-				set_yard_fn: Box::new(move |yard| block_tx.send(ScreenAction::SetYard(yard)).unwrap())
-			};
-			block(projector);
-		});
-
-		Keyboard::read_blocking(screen_tx)
+		{
+			let screen_tx = screen_tx.clone();
+			thread::spawn(move || {
+				let projector = Projector::new(move |yard| {
+					screen_tx.send(ScreenAction::SetYard(yard)).unwrap()
+				});
+				block(projector);
+			});
+		}
+		Keyboard::read_blocking(screen_tx.clone(), stop_rx)
 	}
 }
 
