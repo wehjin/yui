@@ -173,30 +173,32 @@ pub trait Place {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Cling {
 	Custom { x: f32, y: f32 },
-	CenterMiddle,
+	Center,
+	Top,
+	Bottom,
 	Left,
 	LeftTop,
 	LeftBottom,
-	Top,
+	Right,
+	RightTop,
+	RightBottom,
 }
 
 impl Cling {
 	fn x(&self) -> f32 {
 		match self {
-			Cling::Custom { x, .. } => { x.to_owned() }
-			Cling::CenterMiddle => { 0.5 }
-			Cling::Left | Cling::LeftTop | Cling::LeftBottom => { 0.0 }
-			Cling::Top => { 0.5 }
+			Cling::Custom { x, .. } => x.to_owned(),
+			Cling::Left | Cling::LeftTop | Cling::LeftBottom => 0.0,
+			Cling::Center | Cling::Top | Cling::Bottom => 0.5,
+			Cling::Right | Cling::RightTop | Cling::RightBottom => 1.0,
 		}
 	}
 	fn y(&self) -> f32 {
 		match self {
-			Cling::Custom { y, .. } => { y.to_owned() }
-			Cling::CenterMiddle => { 0.5 }
-			Cling::Left => { 0.5 }
-			Cling::LeftTop => { 0.0 }
-			Cling::LeftBottom => { 1.0 }
-			Cling::Top => { 0.0 }
+			Cling::Top | Cling::RightTop | Cling::LeftTop => 0.0,
+			Cling::Center | Cling::Left | Cling::Right => 0.5,
+			Cling::Bottom | Cling::LeftBottom | Cling::RightBottom => 1.0,
+			Cling::Custom { y, .. } => y.to_owned(),
 		}
 	}
 }

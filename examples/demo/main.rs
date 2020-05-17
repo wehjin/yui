@@ -84,7 +84,7 @@ impl story::Wheel for Demo {
 					yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog)),
 					yard::button("Close", link.callback(|_| Action::CloseDialog)),
 				]);
-				let content = trellis.confine(32, 8, Cling::CenterMiddle)
+				let content = trellis.confine(32, 8, Cling::Center)
 					.pad(1)
 					.before(yard::fill(FillColor::Background));
 				content
@@ -109,7 +109,7 @@ impl story::Wheel for Demo {
 				]);
 				let content =
 					trellis
-						.confine(50, 7, Cling::CenterMiddle)
+						.confine(50, 7, Cling::Center)
 						.pad(1)
 						.before(yard::fill(FillColor::Background));
 				content

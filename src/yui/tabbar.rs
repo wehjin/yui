@@ -33,7 +33,7 @@ pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl 
 }
 
 fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
-	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::CenterMiddle);
+	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::Center);
 	let underline = yard::glyph(StrokeColor::EnabledOnPrimary, move || {
 		let selected_index = *selected.read().unwrap();
 		if selected_index == index { '_' } else { '\0' }

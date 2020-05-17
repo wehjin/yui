@@ -11,7 +11,7 @@ impl Place for ArcYard {
 			id: rand::random(),
 			core_yard: self,
 			position: Arc::new(move |bounds| {
-				bounds.confine(width, bounds.height(), Cling::CenterMiddle)
+				bounds.confine(width, bounds.height(), Cling::Center)
 			}),
 		})
 	}

@@ -13,7 +13,7 @@ pub fn button<S: AsRef<str>>(text: S, on_click: impl Fn(i32) + Send + Sync + 'st
 		label_yard: yard::label(
 			&text.as_ref().to_uppercase(),
 			StrokeColor::EnabledOnBackground,
-			Cling::CenterMiddle,
+			Cling::Center,
 		),
 		fill_yard: yard::fill(FillColor::BackgroundWithFocus),
 		is_pressed: Arc::new(RwLock::new(false)),
