@@ -14,7 +14,7 @@ pub trait Wheel: 'static {
 	type Action: Send;
 	type Report: Send;
 
-	fn build(link: Option<Link<Self::Report>>) -> Self::State;
+	fn build(report_link: Option<Link<Self::Report>>) -> Self::State;
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State>;
 	fn yard(_vision: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
 	fn launch(edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self> where Self: std::marker::Sized + 'static {

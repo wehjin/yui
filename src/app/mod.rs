@@ -12,7 +12,7 @@ pub(crate) mod yard_stack;
 
 mod edge;
 
-pub fn run<W: Wheel>() -> Result<(), Box<dyn Error>> {
+pub fn run<W: Wheel>(report_link: Option<Link<W::Report>>) -> Result<(), Box<dyn Error>> {
 	let (yard_tx, yard_rx) = sync_channel(64);
 	let on_close = {
 		let yard_tx = yard_tx.clone();
@@ -23,7 +23,7 @@ pub fn run<W: Wheel>() -> Result<(), Box<dyn Error>> {
 	let stack_story = YardStack::launch(None, Some(on_close));
 	stack_story.link().send({
 		let edge = Edge::new(stack_story.link());
-		let app_story = W::launch(Some(edge), None);
+		let app_story = W::launch(Some(edge), report_link);
 		yard_stack::Action::PushFront(app_story.yards())
 	});
 	{

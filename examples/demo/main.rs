@@ -21,7 +21,7 @@ use yui::tabbar::tabbar_yard;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	app::run::<Demo>()
+	app::run::<Demo>(None)
 }
 
 #[derive(Clone, Debug)]
