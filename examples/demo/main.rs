@@ -52,12 +52,8 @@ impl story::Wheel for Demo {
 
 	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
 		match action {
-			Action::StringEdit(edit) => {
-				AfterRoll::Revise(ctx.state().with_edit(edit))
-			}
-			Action::ShowTab(tab) => {
-				AfterRoll::Revise(ctx.state().with_tab(tab))
-			}
+			Action::StringEdit(edit) => AfterRoll::Revise(ctx.state().with_edit(edit)),
+			Action::ShowTab(tab) => AfterRoll::Revise(ctx.state().with_tab(tab)),
 			Action::OpenDialog => {
 				ctx.start_prequel::<Demo>();
 				AfterRoll::Ignore
@@ -74,12 +70,13 @@ impl story::Wheel for Demo {
 		let select_tab = link.callback(|index| {
 			Action::ShowTab(match index {
 				0 => MainTab::Button,
-				_ => MainTab::TextField,
+				1 => MainTab::TextField,
+				2 => MainTab::QuadLabel,
+				_ => unimplemented!("No tab for index {}", index)
 			})
 		});
 		let yard = match main_tab {
 			MainTab::Button => {
-				let active_tab = 0;
 				let trellis = yard::trellis(3, 2, vec![
 					yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog)),
 					yard::button("Close", link.callback(|_| Action::CloseDialog)),
@@ -87,12 +84,9 @@ impl story::Wheel for Demo {
 				let content = trellis.confine(32, 8, Cling::Center)
 					.pad(1)
 					.before(yard::fill(FillColor::Background));
-				content
-					.pack_top(3, tabbar_yard(TABS, active_tab, select_tab))
-					.pack_top(3, app_bar())
+				tab_page(content, 0, select_tab)
 			}
 			MainTab::TextField => {
-				let active_tab = 1;
 				let link = link.clone();
 				let trellis = yard::trellis(3, 1, vec![
 					yard::label(
@@ -112,9 +106,19 @@ impl story::Wheel for Demo {
 						.confine(50, 7, Cling::Center)
 						.pad(1)
 						.before(yard::fill(FillColor::Background));
-				content
-					.pack_top(3, tabbar_yard(TABS, active_tab, select_tab))
-					.pack_top(3, app_bar())
+				tab_page(content, 1, select_tab)
+			}
+			MainTab::QuadLabel => {
+				let quad_label = yard::quad_label(
+					"Title",
+					"sub-title",
+					"1 Value",
+					"2 sub-value",
+					15,
+					FillColor::Background,
+				);
+				let content = quad_label.pad(1).confine(40, 4, Cling::Center);
+				tab_page(content, 2, select_tab)
 			}
 		};
 		Some(yard)
@@ -134,7 +138,14 @@ pub enum Action {
 pub enum MainTab {
 	Button,
 	TextField,
+	QuadLabel,
 }
+
+static TABS: &'static [(i32, &str)] = &[
+	(1, "Button"),
+	(2, "Text Field"),
+	(3, "Quad Label"),
+];
 
 fn app_bar() -> ArcYard {
 	let tool_bar = yard::title("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
@@ -142,7 +153,8 @@ fn app_bar() -> ArcYard {
 	header_row
 }
 
-static TABS: &'static [(i32, &str)] = &[
-	(1, "Button"),
-	(2, "Text Field")
-];
+fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+	content
+		.pack_top(3, tabbar_yard(TABS, active_tab_index, select_tab))
+		.pack_top(3, app_bar())
+}

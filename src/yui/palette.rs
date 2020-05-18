@@ -3,6 +3,15 @@ use std::collections::HashMap;
 
 use ncurses::{init_color, init_pair, start_color, use_default_colors};
 
+pub fn body_and_comment_for_fill(fill_color: FillColor) -> (StrokeColor, StrokeColor) {
+	match fill_color {
+		FillColor::Background | FillColor::BackgroundWithFocus | FillColor::BackgroundWithPress =>
+			(StrokeColor::BodyOnBackground, StrokeColor::CommentOnBackground),
+		FillColor::Primary | FillColor::PrimaryWithFocus | FillColor::PrimaryWithPress =>
+			(StrokeColor::BodyOnPrimary, StrokeColor::CommentOnPrimary),
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum FillColor {
 	Background,
@@ -30,8 +39,9 @@ pub enum StrokeColor {
 	CommentOnBackground,
 	BodyOnBackground,
 	EnabledOnBackground,
-	BodyOnPrimary,
 	EnabledOnPrimary,
+	BodyOnPrimary,
+	CommentOnPrimary,
 }
 
 fn stroke_i16((color, dimmed): (StrokeColor, bool)) -> i16 {
@@ -39,8 +49,9 @@ fn stroke_i16((color, dimmed): (StrokeColor, bool)) -> i16 {
 		StrokeColor::CommentOnBackground => COLOR_BASE1,
 		StrokeColor::BodyOnBackground => COLOR_BASE00,
 		StrokeColor::EnabledOnBackground => COLOR_MAGENTA,
-		StrokeColor::BodyOnPrimary => COLOR_BASE1,
 		StrokeColor::EnabledOnPrimary => COLOR_MAGENTA,
+		StrokeColor::BodyOnPrimary => COLOR_BASE1,
+		StrokeColor::CommentOnPrimary => COLOR_BASE00,
 	};
 	if dimmed { darken(color) } else { color }
 }
