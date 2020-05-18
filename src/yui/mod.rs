@@ -149,6 +149,7 @@ pub trait Padding {
 
 pub trait Confine {
 	fn confine_height(self, height: i32, cling: Cling) -> ArcYard;
+	fn confine_width(self, width: i32, cling: Cling) -> ArcYard;
 	fn confine(self, width: i32, height: i32, cling: Cling) -> ArcYard;
 }
 

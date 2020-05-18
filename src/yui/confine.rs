@@ -9,6 +9,10 @@ impl Confine for ArcYard {
 		ConfineYard::new(None, Some(height), cling, self)
 	}
 
+	fn confine_width(self, width: i32, cling: Cling) -> ArcYard {
+		ConfineYard::new(Some(width), None, cling, self)
+	}
+
 	fn confine(self, width: i32, height: i32, cling: Cling) -> ArcYard {
 		ConfineYard::new(Some(width), Some(height), cling, self)
 	}
