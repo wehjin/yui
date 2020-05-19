@@ -10,6 +10,7 @@ pub use self::fade::*;
 pub use self::fill::*;
 pub use self::glyph::*;
 pub use self::label::*;
+pub use self::list::*;
 pub use self::observable::*;
 pub use self::quad_label::*;
 pub use self::story::*;
@@ -24,12 +25,12 @@ mod fill;
 mod glyph;
 mod label;
 mod observable;
+mod quad_label;
+mod list;
 mod story;
 mod textfield;
 mod title;
 mod trellis;
-
-mod quad_label;
 
 pub trait Yard {
 	fn id(&self) -> i32;

@@ -32,6 +32,16 @@ impl Bounds {
 			z: self.z,
 		}
 	}
+	pub fn set_height_from_above(&self, down: i32, height: i32) -> Bounds {
+		let new_top = self.top + down;
+		Bounds {
+			right: self.right,
+			bottom: new_top + height,
+			left: self.left,
+			top: new_top,
+			z: self.z,
+		}
+	}
 	pub fn confine(&self, width: i32, height: i32, cling: Cling) -> Bounds {
 		let (extra_width, extra_height) = (self.width() - width, self.height() - height);
 		let top_extra = (cling.y() * extra_height as f32) as i32;

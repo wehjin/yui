@@ -109,15 +109,19 @@ impl story::Spark for Demo {
 				tab_page(content, 1, select_tab)
 			}
 			MainTab::QuadLabel => {
-				let quad_label = yard::quad_label(
-					"Title",
-					"sub-title",
-					"1 Value",
-					"2 sub-value",
-					15,
-					FillColor::Background,
-				);
-				let content = quad_label.pad(1).confine(40, 4, Cling::Center);
+				let mut items = Vec::new();
+				for n in 1..20 {
+					let quad_label = yard::quad_label(
+						&format!("Item {}", n),
+						"sub-title",
+						"1 Value",
+						"2 sub-value",
+						15,
+						FillColor::Background,
+					);
+					items.push((4, quad_label.pad(1)));
+				};
+				let content = yard::list(LIST_ID, items).confine_width(40, Cling::Center);
 				tab_page(content, 2, select_tab)
 			}
 		};
@@ -141,6 +145,7 @@ pub enum MainTab {
 	QuadLabel,
 }
 
+static LIST_ID: i32 = 22431;
 static TABS: &'static [(i32, &str)] = &[
 	(1, "Button"),
 	(2, "Text Field"),
