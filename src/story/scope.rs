@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Link, RollContext, Story, Wheel};
+use crate::{Link, Trace, Story, Spark};
 use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A> {
@@ -32,17 +32,19 @@ impl<V: Clone, A> StoryScope<V, A> {
 	}
 }
 
-impl<V, A> RollContext<V, A> for StoryScope<V, A> {
+impl<V, A> Trace<V, A> for StoryScope<V, A> {
 	fn state(&self) -> &V {
 		&self.vision
 	}
 
 	fn link(&self) -> &Link<A> { &self.link }
 
-	fn start_prequel<T: Wheel>(&self) -> Story<T> {
+	fn start_prequel<S>(&self, spark: S) -> Story<S>
+		where S: Spark + Sync + Send + 'static
+	{
 		match &self.edge {
 			None => panic!("No context"),
-			Some(ctx) => ctx.start_dialog::<T>(),
+			Some(ctx) => ctx.start_dialog::<S>(spark),
 		}
 	}
 

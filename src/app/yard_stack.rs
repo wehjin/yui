@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::thread;
 
-use crate::{AfterRoll, ArcYard, Link, RollContext, story, yard};
+use crate::{AfterTrace, ArcYard, Link, Trace, story, yard};
 use crate::yard::{overlay, YardObservable};
 
 pub(crate) struct YardStack;
@@ -51,12 +51,12 @@ pub(crate) enum Action {
 	PopFront,
 }
 
-impl story::Wheel for YardStack {
+impl story::Spark for YardStack {
 	type State = State;
 	type Action = Action;
 	type Report = ();
 
-	fn build(link: Option<Link<()>>) -> Self::State {
+	fn create(&self, link: Option<Link<()>>) -> Self::State {
 		State {
 			era: 0,
 			yard: yard::empty(),
@@ -65,31 +65,31 @@ impl story::Wheel for YardStack {
 		}
 	}
 
-	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State> {
+	fn trace(ctx: &impl Trace<Self::State, Self::Action>, action: Self::Action) -> AfterTrace<Self::State> {
 		match action {
 			Action::PopFront => {
 				if ctx.state().back_to_front.len() <= 1 {
 					if let Some(report_link) = &ctx.state().report_link {
 						report_link.send(())
 					}
-					AfterRoll::Ignore
+					AfterTrace::Ignore
 				} else {
 					let state = ctx.state().pop_front();
 					spawn_yard_builder(&state.back_to_front, state.era, ctx.link().clone());
-					AfterRoll::ReviseQuietly(state)
+					AfterTrace::ReviseQuietly(state)
 				}
 			}
 			Action::PushFront(front) => {
 				let state = ctx.state().push_front(front);
 				spawn_yard_builder(&state.back_to_front, state.era, ctx.link().clone());
-				AfterRoll::ReviseQuietly(state)
+				AfterTrace::ReviseQuietly(state)
 			}
 			Action::SetYard { era, yard } => {
 				if era == ctx.state().era {
 					let state = ctx.state().set_yard(yard);
-					AfterRoll::Revise(state)
+					AfterTrace::Revise(state)
 				} else {
-					AfterRoll::Ignore
+					AfterTrace::Ignore
 				}
 			}
 		}

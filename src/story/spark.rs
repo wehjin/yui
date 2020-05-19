@@ -5,21 +5,24 @@ use crate::{ArcYard, Link, Story};
 use crate::app::Edge;
 use crate::story::scope::StoryScope;
 
-pub trait Wheel: 'static {
+pub trait Spark {
 	type State: Send + Clone;
 	type Action: Send;
 	type Report: Send;
 
-	fn build(report_link: Option<Link<Self::Report>>) -> Self::State;
-	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Self::Action) -> AfterRoll<Self::State>;
+	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
+	fn trace(trace: &impl Trace<Self::State, Self::Action>, action: Self::Action) -> AfterTrace<Self::State>;
 	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-	fn launch(edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self> where Self: std::marker::Sized + 'static {
+
+	fn spark(self, edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self>
+		where Self: Sized + Sync + Send + 'static
+	{
 		let (tx, rx) = sync_channel::<Msg<Self>>(100);
 		let story = Story { tx };
 		let action_link = story.link().clone();
 		thread::spawn(move || {
 			let mut ctx = StoryScope::new(
-				Self::build(report_link),
+				self.create(report_link),
 				action_link,
 				edge,
 			);
@@ -27,10 +30,10 @@ pub trait Wheel: 'static {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) =>
 						ctx.add_watcher(subscriber_id, watcher),
-					Msg::Update(action) => match Self::roll(&ctx, action) {
-						AfterRoll::ReviseQuietly(next) => ctx.set_vision(next, false),
-						AfterRoll::Revise(next) => ctx.set_vision(next, true),
-						AfterRoll::Ignore => (),
+					Msg::Update(action) => match Self::trace(&ctx, action) {
+						AfterTrace::ReviseQuietly(next) => ctx.set_vision(next, false),
+						AfterTrace::Revise(next) => ctx.set_vision(next, true),
+						AfterTrace::Ignore => (),
 					},
 				}
 			}
@@ -39,21 +42,21 @@ pub trait Wheel: 'static {
 	}
 }
 
-pub trait RollContext<State, Action> {
+pub trait Trace<State, Action> {
 	fn state(&self) -> &State;
 	fn link(&self) -> &Link<Action>;
-	fn start_prequel<T: Wheel>(&self) -> Story<T>;
+	fn start_prequel<S>(&self, spark: S) -> Story<S> where S: Spark + Sync + Send + 'static;
 	fn end_prequel(&self);
 }
 
 
-pub enum AfterRoll<State> {
+pub enum AfterTrace<State> {
 	Ignore,
 	Revise(State),
 	ReviseQuietly(State),
 }
 
-pub(crate) enum Msg<T: Wheel> {
-	Subscribe(i32, SyncSender<T::State>),
-	Update(T::Action),
+pub(crate) enum Msg<S: Spark> {
+	Subscribe(i32, SyncSender<S::State>),
+	Update(S::Action),
 }

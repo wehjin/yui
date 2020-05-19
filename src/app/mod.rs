@@ -2,7 +2,7 @@ use std::error::Error;
 use std::sync::mpsc::sync_channel;
 use std::thread;
 
-use crate::{Link, Projector, Wheel};
+use crate::{Link, Projector, Spark};
 use crate::app::yard_stack::YardStack;
 use crate::yard::YardObservableSource;
 
@@ -12,7 +12,9 @@ pub(crate) mod yard_stack;
 
 mod edge;
 
-pub fn run<W: Wheel>(report_link: Option<Link<W::Report>>) -> Result<(), Box<dyn Error>> {
+pub fn run<S>(spark: S, report_link: Option<Link<S::Report>>) -> Result<(), Box<dyn Error>>
+	where S: Spark + Sync + Send + 'static
+{
 	let (yard_tx, yard_rx) = sync_channel(64);
 	let on_close = {
 		let yard_tx = yard_tx.clone();
@@ -20,10 +22,11 @@ pub fn run<W: Wheel>(report_link: Option<Link<W::Report>>) -> Result<(), Box<dyn
 			yard_tx.send(None).unwrap()
 		})
 	};
-	let stack_story = YardStack::launch(None, Some(on_close));
+	let yard_stack = YardStack {};
+	let stack_story = yard_stack.spark(None, Some(on_close));
 	stack_story.link().send({
 		let edge = Edge::new(stack_story.link());
-		let app_story = W::launch(Some(edge), report_link);
+		let app_story = spark.spark(Some(edge), report_link);
 		yard_stack::Action::PushFront(app_story.yards())
 	});
 	{

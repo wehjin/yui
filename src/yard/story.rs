@@ -3,21 +3,25 @@ use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
 
-use crate::{ArcYard, Story, Wheel};
+use crate::{ArcYard, Story, Spark};
 use crate::yard::{YardObservable, YardObservableSource};
 
-impl<T: Wheel> YardObservableSource for Story<T> {
+impl<S> YardObservableSource for Story<S>
+	where S: Spark + Sync + Send + 'static
+{
 	fn yards(&self) -> Arc<dyn YardObservable> {
 		let publisher = StoryYardPublisher { story: self.clone() };
 		Arc::new(publisher)
 	}
 }
 
-struct StoryYardPublisher<T: Wheel> {
-	story: Story<T>
+struct StoryYardPublisher<S: Spark> {
+	story: Story<S>
 }
 
-impl<T: Wheel> YardObservable for StoryYardPublisher<T> {
+impl<S> YardObservable for StoryYardPublisher<S>
+	where S: Spark + Sync + Send + 'static
+{
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 		let visions = self.story.visions(rand::random())?;
 		let (tx_yard, rx_yard) = sync_channel::<ArcYard>(64);
@@ -37,7 +41,7 @@ impl<T: Wheel> YardObservable for StoryYardPublisher<T> {
 					}
 					first
 				};
-				if let Some(yard) = T::yard(&vision, &link) {
+				if let Some(yard) = S::yard(&vision, &link) {
 					if let Err(_) = tx_yard.send(yard) {
 						done = true;
 					}

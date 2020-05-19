@@ -12,8 +12,8 @@ use std::iter::FromIterator;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{app, Link, RollContext};
-use yui::{AfterRoll, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
+use yui::{app, Link, Trace};
+use yui::{AfterTrace, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
 use yui::tabbar::tabbar_yard;
@@ -21,7 +21,7 @@ use yui::tabbar::tabbar_yard;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	app::run::<Demo>(None)
+	app::run(Demo::new(), None)
 }
 
 #[derive(Clone, Debug)]
@@ -43,24 +43,24 @@ impl Demo {
 	}
 }
 
-impl story::Wheel for Demo {
-	type State = Self;
+impl story::Spark for Demo {
+	type State = Demo;
 	type Action = Action;
 	type Report = ();
 
-	fn build(_link: Option<Link<Self::Report>>) -> Self::State { Demo::new() }
+	fn create(&self, _link: Option<Link<Self::Report>>) -> Self::State { self.clone() }
 
-	fn roll(ctx: &impl RollContext<Self::State, Self::Action>, action: Action) -> AfterRoll<Demo> {
+	fn trace(ctx: &impl Trace<Self::State, Self::Action>, action: Action) -> AfterTrace<Demo> {
 		match action {
-			Action::StringEdit(edit) => AfterRoll::Revise(ctx.state().with_edit(edit)),
-			Action::ShowTab(tab) => AfterRoll::Revise(ctx.state().with_tab(tab)),
+			Action::StringEdit(edit) => AfterTrace::Revise(ctx.state().with_edit(edit)),
+			Action::ShowTab(tab) => AfterTrace::Revise(ctx.state().with_tab(tab)),
 			Action::OpenDialog => {
-				ctx.start_prequel::<Demo>();
-				AfterRoll::Ignore
+				ctx.start_prequel(Demo::new());
+				AfterTrace::Ignore
 			}
 			Action::CloseDialog => {
 				ctx.end_prequel();
-				AfterRoll::Ignore
+				AfterTrace::Ignore
 			}
 		}
 	}
