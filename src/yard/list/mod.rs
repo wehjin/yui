@@ -7,23 +7,23 @@ use crate::yui::bounds::Bounds;
 use crate::yui::layout::LayoutContext;
 
 pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
-	let (rows_from_top, item_heights, sum_heights, yards) =
+	let (item_tops, item_heights, sum_heights, yards) =
 		items.into_iter().fold(
 			(Vec::new(), Vec::new(), 0, Vec::new()),
-			|(mut rows_from_top, mut heights, sum_heights, mut yards), (height, yard)| {
+			|(mut item_tops, mut heights, sum_heights, mut yards), (height, yard)| {
 				let height = height as i32;
-				rows_from_top.push(sum_heights);
+				item_tops.push(sum_heights);
 				heights.push(height);
 				yards.push(yard);
-				(rows_from_top, heights, sum_heights + height, yards)
+				(item_tops, heights, sum_heights + height, yards)
 			},
 		);
-	Arc::new(ListYard { id, item_heights, rows_from_top, sum_heights, yards, nexus: Arc::new(RwLock::new(Nexus::new())) })
+	Arc::new(ListYard { id, item_heights, item_tops, sum_heights, yards, nexus: Arc::new(RwLock::new(Nexus::new())) })
 }
 
 struct ListYard {
 	id: i32,
-	rows_from_top: Vec<i32>,
+	item_tops: Vec<i32>,
 	item_heights: Vec<i32>,
 	sum_heights: i32,
 	yards: Vec<ArcYard>,
@@ -110,26 +110,49 @@ impl ListYard {
 	}
 
 	fn layout_items(&self, bounds: &Bounds) -> Vec<LayoutItem> {
+		let nexus = self.nexus.read().unwrap();
+		let pivot_row = nexus.pivot_row(bounds.height(), bounds.top, self.sum_heights);
+		let pivot_pos = nexus.pivot_pos();
 		let mut layout_items = Vec::new();
 		let mut next_index = Some(0);
 		while next_index.is_some() {
 			let index = next_index.unwrap();
-			let height = self.item_heights[index];
-			let rows_from_top = self.rows_from_top[index];
-			let item_bounds = bounds.set_height_from_above(rows_from_top, height);
-			if item_bounds.bottom > bounds.bottom {
-				// Overflow condition
-				info!("OVERFLOW");
-				next_index = None
+			next_index = if index >= self.item_heights.len() {
+				None
 			} else {
-				let yard = self.yards[index].clone();
-				layout_items.push(LayoutItem { index, bounds: item_bounds, yard });
-				let incr_index = index + 1;
-				if item_bounds.bottom >= bounds.bottom || incr_index >= self.yards.len() {
-					next_index = None
+				let item_bounds = nexus.item_bounds(index, bounds, pivot_row, pivot_pos, &self.item_tops, &self.item_heights);
+				let (next, keep) = if item_bounds.bottom < bounds.top {
+					// Full underflow
+					(Some(index + 1), false)
+				} else if item_bounds.top < bounds.top {
+					// Partial underflow and possibly overflow
+					info!("PARTIAL UNDERFLOW, MAYBE OVERFLOW");
+					if item_bounds.bottom > bounds.bottom {
+						// Full overlap
+						(None, true)
+					} else {
+						// Partial underflow
+						(Some(index + 1), true)
+					}
+				} else if item_bounds.bottom <= bounds.bottom {
+					// In bounds
+					(Some(index + 1), true)
+				} else if item_bounds.top < bounds.bottom {
+					// Partial overflow
+					(None, true)
 				} else {
-					next_index = Some(incr_index)
+					// Full overflow
+					(None, false)
+				};
+				if keep {
+					let layout_item = LayoutItem {
+						index,
+						bounds: item_bounds,
+						yard: self.yards[index].clone(),
+					};
+					layout_items.push(layout_item);
 				}
+				next
 			}
 		}
 		layout_items

@@ -34,13 +34,11 @@ impl Bounds {
 	}
 	pub fn set_height_from_above(&self, down: i32, height: i32) -> Bounds {
 		let new_top = self.top + down;
-		Bounds {
-			right: self.right,
-			bottom: new_top + height,
-			left: self.left,
-			top: new_top,
-			z: self.z,
-		}
+		Bounds { right: self.right, bottom: new_top + height, left: self.left, top: new_top, z: self.z }
+	}
+	pub fn set_height_from_below(&self, up: i32, height: i32) -> Bounds {
+		let new_bottom = self.bottom - up;
+		Bounds { right: self.right, bottom: new_bottom, left: self.left, top: new_bottom - height, z: self.z }
 	}
 	pub fn confine(&self, width: i32, height: i32, cling: Cling) -> Bounds {
 		let (extra_width, extra_height) = (self.width() - width, self.height() - height);
