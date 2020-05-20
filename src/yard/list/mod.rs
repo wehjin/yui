@@ -7,24 +7,29 @@ use crate::yui::bounds::Bounds;
 use crate::yui::layout::LayoutContext;
 
 pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
-	let (item_tops, item_heights, sum_heights, yards) =
-		items.into_iter().fold(
-			(Vec::new(), Vec::new(), 0, Vec::new()),
-			|(mut item_tops, mut heights, sum_heights, mut yards), (height, yard)| {
-				let height = height as i32;
-				item_tops.push(sum_heights);
-				heights.push(height);
-				yards.push(yard);
-				(item_tops, heights, sum_heights + height, yards)
-			},
-		);
-	Arc::new(ListYard { id, item_heights, item_tops, sum_heights, yards, nexus: Arc::new(RwLock::new(Nexus::new())) })
+	let mut item_tops = Vec::new();
+	let mut item_heights = Vec::new();
+	let mut sum_heights = 0i32;
+	let mut yards = Vec::new();
+	let mut min_item_height = 1000i32;
+	for item in items {
+		let (height, yard) = item;
+		let height = height as i32;
+		item_tops.push(sum_heights);
+		item_heights.push(height);
+		yards.push(yard);
+		sum_heights = sum_heights + height;
+		min_item_height = min_item_height.min(height);
+	}
+	let nexus = Nexus::new(item_heights.len());
+	Arc::new(ListYard { id, item_tops, item_heights, min_item_height, sum_heights, yards, nexus: Arc::new(RwLock::new(nexus)) })
 }
 
 struct ListYard {
 	id: i32,
 	item_tops: Vec<i32>,
 	item_heights: Vec<i32>,
+	min_item_height: i32,
 	sum_heights: i32,
 	yards: Vec<ArcYard>,
 	nexus: Arc<RwLock<Nexus>>,
@@ -111,7 +116,7 @@ impl ListYard {
 
 	fn layout_items(&self, bounds: &Bounds) -> Vec<LayoutItem> {
 		let nexus = self.nexus.read().unwrap();
-		let pivot_row = nexus.pivot_row(bounds.height(), bounds.top, self.sum_heights);
+		let pivot_row = nexus.pivot_row(bounds.height(), bounds.top, self.sum_heights, self.min_item_height);
 		let pivot_pos = nexus.pivot_pos();
 		let mut layout_items = Vec::new();
 		let mut next_index = Some(0);

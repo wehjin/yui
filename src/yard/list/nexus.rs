@@ -9,10 +9,10 @@ mod tests {
 	fn small_list() {
 		let item_heights = vec![2, 3];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
-		let top_nexus = Nexus::new();
+		let top_nexus = Nexus::new(item_heights.len());
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
-		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height);
-		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height);
+		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height, 2);
+		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height, 2);
 		assert_eq!(top_pivot_row, 2);
 		assert_eq!(bottom_pivot_row, 2);
 	}
@@ -21,10 +21,10 @@ mod tests {
 	fn large_list() {
 		let item_heights = vec![2, 3];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
-		let top_nexus = Nexus::new();
+		let top_nexus = Nexus::new(item_heights.len());
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
-		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height);
-		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height);
+		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height, 2);
+		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height, 2);
 		assert_eq!(top_pivot_row, 0);
 		assert_eq!(bottom_pivot_row, 3);
 	}
@@ -32,21 +32,21 @@ mod tests {
 	#[test]
 	fn one_heights() {
 		let item_heights = vec![2, 3];
-		let nexus = Nexus::new();
+		let nexus = Nexus::new(item_heights.len());
 		let u = nexus.up(&item_heights);
 		let d = nexus.down(&item_heights).unwrap();
 		let dd = d.down(&item_heights);
 		let du = d.up(&item_heights).unwrap();
 		assert_eq!(u, None);
-		assert_eq!(d, Nexus::Down { last_pos: 4, item_index: 1 });
+		assert_eq!(d, Nexus::Down { last_pos: 4, item_index: 1, max_index: 2 });
 		assert_eq!(dd, None);
-		assert_eq!(du, Nexus::Up { first_pos: 0, item_index: 0 });
+		assert_eq!(du, Nexus::Up { first_pos: 0, item_index: 0, max_index: 2 });
 	}
 
 	#[test]
 	fn one_height() {
 		let item_heights = vec![2];
-		let nexus = Nexus::new();
+		let nexus = Nexus::new(item_heights.len());
 		let d = nexus.down(&item_heights);
 		assert_eq!(d, None);
 		let u = nexus.up(&item_heights);
@@ -56,14 +56,14 @@ mod tests {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Nexus {
-	Up { first_pos: i32, item_index: usize },
-	Down { last_pos: i32, item_index: usize },
+	Up { first_pos: i32, item_index: usize, max_index: usize },
+	Down { last_pos: i32, item_index: usize, max_index: usize },
 }
 
 impl Nexus {
 	pub fn down(&self, item_heights: &Vec<i32>) -> Option<Self> {
 		match self {
-			Nexus::Up { first_pos: first_row, item_index } => {
+			Nexus::Up { first_pos: first_row, item_index, max_index } => {
 				let next_item_index = *item_index + 1;
 				if next_item_index >= item_heights.len() {
 					None
@@ -72,10 +72,10 @@ impl Nexus {
 					assert!(next_item_height > 0);
 					let next_first_row = *first_row + item_heights[*item_index];
 					let next_last_row = next_first_row + next_item_height - 1;
-					Some(Down { last_pos: next_last_row, item_index: next_item_index })
+					Some(Down { last_pos: next_last_row, item_index: next_item_index, max_index: *max_index })
 				}
 			}
-			Nexus::Down { last_pos: last_row, item_index } => {
+			Nexus::Down { last_pos: last_row, item_index, max_index } => {
 				let next_item_index = *item_index + 1;
 				if next_item_index >= item_heights.len() {
 					None
@@ -83,14 +83,14 @@ impl Nexus {
 					let next_item_height = item_heights[next_item_index];
 					assert!(next_item_height > 0);
 					let next_last_row = *last_row + next_item_height;
-					Some(Down { last_pos: next_last_row, item_index: next_item_index })
+					Some(Down { last_pos: next_last_row, item_index: next_item_index, max_index: *max_index })
 				}
 			}
 		}
 	}
 	pub fn up(&self, item_heights: &Vec<i32>) -> Option<Self> {
 		match self {
-			Nexus::Up { first_pos: first_row, item_index } => {
+			Nexus::Up { first_pos: first_row, item_index, max_index } => {
 				if *item_index == 0 {
 					None
 				} else {
@@ -98,10 +98,10 @@ impl Nexus {
 					let next_item_height = item_heights[next_item_index];
 					assert!(next_item_height > 0);
 					let next_first_row = *first_row - next_item_height;
-					Some(Nexus::Up { first_pos: next_first_row, item_index: next_item_index })
+					Some(Nexus::Up { first_pos: next_first_row, item_index: next_item_index, max_index: *max_index })
 				}
 			}
-			Nexus::Down { last_pos: last_row, item_index } => {
+			Nexus::Down { last_pos: last_row, item_index, max_index } => {
 				if *item_index == 0 {
 					None
 				} else {
@@ -111,20 +111,33 @@ impl Nexus {
 					let item_height = item_heights[*item_index];
 					let next_last_row = *last_row - item_height;
 					let next_first_row = next_last_row - next_item_height + 1;
-					Some(Nexus::Up { first_pos: next_first_row, item_index: next_index_index })
+					Some(Nexus::Up { first_pos: next_first_row, item_index: next_index_index, max_index: *max_index })
 				}
 			}
 		}
 	}
-	pub fn pivot_row(&self, bounds_height: i32, bounds_top: i32, list_height: i32) -> i32 {
+	pub fn pivot_row(&self, bounds_height: i32, bounds_top: i32, list_height: i32, min_item_height: i32) -> i32 {
 		if list_height <= bounds_height {
 			bounds_top
 		} else {
 			let pivot_factor = ((self.pivot_pos() + 1) as f64) / (list_height as f64);
-			let pivot_height = pivot_factor * bounds_height as f64;
-			let pivot_row_offset = (pivot_height - 0.000001).floor() as i32;
-			let pivot_row = bounds_top + pivot_row_offset;
-			pivot_row
+			let float_rows_from_top = pivot_factor * bounds_height as f64;
+			let rows_from_top = (float_rows_from_top - 0.000001).floor() as i32;
+			let pivot_row_offset = {
+				match self {
+					Nexus::Up { item_index, max_index, .. } => {
+						let index_extra = ((*max_index - *item_index - 1) as i32).min(bounds_height / 5);
+						rows_from_top.min((bounds_height - min_item_height) - index_extra)
+							.max(if *item_index == 0 { 0 } else { 1 })
+					}
+					Nexus::Down { item_index, max_index, .. } => {
+						let index_extra = (*item_index as i32).min(bounds_height as i32 / 5);
+						rows_from_top.max((min_item_height - 1) + index_extra)
+							.min(bounds_height - 1 - if *item_index + 1 >= *max_index { 0 } else { 1 })
+					}
+				}
+			};
+			bounds_top + pivot_row_offset
 		}
 	}
 	pub fn item_bounds(&self, index: usize, bounds: &Bounds, pivot_row: i32, pivot_pos: i32, item_tops: &Vec<i32>, item_heights: &Vec<i32>) -> Bounds {
@@ -156,7 +169,7 @@ impl Nexus {
 			Nexus::Down { item_index, .. } => *item_index,
 		}
 	}
-	pub fn new() -> Self {
-		Nexus::Up { first_pos: 0, item_index: 0 }
+	pub fn new(max_index: usize) -> Self {
+		Nexus::Up { first_pos: 0, item_index: 0, max_index }
 	}
 }
