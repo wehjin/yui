@@ -7,7 +7,7 @@ use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusTyp
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::{FillColor, StrokeColor};
+use crate::palette::{FillColor, StrokeColor};
 
 pub fn textfield(id: i32, label: &str, edit: StringEdit, update: impl Fn(stringedit::Action) + 'static + Send + Sync) -> ArcYard {
 	let yard = TextfieldYard {

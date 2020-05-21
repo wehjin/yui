@@ -1,5 +1,5 @@
 use crate::{ArcYard, Cling, Confine, Pack, yard};
-use crate::yui::palette::StrokeColor;
+use crate::palette::StrokeColor;
 
 pub fn title<T: AsRef<str>>(text: T, color: StrokeColor, cling: Cling) -> ArcYard {
 	let text = text.as_ref();

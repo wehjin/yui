@@ -1,5 +1,5 @@
 use crate::{ArcYard, Cling, Pack, yard};
-use crate::yui::palette::{body_and_comment_for_fill, FillColor};
+use crate::palette::{body_and_comment_for_fill, FillColor};
 
 pub fn quad_label(title: &str, subtitle: &str, value: &str, subvalue: &str, value_rows: usize, fill_color: FillColor) -> ArcYard {
 	let (color, subcolor) = body_and_comment_for_fill(fill_color);

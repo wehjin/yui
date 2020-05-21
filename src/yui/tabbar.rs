@@ -5,7 +5,7 @@ use crate::yard;
 use crate::yard::{ArcYard, ignore_touch, Yard, YardOption};
 use crate::yui::*;
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::{FillColor, StrokeColor};
+use crate::palette::{FillColor, StrokeColor};
 
 pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));

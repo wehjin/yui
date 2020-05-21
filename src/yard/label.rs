@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{Cling, RenderContext};
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::StrokeColor;
+use crate::palette::StrokeColor;
 
 pub fn label<S: AsRef<str>>(string: S, color: StrokeColor, cling: Cling) -> ArcYard {
 	Arc::new(LabelYard { id: rand::random(), color, string: string.as_ref().to_string(), cling })

@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use crate::RenderContext;
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::FillColor;
+use crate::palette::FillColor;
 
 pub fn fill(color: FillColor) -> ArcYard {
 	Arc::new(FillYard {

@@ -11,13 +11,12 @@ pub use multi_layout::*;
 use crate::yard::{ArcTouch, ArcYard};
 
 use self::bounds::Bounds;
-use self::palette::{FillColor, StrokeColor};
+use crate::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
 pub mod layout;
 pub mod pad;
 pub mod before;
-pub mod palette;
 pub mod pack;
 pub mod place;
 pub mod confine;

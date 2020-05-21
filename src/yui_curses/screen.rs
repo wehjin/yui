@@ -10,7 +10,7 @@ use crate::yard;
 use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::layout::{ActiveFocus, LayoutContext};
-use crate::yui::palette::{FillColor, Palette, StrokeColor};
+use crate::palette::{FillColor, Palette, StrokeColor};
 use crate::yui::RenderContext;
 
 #[derive(Clone)]

@@ -11,6 +11,7 @@ pub use yui::*;
 pub use yui_curses::*;
 
 pub mod app;
+pub mod palette;
 pub mod story;
 pub mod yard;
 mod link;

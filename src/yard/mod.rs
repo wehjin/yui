@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::FillColor;
+use crate::palette::FillColor;
 use crate::yui::RenderContext;
 
 pub use self::button::*;

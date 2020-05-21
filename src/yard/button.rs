@@ -4,7 +4,7 @@ use crate::yard::{ArcTouch, ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
-use crate::yui::palette::{FillColor, StrokeColor};
+use crate::palette::{FillColor, StrokeColor};
 
 pub fn button<S: AsRef<str>>(text: S, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
 	let id = rand::random();
