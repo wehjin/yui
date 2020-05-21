@@ -52,7 +52,7 @@ impl ActiveFocus {
 		if let Some(ref focus) = self.focus {
 			match &focus.focus_type {
 				FocusType::Submit => FocusMotionFuture::Default,
-				FocusType::Edit(on_motion) => on_motion.deref()(motion),
+				FocusType::Edit(on_motion) | FocusType::CompositeSubmit(on_motion) => on_motion.deref()(motion),
 			}
 		} else {
 			FocusMotionFuture::Default

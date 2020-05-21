@@ -62,8 +62,8 @@ impl Yard for ListYard {
 				multi_layout.layout(&layout_item.yard, &layout_item.bounds);
 				if layout_item.index == focus_index {
 					let sub_focus = multi_layout.trapped_focus().map(|it| Arc::new((*it).clone()));
-					*self.sub_focus.write().unwrap() = sub_focus;
-					focus = Some(self.create_focus(&bounds))
+					*self.sub_focus.write().unwrap() = sub_focus.to_owned();
+					focus = Some(self.create_focus(&bounds, sub_focus))
 				}
 			}
 			multi_layout.finish()
@@ -104,12 +104,12 @@ impl Yard for ListYard {
 
 
 impl ListYard {
-	fn create_focus(&self, bounds: &Bounds) -> Focus {
+	fn create_focus(&self, bounds: &Bounds, sub_focus: Option<Arc<Focus>>) -> Focus {
 		let nexus = self.nexus.clone();
 		let item_heights = self.item_heights.to_vec();
 		let focus = Focus {
 			yard_id: self.id,
-			focus_type: FocusType::Edit(Arc::new(move |focus_motion| {
+			focus_type: FocusType::CompositeSubmit(Arc::new(move |focus_motion| {
 				let new_nexus = match focus_motion {
 					FocusMotion::Left | FocusMotion::Right => None,
 					FocusMotion::Up => nexus.read().unwrap().up(&item_heights),
@@ -124,7 +124,11 @@ impl ListYard {
 				}
 			})),
 			bounds: bounds.to_owned(),
-			action_block: Arc::new(|_ctx| {}),
+			action_block: Arc::new(move |ctx| {
+				if let Some(sub_focus) = &sub_focus {
+					(*sub_focus.action_block)(ctx);
+				}
+			}),
 		};
 		focus
 	}

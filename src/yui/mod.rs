@@ -43,7 +43,7 @@ impl Focus {
 
 	pub fn insert_char(&self, char: char, refresh: impl Fn() + Send + 'static) {
 		match self.focus_type {
-			FocusType::Submit => {}
+			FocusType::Submit | FocusType::CompositeSubmit(_) => {}
 			FocusType::Edit(_) => {
 				let action_block = self.action_block.clone();
 				thread::spawn(move || {
@@ -69,7 +69,7 @@ impl Focus {
 					action_block(&ctx);
 				});
 			}
-			FocusType::Submit => {
+			FocusType::Submit | FocusType::CompositeSubmit(_) => {
 				let action_block = self.action_block.clone();
 				thread::spawn(move || {
 					let ctx = FocusActionContext {
@@ -92,6 +92,7 @@ pub struct FocusActionContext {
 pub enum FocusType {
 	Submit,
 	Edit(Arc<dyn Fn(FocusMotion) -> FocusMotionFuture + Send + Sync>),
+	CompositeSubmit(Arc<dyn Fn(FocusMotion) -> FocusMotionFuture + Send + Sync>),
 }
 
 impl fmt::Debug for FocusType {
@@ -99,6 +100,7 @@ impl fmt::Debug for FocusType {
 		match self {
 			FocusType::Submit => f.write_str("FocusType::Submit"),
 			FocusType::Edit(_) => f.write_str("FocusType::Edit(Arc<dyn Fn(&FocusMotion) -> AfterMotion>)"),
+			FocusType::CompositeSubmit(_) => f.write_str("FocusType::CompositeSubmit(Arc<dyn Fn(&FocusMotion) -> AfterMotion>)"),
 		}
 	}
 }
@@ -123,7 +125,16 @@ pub fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext, t
 		*is_pressed.write().unwrap() = true;
 	}
 	ctx.refresh.deref()();
-	thread::sleep(Duration::from_millis(100));
+	{
+		// For longer yard::lists, 100 is too fast for the pressed state to render
+		// consistently when the cursor is at the bottom of the list.
+		let millis = if cfg!(debug_assertions) {
+			200
+		} else {
+			100
+		};
+		thread::sleep(Duration::from_millis(millis));
+	}
 	{
 		*is_pressed.write().unwrap() = false;
 	}
