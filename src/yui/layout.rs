@@ -129,15 +129,9 @@ pub struct LayoutContext {
 }
 
 impl LayoutContext {
-	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>) -> LayoutContext {
-		LayoutContext {
-			current_index,
-			bounds_hold,
-			focus_vec: Rc::new(RefCell::new(Vec::new())),
-			focus_max: i32::max_value(),
-		}
+	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {
+		self.focus_vec.borrow().last().map(|it| it.clone())
 	}
-
 	pub fn pop_active_focus(&mut self, active: &ActiveFocus) -> ActiveFocus {
 		let mut all_in_range = self.all_focus_in_range();
 		let next_active = if let ActiveFocus { focus: Some(focus), .. } = active {
@@ -182,8 +176,9 @@ impl LayoutContext {
 		(*self.bounds_hold).borrow_mut().push_bounds(bounds)
 	}
 
-	pub fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize) {
+	pub fn set_yard_bounds(&mut self, yard_id: i32, bounds_index: usize) -> usize {
 		(*self.bounds_hold).borrow_mut().insert_yard_bounds(yard_id, bounds_index);
+		bounds_index
 	}
 
 	pub fn add_focus(&mut self, focus: Focus) {
@@ -194,7 +189,22 @@ impl LayoutContext {
 		self.focus_max = focus_max
 	}
 
-	pub fn with_index(&self, index: usize) -> LayoutContext {
+	pub fn trap_foci(&self) -> Self {
+		let mut new_context = self.to_owned();
+		new_context.focus_vec = Rc::new(RefCell::new(Vec::new()));
+		new_context
+	}
+
+	pub fn with_index(&self, index: usize) -> Self {
 		LayoutContext { current_index: index, ..self.to_owned() }
+	}
+
+	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>) -> Self {
+		LayoutContext {
+			current_index,
+			bounds_hold,
+			focus_vec: Rc::new(RefCell::new(Vec::new())),
+			focus_max: i32::max_value(),
+		}
 	}
 }

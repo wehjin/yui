@@ -1,10 +1,14 @@
+use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
-use crate::{ArcYard, Focus, FocusMotion, FocusMotionFuture, FocusType, MultiLayout, palette, RenderContext};
+use crate::{ArcYard, Focus, FocusIdRenderContext, FocusMotion, FocusMotionFuture, FocusType, MultiLayout, RenderContext};
+use crate::yard;
 use crate::yard::{Yard, YardOption};
 use crate::yard::list::nexus::Nexus;
 use crate::yui::bounds::Bounds;
 use crate::yui::layout::LayoutContext;
+
+mod nexus;
 
 pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
 	let mut item_tops = Vec::new();
@@ -16,13 +20,14 @@ pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
 		let (height, yard) = item;
 		let height = height as i32;
 		item_tops.push(sum_heights);
-		item_heights.push(height);
-		yards.push(yard);
 		sum_heights = sum_heights + height;
+		item_heights.push(height);
 		min_item_height = min_item_height.min(height);
+		yards.push(yard::pressable(yard, |_| {}));
 	}
-	let nexus = Nexus::new(item_heights.len());
-	Arc::new(ListYard { id, item_tops, item_heights, min_item_height, sum_heights, yards, nexus: Arc::new(RwLock::new(nexus)) })
+	let nexus = Arc::new(RwLock::new(Nexus::new(item_heights.len())));
+	let sub_focus = Arc::new(RwLock::new(None));
+	Arc::new(ListYard { id, item_tops, item_heights, min_item_height, sum_heights, yards, nexus, sub_focus })
 }
 
 struct ListYard {
@@ -33,6 +38,7 @@ struct ListYard {
 	sum_heights: i32,
 	yards: Vec<ArcYard>,
 	nexus: Arc<RwLock<Nexus>>,
+	sub_focus: Arc<RwLock<Option<Arc<Focus>>>>,
 }
 
 struct LayoutItem {
@@ -51,11 +57,14 @@ impl Yard for ListYard {
 		let mut focus = None;
 		let final_bounds_id = {
 			let mut multi_layout = MultiLayout::new(ctx);
+			multi_layout.trap_foci(true);
 			for layout_item in self.layout_items(&bounds) {
+				multi_layout.layout(&layout_item.yard, &layout_item.bounds);
 				if layout_item.index == focus_index {
+					let sub_focus = multi_layout.trapped_focus().map(|it| Arc::new((*it).clone()));
+					*self.sub_focus.write().unwrap() = sub_focus;
 					focus = Some(self.create_focus(&bounds))
 				}
-				multi_layout.layout(&layout_item.yard, &layout_item.bounds);
 			}
 			multi_layout.finish()
 		};
@@ -70,23 +79,29 @@ impl Yard for ListYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			let focus_index = if ctx.focus_id() == self.id {
+			let sub_focus_id = if let Some(sub_focus) = self.sub_focus.read().unwrap().deref() {
+				Some(sub_focus.yard_id)
+			} else {
+				None
+			};
+			let sub_focus_index = if ctx.focus_id() == self.id {
 				Some(self.nexus.read().unwrap().item_index())
 			} else {
 				None
 			};
 			for layout_item in self.layout_items(&bounds) {
-				layout_item.yard.render(ctx);
-				if Some(layout_item.index) == focus_index && layout_item.bounds.intersects(row, col) {
-					ctx.set_fill(palette::FillColor::BackgroundWithFocus, layout_item.bounds.z)
+				if Some(layout_item.index) == sub_focus_index && sub_focus_id.is_some() {
+					let focus_id = sub_focus_id.unwrap();
+					let item_ctx = FocusIdRenderContext { parent: ctx, focus_id };
+					layout_item.yard.render(&item_ctx);
+				} else {
+					layout_item.yard.render(ctx);
 				}
 			}
 		}
 	}
 }
 
-
-mod nexus;
 
 impl ListYard {
 	fn create_focus(&self, bounds: &Bounds) -> Focus {

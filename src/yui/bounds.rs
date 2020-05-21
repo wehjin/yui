@@ -12,35 +12,37 @@ pub struct Bounds {
 	pub left: i32,
 	pub top: i32,
 	pub z: i32,
+	pub far_z: i32,
 }
 
 impl Bounds {
-	pub fn new(width: i32, height: i32) -> Bounds {
-		Bounds { right: width, bottom: height, left: 0, top: 0, z: 0 }
+	pub fn new(width: i32, height: i32) -> Self {
+		Bounds { right: width, bottom: height, left: 0, top: 0, z: 0, far_z: 0 }
 	}
 	pub fn width(&self) -> i32 { self.right - self.left }
 	pub fn height(&self) -> i32 { self.bottom - self.top }
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
 		row >= self.top && row < self.bottom && col >= self.left && col < self.right
 	}
-	pub fn pad(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Bounds {
+	pub fn pad(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Self {
 		Bounds {
 			right: self.right - right_cols,
 			bottom: self.bottom - bottom_rows,
 			left: self.left + left_cols,
 			top: self.top + top_rows,
 			z: self.z,
+			far_z: self.z,
 		}
 	}
-	pub fn set_height_from_above(&self, down: i32, height: i32) -> Bounds {
+	pub fn set_height_from_above(&self, down: i32, height: i32) -> Self {
 		let new_top = self.top + down;
-		Bounds { right: self.right, bottom: new_top + height, left: self.left, top: new_top, z: self.z }
+		Bounds { right: self.right, bottom: new_top + height, left: self.left, top: new_top, z: self.z, far_z: self.far_z }
 	}
-	pub fn set_height_from_below(&self, up: i32, height: i32) -> Bounds {
+	pub fn set_height_from_below(&self, up: i32, height: i32) -> Self {
 		let new_bottom = self.bottom - up;
-		Bounds { right: self.right, bottom: new_bottom, left: self.left, top: new_bottom - height, z: self.z }
+		Bounds { right: self.right, bottom: new_bottom, left: self.left, top: new_bottom - height, z: self.z, far_z: self.far_z }
 	}
-	pub fn confine(&self, width: i32, height: i32, cling: Cling) -> Bounds {
+	pub fn confine(&self, width: i32, height: i32, cling: Cling) -> Self {
 		let (extra_width, extra_height) = (self.width() - width, self.height() - height);
 		let top_extra = (cling.y() * extra_height as f32) as i32;
 		let bottom_extra = extra_height - top_extra;
@@ -52,11 +54,19 @@ impl Bounds {
 			left: self.left + left_extra,
 			top: self.top + top_extra,
 			z: self.z,
+			far_z: self.far_z,
 		}
 	}
-	pub fn with_z(&self, z: i32) -> Bounds {
+	pub fn with_z(&self, z: i32) -> Self {
 		let mut new = self.clone();
 		new.z = z;
+		new
+	}
+
+	pub fn with_z_far_z(&self, z: i32, far_z: i32) -> Self {
+		let mut new = self.clone();
+		new.z = z;
+		new.far_z = far_z;
 		new
 	}
 

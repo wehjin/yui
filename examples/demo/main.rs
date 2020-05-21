@@ -110,7 +110,7 @@ impl story::Spark for Demo {
 			}
 			MainTab::QuadLabel => {
 				let mut items = Vec::new();
-				for n in 1..31 {
+				for n in 1..11 {
 					let quad_label = yard::quad_label(
 						&format!("Item {}", n),
 						"sub-title",

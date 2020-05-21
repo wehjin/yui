@@ -8,10 +8,10 @@ pub use stringedit::*;
 
 pub use multi_layout::*;
 
+use crate::palette::{FillColor, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard};
 
 use self::bounds::Bounds;
-use crate::palette::{FillColor, StrokeColor};
 
 pub mod bounds;
 pub mod layout;
@@ -207,4 +207,18 @@ impl From<Cling> for (f32, f32) {
 	fn from(cling: Cling) -> Self {
 		(cling.x(), cling.y())
 	}
+}
+
+pub struct FocusIdRenderContext<'a> {
+	pub parent: &'a dyn RenderContext,
+	pub focus_id: i32,
+}
+
+impl<'a> RenderContext for FocusIdRenderContext<'a> {
+	fn focus_id(&self) -> i32 { self.focus_id }
+	fn spot(&self) -> (i32, i32) { self.parent.spot() }
+	fn yard_bounds(&self, yard_id: i32) -> Bounds { self.parent.yard_bounds(yard_id) }
+	fn set_fill(&self, color: FillColor, z: i32) { self.parent.set_fill(color, z) }
+	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32) { self.parent.set_glyph(glyph, color, z) }
+	fn set_dark(&self, z: i32) { self.parent.set_dark(z) }
 }

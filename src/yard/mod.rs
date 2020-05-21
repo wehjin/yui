@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::yui::layout::LayoutContext;
 use crate::palette::FillColor;
+use crate::yui::layout::LayoutContext;
 use crate::yui::RenderContext;
 
 pub use self::button::*;
@@ -12,6 +12,7 @@ pub use self::glyph::*;
 pub use self::label::*;
 pub use self::list::*;
 pub use self::observable::*;
+pub use self::pressable::*;
 pub use self::quad_label::*;
 pub use self::story::*;
 pub use self::textfield::*;
@@ -25,6 +26,7 @@ mod fill;
 mod glyph;
 mod label;
 mod observable;
+mod pressable;
 mod quad_label;
 mod list;
 mod story;
@@ -34,7 +36,7 @@ mod trellis;
 
 pub trait Yard {
 	fn id(&self) -> i32;
-	fn update(&self, option: YardOption);
+	fn update(&self, _option: YardOption) {}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize;
 	fn render(&self, ctx: &dyn RenderContext);
 }
