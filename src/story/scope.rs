@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Link, Trace, Story, Spark};
+use crate::{Link, Flow, Story, Spark};
 use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A> {
@@ -32,7 +32,7 @@ impl<V: Clone, A> StoryScope<V, A> {
 	}
 }
 
-impl<V, A> Trace<V, A> for StoryScope<V, A> {
+impl<V, A> Flow<V, A> for StoryScope<V, A> {
 	fn state(&self) -> &V {
 		&self.vision
 	}

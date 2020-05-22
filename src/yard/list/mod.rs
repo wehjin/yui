@@ -2,7 +2,6 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
 use crate::{ArcYard, Focus, FocusIdRenderContext, FocusMotion, FocusMotionFuture, FocusType, MultiLayout, RenderContext};
-use crate::yard;
 use crate::yard::{Yard, YardOption};
 use crate::yard::list::nexus::Nexus;
 use crate::yui::bounds::Bounds;
@@ -10,7 +9,7 @@ use crate::yui::layout::LayoutContext;
 
 mod nexus;
 
-pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
+pub fn list(id: i32, selected: usize, items: Vec<(u8, ArcYard)>) -> ArcYard {
 	let mut item_tops = Vec::new();
 	let mut item_heights = Vec::new();
 	let mut sum_heights = 0i32;
@@ -23,9 +22,9 @@ pub fn list(id: i32, items: Vec<(u8, ArcYard)>) -> ArcYard {
 		sum_heights = sum_heights + height;
 		item_heights.push(height);
 		min_item_height = min_item_height.min(height);
-		yards.push(yard::pressable(yard, |_| {}));
+		yards.push(yard);
 	}
-	let nexus = Arc::new(RwLock::new(Nexus::new(item_heights.len())));
+	let nexus = Arc::new(RwLock::new(Nexus::new(selected, &item_heights)));
 	let sub_focus = Arc::new(RwLock::new(None));
 	Arc::new(ListYard { id, item_tops, item_heights, min_item_height, sum_heights, yards, nexus, sub_focus })
 }

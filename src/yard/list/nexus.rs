@@ -9,7 +9,7 @@ mod tests {
 	fn small_list() {
 		let item_heights = vec![2, 3];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
-		let top_nexus = Nexus::new(item_heights.len());
+		let top_nexus = Nexus::new(0, &item_heights);
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
 		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height, 2);
 		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height, 2);
@@ -21,7 +21,7 @@ mod tests {
 	fn large_list() {
 		let item_heights = vec![2, 3];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
-		let top_nexus = Nexus::new(item_heights.len());
+		let top_nexus = Nexus::new(0, &item_heights);
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
 		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height, 2);
 		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height, 2);
@@ -32,7 +32,7 @@ mod tests {
 	#[test]
 	fn one_heights() {
 		let item_heights = vec![2, 3];
-		let nexus = Nexus::new(item_heights.len());
+		let nexus = Nexus::new(0, &item_heights);
 		let u = nexus.up(&item_heights);
 		let d = nexus.down(&item_heights).unwrap();
 		let dd = d.down(&item_heights);
@@ -46,7 +46,7 @@ mod tests {
 	#[test]
 	fn one_height() {
 		let item_heights = vec![2];
-		let nexus = Nexus::new(item_heights.len());
+		let nexus = Nexus::new(0, &item_heights);
 		let d = nexus.down(&item_heights);
 		assert_eq!(d, None);
 		let u = nexus.up(&item_heights);
@@ -169,7 +169,11 @@ impl Nexus {
 			Nexus::Down { item_index, .. } => *item_index,
 		}
 	}
-	pub fn new(max_index: usize) -> Self {
-		Nexus::Up { first_pos: 0, item_index: 0, max_index }
+	pub fn new(index: usize, item_heights: &Vec<i32>) -> Self {
+		let mut nexus = Nexus::Up { first_pos: 0, item_index: 0, max_index: item_heights.len() };
+		for _ in 0..index {
+			nexus = nexus.down(item_heights).unwrap();
+		}
+		nexus
 	}
 }

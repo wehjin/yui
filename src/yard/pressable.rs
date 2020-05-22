@@ -5,6 +5,16 @@ use crate::yard::{ArcTouch, ArcYard, Yard};
 use crate::yui::{Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 
+pub trait Pressable {
+	fn pressable(self, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard;
+}
+
+impl Pressable for ArcYard {
+	fn pressable(self, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+		pressable(self, on_press)
+	}
+}
+
 pub fn pressable(yard: ArcYard, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
 	let id = rand::random();
 	let is_pressed = Arc::new(RwLock::new(false));

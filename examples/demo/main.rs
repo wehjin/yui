@@ -12,11 +12,12 @@ use std::iter::FromIterator;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{app, Link, Trace};
-use yui::{AfterTrace, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
+use yui::{app, Flow, Link};
+use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
 use yui::tabbar::tabbar_yard;
+use yui::yard::Pressable;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
@@ -28,18 +29,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 pub struct Demo {
 	main_tab: MainTab,
 	edit: StringEdit,
+	value: i32,
 }
 
 impl Demo {
+	fn with_value(&self, value: i32) -> Self {
+		let mut new = self.clone();
+		new.value = value;
+		new
+	}
 	fn with_edit(&self, action: stringedit::Action) -> Self {
 		let edit = self.edit.edit(action);
-		Demo { main_tab: self.main_tab, edit }
+		Demo { main_tab: self.main_tab, edit, value: self.value }
 	}
 	fn with_tab(&self, main_tab: MainTab) -> Self {
-		Demo { main_tab, edit: self.edit.clone() }
+		Demo { main_tab, edit: self.edit.clone(), value: self.value }
 	}
 	fn new() -> Self {
-		Demo { main_tab: MainTab::Button, edit: StringEdit::empty() }
+		Demo { main_tab: MainTab::Button, edit: StringEdit::empty(), value: 1 }
 	}
 }
 
@@ -50,23 +57,27 @@ impl story::Spark for Demo {
 
 	fn create(&self, _link: Option<Link<Self::Report>>) -> Self::State { self.clone() }
 
-	fn trace(ctx: &impl Trace<Self::State, Self::Action>, action: Action) -> AfterTrace<Demo> {
+	fn flow(flow: &impl Flow<Self::State, Self::Action>, action: Action) -> AfterFlow<Demo> {
 		match action {
-			Action::StringEdit(edit) => AfterTrace::Revise(ctx.state().with_edit(edit)),
-			Action::ShowTab(tab) => AfterTrace::Revise(ctx.state().with_tab(tab)),
+			Action::SetValue(value) => {
+				let state = flow.state().with_value(value);
+				AfterFlow::Revise(state)
+			}
+			Action::StringEdit(edit) => AfterFlow::Revise(flow.state().with_edit(edit)),
+			Action::ShowTab(tab) => AfterFlow::Revise(flow.state().with_tab(tab)),
 			Action::OpenDialog => {
-				ctx.start_prequel(Demo::new());
-				AfterTrace::Ignore
+				flow.start_prequel(Demo::new());
+				AfterFlow::Ignore
 			}
 			Action::CloseDialog => {
-				ctx.end_prequel();
-				AfterTrace::Ignore
+				flow.end_prequel();
+				AfterFlow::Ignore
 			}
 		}
 	}
 
 	fn yard(vision: &Demo, link: &Link<Action>) -> Option<ArcYard> {
-		let Demo { main_tab, edit } = vision;
+		let Demo { main_tab, edit, value } = vision;
 		let select_tab = link.callback(|index| {
 			Action::ShowTab(match index {
 				0 => MainTab::Button,
@@ -114,14 +125,18 @@ impl story::Spark for Demo {
 					let quad_label = yard::quad_label(
 						&format!("Item {}", n),
 						"sub-title",
-						"1 Value",
+						&format!("{} Value", value),
 						"2 sub-value",
 						15,
 						FillColor::Background,
 					);
-					items.push((4, quad_label.pad(1)));
+					let link = link.clone();
+					let item = quad_label.pad(1).pressable(move |_| {
+						link.send(Action::SetValue(n))
+					});
+					items.push((4, item));
 				};
-				let content = yard::list(LIST_ID, items).confine_width(40, Cling::Center);
+				let content = yard::list(LIST_ID, *value as usize - 1, items).confine_width(40, Cling::Center);
 				tab_page(content, 2, select_tab)
 			}
 		};
@@ -132,6 +147,7 @@ impl story::Spark for Demo {
 
 #[derive(Clone, Debug)]
 pub enum Action {
+	SetValue(i32),
 	StringEdit(stringedit::Action),
 	ShowTab(MainTab),
 	OpenDialog,

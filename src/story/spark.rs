@@ -11,7 +11,7 @@ pub trait Spark {
 	type Report: Send;
 
 	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
-	fn trace(trace: &impl Trace<Self::State, Self::Action>, action: Self::Action) -> AfterTrace<Self::State>;
+	fn flow(trace: &impl Flow<Self::State, Self::Action>, action: Self::Action) -> AfterFlow<Self::State>;
 	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
 
 	fn spark(self, edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self>
@@ -30,10 +30,10 @@ pub trait Spark {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) =>
 						ctx.add_watcher(subscriber_id, watcher),
-					Msg::Update(action) => match Self::trace(&ctx, action) {
-						AfterTrace::ReviseQuietly(next) => ctx.set_vision(next, false),
-						AfterTrace::Revise(next) => ctx.set_vision(next, true),
-						AfterTrace::Ignore => (),
+					Msg::Update(action) => match Self::flow(&ctx, action) {
+						AfterFlow::ReviseQuietly(next) => ctx.set_vision(next, false),
+						AfterFlow::Revise(next) => ctx.set_vision(next, true),
+						AfterFlow::Ignore => (),
 					},
 				}
 			}
@@ -42,7 +42,7 @@ pub trait Spark {
 	}
 }
 
-pub trait Trace<State, Action> {
+pub trait Flow<State, Action> {
 	fn state(&self) -> &State;
 	fn link(&self) -> &Link<Action>;
 	fn start_prequel<S>(&self, spark: S) -> Story<S> where S: Spark + Sync + Send + 'static;
@@ -50,7 +50,7 @@ pub trait Trace<State, Action> {
 }
 
 
-pub enum AfterTrace<State> {
+pub enum AfterFlow<State> {
 	Ignore,
 	Revise(State),
 	ReviseQuietly(State),
