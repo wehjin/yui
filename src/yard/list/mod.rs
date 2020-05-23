@@ -134,7 +134,13 @@ impl ListYard {
 
 	fn layout_items(&self, bounds: &Bounds) -> Vec<LayoutItem> {
 		let nexus = self.nexus.read().unwrap();
-		let pivot_row = nexus.pivot_row(bounds.height(), bounds.top, self.sum_heights, self.min_item_height);
+		let pivot_row = nexus.pivot_row(
+			bounds.height(),
+			bounds.top,
+			self.sum_heights,
+			self.min_item_height,
+			&self.item_tops,
+		);
 		let pivot_pos = nexus.pivot_pos();
 		let mut layout_items = Vec::new();
 		let mut next_index = Some(0);

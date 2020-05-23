@@ -8,23 +8,25 @@ mod tests {
 	#[test]
 	fn small_list() {
 		let item_heights = vec![2, 3];
+		let item_tops = vec![0, 2];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
 		let top_nexus = Nexus::new(0, &item_heights);
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
-		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height, 2);
-		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height, 2);
+		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height, 2, &item_tops);
+		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height, 2, &item_tops);
 		assert_eq!(top_pivot_row, 2);
-		assert_eq!(bottom_pivot_row, 2);
+		assert_eq!(bottom_pivot_row, 6);
 	}
 
 	#[test]
 	fn large_list() {
 		let item_heights = vec![2, 3];
+		let item_tops = vec![0, 2];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
 		let top_nexus = Nexus::new(0, &item_heights);
 		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
-		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height, 2);
-		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height, 2);
+		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height, 2, &item_tops);
+		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height, 2, &item_tops);
 		assert_eq!(top_pivot_row, 0);
 		assert_eq!(bottom_pivot_row, 3);
 	}
@@ -116,9 +118,18 @@ impl Nexus {
 			}
 		}
 	}
-	pub fn pivot_row(&self, bounds_height: i32, bounds_top: i32, list_height: i32, min_item_height: i32) -> i32 {
+	pub fn pivot_row(&self, bounds_height: i32, bounds_top: i32, list_height: i32, min_item_height: i32, item_tops: &Vec<i32>) -> i32 {
 		if list_height <= bounds_height {
-			bounds_top
+			bounds_top + match self {
+				Nexus::Up { .. } => item_tops[self.item_index()],
+				Nexus::Down { item_index, .. } => {
+					if item_index + 1 == item_tops.len() {
+						list_height - 1
+					} else {
+						item_tops[item_index + 1] - 1
+					}
+				}
+			}
 		} else {
 			let pivot_factor = ((self.pivot_pos() + 1) as f64) / (list_height as f64);
 			let float_rows_from_top = pivot_factor * bounds_height as f64;
