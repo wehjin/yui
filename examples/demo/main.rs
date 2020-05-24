@@ -7,17 +7,17 @@ extern crate yui;
 
 use std::error::Error;
 use std::fs::File;
-use std::iter::FromIterator;
 
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
 use yui::{app, Flow, Link};
-use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Pack, Padding, story, yard};
+use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
 use yui::tabbar::tabbar_yard;
-use yui::yard::Pressable;
+
+mod tab;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
@@ -76,69 +76,20 @@ impl story::Spark for Demo {
 		}
 	}
 
-	fn yard(vision: &Demo, link: &Link<Action>) -> Option<ArcYard> {
-		let Demo { main_tab, edit, value } = vision;
+	fn yard(state: &Demo, link: &Link<Action>) -> Option<ArcYard> {
+		let Demo { main_tab, edit, value } = state;
 		let select_tab = link.callback(|index| {
 			Action::ShowTab(match index {
 				0 => MainTab::Button,
 				1 => MainTab::TextField,
-				2 => MainTab::QuadLabel,
+				2 => MainTab::SelectionList,
 				_ => unimplemented!("No tab for index {}", index)
 			})
 		});
 		let yard = match main_tab {
-			MainTab::Button => {
-				let trellis = yard::trellis(3, 2, vec![
-					yard::button("Open  Dialog", link.callback(|_| Action::OpenDialog)),
-					yard::button("Close", link.callback(|_| Action::CloseDialog)),
-				]);
-				let content = trellis.confine(32, 8, Cling::Center)
-					.pad(1)
-					.before(yard::fill(FillColor::Background));
-				tab_page(content, 0, select_tab)
-			}
-			MainTab::TextField => {
-				let link = link.clone();
-				let trellis = yard::trellis(3, 1, vec![
-					yard::label(
-						&String::from_iter(edit.chars.to_vec()),
-						StrokeColor::BodyOnBackground,
-						Cling::Left,
-					),
-					yard::textfield(
-						1932,
-						"Label".into(),
-						edit.clone(),
-						move |new_edit| link.send(Action::StringEdit(new_edit)),
-					),
-				]);
-				let content =
-					trellis
-						.confine(50, 7, Cling::Center)
-						.pad(1)
-						.before(yard::fill(FillColor::Background));
-				tab_page(content, 1, select_tab)
-			}
-			MainTab::QuadLabel => {
-				let mut items = Vec::new();
-				for n in 1..11 {
-					let quad_label = yard::quad_label(
-						&format!("Item {}", n),
-						"sub-title",
-						&format!("{} Value", value),
-						"2 sub-value",
-						15,
-						FillColor::Background,
-					);
-					let link = link.clone();
-					let item = quad_label.pad(1).pressable(move |_| {
-						link.send(Action::SetValue(n))
-					});
-					items.push((4, item));
-				};
-				let content = yard::list(LIST_ID, *value as usize - 1, items).confine_width(40, Cling::Center);
-				tab_page(content, 2, select_tab)
-			}
+			MainTab::Button => tab::button::render(link, select_tab),
+			MainTab::TextField => tab::textfield::render(&edit, link, select_tab),
+			MainTab::SelectionList => tab::selection_list::render(*value, link, select_tab)
 		};
 		Some(yard)
 	}
@@ -158,10 +109,9 @@ pub enum Action {
 pub enum MainTab {
 	Button,
 	TextField,
-	QuadLabel,
+	SelectionList,
 }
 
-static LIST_ID: i32 = 22431;
 static TABS: &'static [(i32, &str)] = &[
 	(1, "Button"),
 	(2, "Text Field"),
@@ -179,3 +129,5 @@ fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize
 		.pack_top(3, tabbar_yard(TABS, active_tab_index, select_tab))
 		.pack_top(3, app_bar())
 }
+
+
