@@ -1,24 +1,43 @@
 use std::sync::{Arc, RwLock};
 
+use crate::palette::{FillColor, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
-use crate::palette::{FillColor, StrokeColor};
 
-pub fn button<S: AsRef<str>>(text: S, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+pub fn button_enabled<S: AsRef<str>>(text: S, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+	button(text, ActiveState::Enabled(Box::new(on_click)))
+}
+
+pub fn button_disabled<S: AsRef<str>>(text: S) -> ArcYard {
+	button(text, ActiveState::Disabled)
+}
+
+pub fn button<S: AsRef<str>>(text: S, active_state: ActiveState) -> ArcYard {
 	let id = rand::random();
 	Arc::new(ButtonYard {
 		id,
 		label_yard: yard::label(
 			&text.as_ref().to_uppercase(),
-			StrokeColor::EnabledOnBackground,
+			match &active_state {
+				ActiveState::Enabled(_) => StrokeColor::EnabledOnBackground,
+				ActiveState::Disabled => StrokeColor::CommentOnBackground,
+			},
 			Cling::Center,
 		),
 		fill_yard: yard::fill(FillColor::BackgroundWithFocus),
 		is_pressed: Arc::new(RwLock::new(false)),
-		on_click: Arc::new(move || on_click(id)),
+		click_option: match active_state {
+			ActiveState::Enabled(on_click) => Some(Arc::new(move || on_click(id))),
+			ActiveState::Disabled => None,
+		},
 	})
+}
+
+pub enum ActiveState {
+	Enabled(Box<dyn Fn(i32) + Send + Sync + 'static>),
+	Disabled,
 }
 
 struct ButtonYard {
@@ -26,7 +45,7 @@ struct ButtonYard {
 	label_yard: ArcYard,
 	fill_yard: ArcYard,
 	is_pressed: Arc<RwLock<bool>>,
-	on_click: ArcTouch,
+	click_option: Option<ArcTouch>,
 }
 
 impl Yard for ButtonYard {
@@ -38,14 +57,19 @@ impl Yard for ButtonYard {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
 		self.fill_yard.layout(ctx);
 		self.label_yard.layout(ctx);
-		let is_pressed = self.is_pressed.clone();
-		let on_click = self.on_click.to_owned();
-		ctx.add_focus(Focus {
-			yard_id: self.id(),
-			focus_type: FocusType::Submit,
-			bounds: edge_bounds,
-			action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx, &on_click)),
-		});
+		match &self.click_option {
+			None => {}
+			Some(on_click) => {
+				let on_click = on_click.to_owned();
+				let is_pressed = self.is_pressed.clone();
+				ctx.add_focus(Focus {
+					yard_id: self.id(),
+					focus_type: FocusType::Submit,
+					bounds: edge_bounds,
+					action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx, &on_click)),
+				});
+			}
+		}
 		edge_index
 	}
 
