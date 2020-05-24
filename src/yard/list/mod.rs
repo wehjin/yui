@@ -106,22 +106,33 @@ impl ListYard {
 	fn create_focus(&self, bounds: &Bounds, sub_focus: Option<Arc<Focus>>) -> Focus {
 		let nexus = self.nexus.clone();
 		let item_heights = self.item_heights.to_vec();
+		let focus_motion = Arc::new(move |focus_motion| {
+			let new_nexus = match focus_motion {
+				FocusMotion::Left | FocusMotion::Right => None,
+				FocusMotion::Up => nexus.read().unwrap().up(&item_heights),
+				FocusMotion::Down => nexus.read().unwrap().down(&item_heights),
+			};
+			match new_nexus {
+				None => FocusMotionFuture::Default,
+				Some(new_nexus) => {
+					*nexus.write().unwrap() = new_nexus;
+					FocusMotionFuture::Skip
+				}
+			}
+		});
+		let focus_type = match &sub_focus {
+			None => FocusType::CompositeSubmit(focus_motion),
+			Some(focus) => {
+				match &focus.focus_type {
+					FocusType::Submit => FocusType::CompositeSubmit(focus_motion),
+					FocusType::Edit(_) => FocusType::Edit(focus_motion),
+					FocusType::CompositeSubmit(_) => FocusType::CompositeSubmit(focus_motion),
+				}
+			}
+		};
 		let focus = Focus {
 			yard_id: self.id,
-			focus_type: FocusType::CompositeSubmit(Arc::new(move |focus_motion| {
-				let new_nexus = match focus_motion {
-					FocusMotion::Left | FocusMotion::Right => None,
-					FocusMotion::Up => nexus.read().unwrap().up(&item_heights),
-					FocusMotion::Down => nexus.read().unwrap().down(&item_heights),
-				};
-				match new_nexus {
-					None => FocusMotionFuture::Default,
-					Some(new_nexus) => {
-						*nexus.write().unwrap() = new_nexus;
-						FocusMotionFuture::Skip
-					}
-				}
-			})),
+			focus_type,
 			bounds: bounds.to_owned(),
 			action_block: Arc::new(move |ctx| {
 				if let Some(sub_focus) = &sub_focus {

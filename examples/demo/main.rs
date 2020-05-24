@@ -81,15 +81,15 @@ impl story::Spark for Demo {
 		let select_tab = link.callback(|index| {
 			Action::ShowTab(match index {
 				0 => MainTab::Button,
-				1 => MainTab::TextField,
+				1 => MainTab::FormList,
 				2 => MainTab::SelectionList,
 				_ => unimplemented!("No tab for index {}", index)
 			})
 		});
 		let yard = match main_tab {
 			MainTab::Button => tab::button::render(link, select_tab),
-			MainTab::TextField => tab::textfield::render(&edit, link, select_tab),
-			MainTab::SelectionList => tab::selection_list::render(*value, link, select_tab)
+			MainTab::FormList => tab::form_list::render(&edit, link, select_tab),
+			MainTab::SelectionList => tab::selector_list::render(*value, link, select_tab)
 		};
 		Some(yard)
 	}
@@ -108,14 +108,14 @@ pub enum Action {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum MainTab {
 	Button,
-	TextField,
+	FormList,
 	SelectionList,
 }
 
 static TABS: &'static [(i32, &str)] = &[
 	(1, "Button"),
-	(2, "Text Field"),
-	(3, "Quad Label"),
+	(2, "Form List"),
+	(3, "Selector List"),
 ];
 
 fn app_bar() -> ArcYard {
