@@ -27,9 +27,11 @@ pub fn render(edit: &StringEdit, link: &Link<Action>, select_tab: impl Fn(usize)
 			).confine_height(3, Cling::Center)
 		},
 		{
-			let button = match String::from_iter(&edit.chars).parse::<u64>() {
-				Ok(_) => yard::button_enabled("Submit", move |_| link.send(Action::ShowTab(MainTab::Button))),
-				Err(_) => yard::button_disabled("Submit")
+			let link = link.clone();
+			let button = if edit.is_valid() {
+				yard::button_enabled("Submit", move |_| link.send(Action::ShowTab(MainTab::Button)))
+			} else {
+				yard::button_disabled("Enter N")
 			};
 			button.confine_height(3, Cling::Center)
 		}

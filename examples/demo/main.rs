@@ -10,6 +10,7 @@ use std::fs::File;
 
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
+use stringedit::Validity;
 
 use yui::{app, Flow, Link};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
@@ -46,7 +47,7 @@ impl Demo {
 		Demo { main_tab, edit: self.edit.clone(), value: self.value }
 	}
 	fn new() -> Self {
-		Demo { main_tab: MainTab::Button, edit: StringEdit::empty(), value: 1 }
+		Demo { main_tab: MainTab::Button, edit: StringEdit::empty(Validity::UnsignedInt), value: 1 }
 	}
 }
 

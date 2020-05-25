@@ -4,10 +4,10 @@ use std::sync::Arc;
 use stringedit::StringEdit;
 
 use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext};
+use crate::palette::{FillColor, StrokeColor};
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::layout::LayoutContext;
-use crate::palette::{FillColor, StrokeColor};
 
 pub fn textfield(id: i32, label: &str, edit: StringEdit, update: impl Fn(stringedit::Action) + 'static + Send + Sync) -> ArcYard {
 	let yard = TextfieldYard {

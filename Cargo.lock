@@ -37,9 +37,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.53"
+version = "1.0.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "404b1fe4f65288577753b17e3b36a04596ee784493ec249bf81c7f2d2acd751c"
+checksum = "7bbb73db36c1246e9034e307d0fba23f9a2e251faa47ade70c1bd252220c8311"
 
 [[package]]
 name = "cfg-if"
@@ -167,9 +167,9 @@ checksum = "05da548ad6865900e60eaba7f589cc0783590a92e940c26953ff81ddbab2d677"
 
 [[package]]
 name = "ppv-lite86"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1e4df3c96bec4c7ce0e32fe5960c98ffc869443ec9592a0411ca1ee96e5e2f0"
+checksum = "237a5ed80e274dbc66f86bd59c1e25edc039660be53194b5fe0a482e0f2612ea"
 
 [[package]]
 name = "rand"
@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "stringedit"
 version = "0.1.0"
-source = "git+https://github.com/wehjin/stringedit.git#c79ee6182d8dc7104cc2a9b6d2e442c6ce7d3c1a"
+source = "git+https://github.com/wehjin/stringedit.git#7c5abff0e242d2210bebfb12256b6893ae4d21d9"
 
 [[package]]
 name = "term"
