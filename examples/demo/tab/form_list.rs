@@ -29,7 +29,7 @@ pub fn render(edit: &StringEdit, link: &Link<Action>, select_tab: impl Fn(usize)
 		{
 			let link = link.clone();
 			let button = if edit.is_valid() {
-				yard::button_enabled("Submit", move |_| link.send(Action::ShowTab(MainTab::Button)))
+				yard::button_enabled("Submit", move |_| link.send(Action::ShowTab(MainTab::Dialog)))
 			} else {
 				yard::button_disabled("Enter N")
 			};

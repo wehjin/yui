@@ -11,7 +11,7 @@ pub trait Spark {
 	type Report: Send;
 
 	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
-	fn flow(trace: &impl Flow<Self::State, Self::Action>, action: Self::Action) -> AfterFlow<Self::State>;
+	fn flow(trace: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
 	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
 
 	fn spark(self, edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self>
@@ -21,11 +21,13 @@ pub trait Spark {
 		let story = Story { tx };
 		let action_link = story.link().clone();
 		thread::spawn(move || {
-			let mut ctx = StoryScope::new(
-				self.create(report_link),
-				action_link,
-				edge,
-			);
+			let state = self.create(report_link.clone());
+			let mut ctx = StoryScope::new(state, action_link, edge, move |report| {
+				match &report_link {
+					None => {}
+					Some(link) => link.send(report),
+				}
+			});
 			for msg in rx {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) =>
@@ -42,11 +44,12 @@ pub trait Spark {
 	}
 }
 
-pub trait Flow<State, Action> {
+pub trait Flow<State, Action, Report> {
 	fn state(&self) -> &State;
 	fn link(&self) -> &Link<Action>;
-	fn start_prequel<S>(&self, spark: S) -> Story<S> where S: Spark + Sync + Send + 'static;
+	fn start_prequel<S>(&self, spark: S, on_report: impl Fn(S::Report) + Sync + Send + 'static) -> Story<S> where S: Spark + Sync + Send + 'static;
 	fn end_prequel(&self);
+	fn report(&self, report: Report);
 }
 
 

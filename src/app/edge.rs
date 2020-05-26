@@ -1,4 +1,4 @@
-use crate::{Link, Story, Spark};
+use crate::{Link, Spark, Story};
 use crate::app::yard_stack;
 use crate::yard::YardObservableSource;
 
@@ -11,10 +11,10 @@ impl Clone for Edge {
 }
 
 impl Edge {
-	pub fn start_dialog<S>(&self, spark: S) -> Story<S>
+	pub fn start_dialog<S>(&self, spark: S, report_link: Link<S::Report>) -> Story<S>
 		where S: Spark + Sync + Send + 'static
 	{
-		let story = spark.spark(Some(self.clone()), None);
+		let story = spark.spark(Some(self.clone()), Some(report_link));
 		self.link.send(yard_stack::Action::PushFront(story.yards()));
 		story
 	}

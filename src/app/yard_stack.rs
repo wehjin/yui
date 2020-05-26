@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::thread;
 
-use crate::{AfterFlow, ArcYard, Link, Flow, story, yard};
+use crate::{AfterFlow, ArcYard, Flow, Link, story, yard};
 use crate::yard::{overlay, YardObservable};
 
 pub(crate) struct YardStack;
@@ -65,7 +65,7 @@ impl story::Spark for YardStack {
 		}
 	}
 
-	fn flow(ctx: &impl Flow<Self::State, Self::Action>, action: Self::Action) -> AfterFlow<Self::State> {
+	fn flow(ctx: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State> {
 		match action {
 			Action::PopFront => {
 				if ctx.state().back_to_front.len() <= 1 {
