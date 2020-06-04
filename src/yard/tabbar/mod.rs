@@ -1,20 +1,26 @@
+use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
-use crate::{ArcYard, Before, Pack, Place, yard, Cling, Focus, FocusType, render_submit, RenderContext};
-use crate::palette::{FillColor, StrokeColor};
-use std::ops::Deref;
-use crate::yard::{Yard, YardOption, ignore_touch};
+use crate::{ArcYard, Before, Cling, Focus, FocusType, Pack, Place, render_submit, RenderContext, yard};
 use crate::layout::LayoutContext;
+use crate::palette::{FillColor, StrokeColor};
+use crate::yard::{ignore_touch, Yard, YardOption};
 
-pub fn tabbar(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+pub use self::tab::*;
+
+mod tab;
+
+pub fn tabbar(tabs: &[impl Tab], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
 	let on_select =
 		Arc::new(on_select);
-	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map(|(index, (id, label))| {
+	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map(|(index, tab)| {
+		let id = tab.uid();
+		let label = tab.label();
 		let tab_width = (label.chars().count() + 2 * 2) as i32;
 		let tab_selected_index = selected_index.clone();
 		let tab_on_select = on_select.clone();
-		let tab_yard = tab_yard(id.to_owned(), label, index, tab_selected_index.clone(), move || {
+		let tab_yard = tab_yard(id, label, index, tab_selected_index.clone(), move || {
 			let old_index = *(tab_selected_index.read().unwrap());
 			if index != old_index {
 				*(tab_selected_index.write().unwrap()) = index;
@@ -31,6 +37,7 @@ pub fn tabbar(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(us
 	let fill = yard::fill(FillColor::Primary);
 	centered_bar.before(fill)
 }
+
 
 fn tab_yard(id: i32, label: &str, index: usize, selected: Arc<RwLock<usize>>, select: impl Fn() + Send + Sync + 'static) -> ArcYard {
 	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::Center);
