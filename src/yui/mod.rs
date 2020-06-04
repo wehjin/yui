@@ -20,7 +20,6 @@ pub mod before;
 pub mod pack;
 pub mod place;
 pub mod confine;
-pub mod tabbar;
 mod multi_layout;
 
 pub enum FocusAction {

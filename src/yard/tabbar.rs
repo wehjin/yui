@@ -1,15 +1,15 @@
-use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
-use crate::yard;
-use crate::yard::{ArcYard, ignore_touch, Yard, YardOption};
-use crate::yui::*;
-use crate::yui::layout::LayoutContext;
+use crate::{ArcYard, Before, Pack, Place, yard, Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::palette::{FillColor, StrokeColor};
+use std::ops::Deref;
+use crate::yard::{Yard, YardOption, ignore_touch};
+use crate::layout::LayoutContext;
 
-pub fn tabbar_yard(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+pub fn tabbar(tabs: &[(i32, &str)], selected_index: usize, on_select: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	let selected_index = Arc::new(RwLock::new(selected_index));
-	let on_select = Arc::new(on_select);
+	let on_select =
+		Arc::new(on_select);
 	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map(|(index, (id, label))| {
 		let tab_width = (label.chars().count() + 2 * 2) as i32;
 		let tab_selected_index = selected_index.clone();
@@ -98,4 +98,3 @@ impl Yard for TabYard {
 		}
 	}
 }
-

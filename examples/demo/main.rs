@@ -16,7 +16,6 @@ use yui::{app, Flow, Link};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
-use yui::tabbar::tabbar_yard;
 
 mod tab;
 
@@ -156,7 +155,7 @@ fn app_bar() -> ArcYard {
 
 fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
 	content
-		.pack_top(3, tabbar_yard(TABS, active_tab_index, select_tab))
+		.pack_top(3, yard::tabbar(TABS, active_tab_index, select_tab))
 		.pack_top(3, app_bar())
 }
 
