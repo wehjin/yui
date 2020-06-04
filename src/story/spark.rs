@@ -10,10 +10,6 @@ pub trait Spark {
 	type Action: Send;
 	type Report: Send;
 
-	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
-	fn flow(trace: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
-	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-
 	fn spark(self, edge: Option<Edge>, report_link: Option<Link<Self::Report>>) -> Story<Self>
 		where Self: Sized + Sync + Send + 'static
 	{
@@ -42,6 +38,10 @@ pub trait Spark {
 		});
 		story
 	}
+
+	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
+	fn flow(trace: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
+	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
 }
 
 pub trait Flow<State, Action, Report> {
