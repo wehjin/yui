@@ -1,6 +1,6 @@
 use crate::{Link, Spark, Story};
 use crate::app::yard_stack;
-use crate::yard::YardObservableSource;
+use crate::yard::YardPublisherSource;
 
 pub struct Edge {
 	link: Link<yard_stack::Action>
@@ -15,7 +15,7 @@ impl Edge {
 		where S: Spark + Sync + Send + 'static
 	{
 		let story = spark.spark(Some(self.clone()), Some(report_link));
-		self.link.send(yard_stack::Action::PushFront(story.yards()));
+		self.link.send(yard_stack::Action::PushFront(story.yard_publisher()));
 		story
 	}
 

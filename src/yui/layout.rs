@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
 use crate::yui::bounds::{Bounds, BoundsHold};
@@ -126,9 +127,11 @@ pub struct LayoutContext {
 	bounds_hold: Rc<RefCell<BoundsHold>>,
 	focus_vec: Rc<RefCell<Vec<Rc<Focus>>>>,
 	focus_max: i32,
+	refresh_fn: Arc<dyn Fn() + Sync + Send>,
 }
 
 impl LayoutContext {
+	pub fn refresh_fn(&self) -> Arc<dyn Fn() + Sync + Send> { self.refresh_fn.clone() }
 	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {
 		self.focus_vec.borrow().last().map(|it| it.clone())
 	}
@@ -199,12 +202,13 @@ impl LayoutContext {
 		LayoutContext { current_index: index, ..self.to_owned() }
 	}
 
-	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>) -> Self {
+	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>, refresh_fn: impl Fn() + Sync + Send + 'static) -> Self {
 		LayoutContext {
 			current_index,
 			bounds_hold,
 			focus_vec: Rc::new(RefCell::new(Vec::new())),
 			focus_max: i32::max_value(),
+			refresh_fn: Arc::new(refresh_fn),
 		}
 	}
 }

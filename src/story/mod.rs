@@ -9,26 +9,23 @@ mod scope;
 mod spark;
 
 #[derive(Debug)]
-pub struct Story<S: Spark> {
-	tx: SyncSender<Msg<S>>
-}
+pub struct Story<Spk: Spark> { tx: SyncSender<Msg<Spk>> }
 
-impl<S: Spark> Clone for Story<S> {
+impl<Spk: Spark> Clone for Story<Spk> {
 	fn clone(&self) -> Self {
 		Story { tx: self.tx.clone() }
 	}
 }
 
-impl<S> Story<S>
-	where S: Spark + Sync + Send + 'static
+impl<Spk> Story<Spk> where Spk: Spark + Sync + Send + 'static
 {
-	pub fn link(&self) -> Link<S::Action> {
+	pub fn link(&self) -> Link<Spk::Action> {
 		let sender = self.tx.to_owned();
-		Link::new(move |action: S::Action| { sender.send(Msg::Update(action)).unwrap(); })
+		Link::new(move |action: Spk::Action| { sender.send(Msg::Update(action)).unwrap(); })
 	}
 
-	pub fn visions(&self, id: i32) -> Result<Receiver<S::State>, Box<dyn Error>> {
-		let (tx, rx) = sync_channel::<S::State>(100);
+	pub fn visions(&self, id: i32) -> Result<Receiver<Spk::State>, Box<dyn Error>> {
+		let (tx, rx) = sync_channel::<Spk::State>(100);
 		let msg = Msg::Subscribe(id, tx);
 		self.tx.send(msg)
 			.map(|_| rx)

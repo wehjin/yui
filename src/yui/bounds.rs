@@ -151,6 +151,15 @@ impl Bounds {
 	}
 }
 
+const BOUNDS_ZERO: Bounds = Bounds {
+	right: 0,
+	bottom: 0,
+	left: 0,
+	top: 0,
+	z: 0,
+	far_z: 0,
+};
+
 #[derive(Debug)]
 pub struct BoundsHold {
 	holdings: Vec<Bounds>,
@@ -183,8 +192,17 @@ impl BoundsHold {
 	}
 
 	pub fn yard_bounds(&self, id: i32) -> &Bounds {
-		let bounds_index = self.map.get(&id).unwrap().to_owned();
-		self.holdings.get(bounds_index).unwrap()
+		let option = self.map.get(&id);
+		match option {
+			None => {
+				info!("No bounds index found for id {}", id);
+				&BOUNDS_ZERO
+			}
+			Some(index) => {
+				let bounds_index = *index;
+				self.holdings.get(bounds_index).unwrap()
+			}
+		}
 	}
 
 	pub fn insert_yard_bounds(&mut self, id: i32, bounds_index: usize) {

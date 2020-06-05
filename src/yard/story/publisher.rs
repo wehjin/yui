@@ -1,27 +1,15 @@
 use std::error::Error;
-use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
 
-use crate::{ArcYard, Story, Spark};
-use crate::yard::{YardObservable, YardObservableSource};
+use crate::{ArcYard, Spark, Story};
+use crate::yard::YardPublisher;
 
-impl<S> YardObservableSource for Story<S>
-	where S: Spark + Sync + Send + 'static
-{
-	fn yards(&self) -> Arc<dyn YardObservable> {
-		let publisher = StoryYardPublisher { story: self.clone() };
-		Arc::new(publisher)
-	}
+pub(crate) struct StoryYardPublisher<S: Spark> {
+	pub story: Story<S>
 }
 
-struct StoryYardPublisher<S: Spark> {
-	story: Story<S>
-}
-
-impl<S> YardObservable for StoryYardPublisher<S>
-	where S: Spark + Sync + Send + 'static
-{
+impl<S> YardPublisher for StoryYardPublisher<S> where S: Spark + Sync + Send + 'static {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 		let visions = self.story.visions(rand::random())?;
 		let (tx_yard, rx_yard) = sync_channel::<ArcYard>(64);

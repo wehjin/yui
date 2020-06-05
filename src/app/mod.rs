@@ -4,7 +4,7 @@ use std::thread;
 
 use crate::{Link, Projector, Spark};
 use crate::app::yard_stack::YardStack;
-use crate::yard::YardObservableSource;
+use crate::yard::YardPublisherSource;
 
 pub use self::edge::*;
 
@@ -27,12 +27,12 @@ pub fn run<S>(spark: S, report_link: Option<Link<S::Report>>) -> Result<(), Box<
 	stack_story.link().send({
 		let edge = Edge::new(stack_story.link());
 		let app_story = spark.spark(Some(edge), report_link);
-		yard_stack::Action::PushFront(app_story.yards())
+		yard_stack::Action::PushFront(app_story.yard_publisher())
 	});
 	{
 		let yard_tx = yard_tx.clone();
 		thread::spawn(move || {
-			let yards = stack_story.yards().subscribe();
+			let yards = stack_story.yard_publisher().subscribe();
 			match yards {
 				Ok(yards) =>
 					for yard in yards {

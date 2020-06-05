@@ -17,7 +17,11 @@ pub trait Spark {
 		let story = Story { tx };
 		let action_link = story.link().clone();
 		thread::spawn(move || {
-			let state = self.create(report_link.clone());
+			let state = self.create(&Create {
+				action_link: action_link.clone(),
+				edge: edge.clone(),
+				report_link: report_link.clone(),
+			});
 			let mut ctx = StoryScope::new(state, action_link, edge, move |report| {
 				match &report_link {
 					None => {}
@@ -40,8 +44,20 @@ pub trait Spark {
 	}
 
 	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-	fn flow(trace: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
-	fn create(&self, report_link: Option<Link<Self::Report>>) -> Self::State;
+	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State;
+}
+
+pub struct Create<Action, Report> {
+	action_link: Link<Action>,
+	report_link: Option<Link<Report>>,
+	edge: Option<Edge>,
+}
+
+impl<Action, Report> Create<Action, Report> {
+	pub fn link(&self) -> &Link<Action> { &self.action_link }
+	pub fn report_link(&self) -> &Option<Link<Report>> { &self.report_link }
+	pub fn edge(&self) -> &Option<Edge> { &self.edge }
 }
 
 pub trait Flow<State, Action, Report> {

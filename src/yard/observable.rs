@@ -5,24 +5,24 @@ use std::thread;
 
 use crate::{ArcYard, Fade};
 
-pub trait YardObservableSource {
-	fn yards(&self) -> Arc<dyn YardObservable>;
+pub trait YardPublisherSource {
+	fn yard_publisher(&self) -> Arc<dyn YardPublisher>;
 }
 
-pub trait YardObservable: Send + Sync {
+pub trait YardPublisher: Send + Sync {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>>;
 }
 
-pub fn overlay(rear: Arc<dyn YardObservable>, fore: Arc<dyn YardObservable>) -> Arc<dyn YardObservable> {
-	Arc::new(OverlayYardObservable { rear, fore })
+pub fn overlay(rear: Arc<dyn YardPublisher>, fore: Arc<dyn YardPublisher>) -> Arc<dyn YardPublisher> {
+	Arc::new(OverlayYardPublisher { rear, fore })
 }
 
-struct OverlayYardObservable {
-	rear: Arc<dyn YardObservable>,
-	fore: Arc<dyn YardObservable>,
+struct OverlayYardPublisher {
+	rear: Arc<dyn YardPublisher>,
+	fore: Arc<dyn YardPublisher>,
 }
 
-impl YardObservable for OverlayYardObservable {
+impl YardPublisher for OverlayYardPublisher {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 		let (tx_yard, rx_yard) = sync_channel::<ArcYard>(64);
 		let (tx_pos_yard, rx_pos_yard) = sync_channel::<(bool, ArcYard)>(64);

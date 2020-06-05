@@ -12,17 +12,19 @@ use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 use stringedit::Validity;
 
-use yui::{app, Flow, Link};
+use yui::{app, Create, Flow, Link, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
+
+use crate::tab::button::{DialogDemo, Report};
 
 mod tab;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	app::run(Demo::new(), None)
+	app::run(DemoSpark { dialog_id: 1 }, None)
 }
 
 #[derive(Debug, Clone)]
@@ -30,8 +32,7 @@ pub struct Demo {
 	main_tab: MainTab,
 	edit: StringEdit,
 	value: i32,
-	first_dialog: u32,
-	next_dialog: u32,
+	dialog_story: Story<DialogDemo>,
 }
 
 impl Demo {
@@ -50,91 +51,67 @@ impl Demo {
 		next.main_tab = main_tab;
 		next
 	}
-	fn with_dialogs(&self, first_dialog: u32, next_dialog: u32) -> Self {
-		let mut next = self.clone();
-		next.first_dialog = first_dialog;
-		next.next_dialog = next_dialog;
-		next
-	}
-	fn with_next_dialog(&self, next_dialog: u32) -> Self {
-		let mut next = self.clone();
-		next.next_dialog = next_dialog;
-		next
-	}
-	fn new() -> Self {
-		Demo {
-			main_tab: MainTab::Dialog,
-			edit: StringEdit::empty(Validity::UnsignedInt),
-			value: 1,
-			first_dialog: 1,
-			next_dialog: 2,
-		}
-	}
 }
 
-impl story::Spark for Demo {
+pub struct DemoSpark {
+	dialog_id: u32,
+}
+
+impl story::Spark for DemoSpark {
 	type State = Demo;
 	type Action = Action;
 	type Report = u32;
 
-	fn create(&self, _link: Option<Link<Self::Report>>) -> Self::State {
-		self.clone()
-	}
-
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Action) -> AfterFlow<Demo> {
-		match action {
-			Action::SetNextDialog(dialogs) => AfterFlow::Revise(flow.state().with_next_dialog(dialogs)),
-			Action::SetValue(value) => AfterFlow::Revise(flow.state().with_value(value)),
-			Action::StringEdit(edit) => AfterFlow::Revise(flow.state().with_edit(edit)),
-			Action::ShowTab(tab) => AfterFlow::Revise(flow.state().with_tab(tab)),
-			Action::OpenDialog => {
-				let state = flow.state();
-				let link = flow.link().clone();
-				let next_first_dialog = state.next_dialog;
-				flow.start_prequel(Demo::new().with_dialogs(next_first_dialog, next_first_dialog + 1), move |next_dialog| {
-					link.send(Action::SetNextDialog(next_dialog))
-				});
-				AfterFlow::Ignore
-			}
-			Action::CloseDialog => {
-				flow.report(flow.state().next_dialog);
-				flow.end_prequel();
-				AfterFlow::Ignore
-			}
-		}
-	}
-
 	fn yard(state: &Demo, link: &Link<Action>) -> Option<ArcYard> {
-		let Demo { main_tab, edit, value, first_dialog, next_dialog } = state;
-		let select_tab = link.callback(|index| {
-			Action::ShowTab(match index {
-				0 => MainTab::Dialog,
-				1 => MainTab::FormList,
-				2 => MainTab::SelectionList,
-				_ => unimplemented!("No tab for index {}", index)
-			})
-		});
+		let Demo { main_tab, edit, value, dialog_story } = state;
+		let select_tab = link.callback(|index| Action::ShowTab(tab_at_index(index)));
 		let yard = match main_tab {
-			MainTab::Dialog => tab::button::render(*first_dialog, *next_dialog, link, select_tab),
+			MainTab::Dialog => yard::story(dialog_story),
 			MainTab::FormList => tab::form_list::render(&edit, link, select_tab),
 			MainTab::SelectionList => tab::selector_list::render(*value, link, select_tab)
 		};
 		Some(yard)
+	}
+
+	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Action) -> AfterFlow<Demo> {
+		match action {
+			Action::SetValue(value) => AfterFlow::Revise(flow.state().with_value(value)),
+			Action::StringEdit(edit) => AfterFlow::Revise(flow.state().with_edit(edit)),
+			Action::ShowTab(tab) => AfterFlow::Revise(flow.state().with_tab(tab)),
+		}
+	}
+
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
+		let action_link = create.link().clone();
+		let report_link = create.report_link().clone();
+		let dialog_reports = Link::new(move |report| {
+			match report {
+				Report::SelectedTab(index) => action_link.send(Action::ShowTab(tab_at_index(index))),
+				Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
+			}
+		});
+		Demo {
+			main_tab: MainTab::Dialog,
+			edit: StringEdit::empty(Validity::UnsignedInt),
+			value: 1,
+			dialog_story: DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 }
+				.spark(
+					create.edge().clone(),
+					Some(dialog_reports),
+				),
+		}
 	}
 }
 
 
 #[derive(Clone, Debug)]
 pub enum Action {
-	SetNextDialog(u32),
 	SetValue(i32),
 	StringEdit(stringedit::Action),
 	ShowTab(MainTab),
-	OpenDialog,
-	CloseDialog,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Debug, Clone)]
 pub enum MainTab {
 	Dialog,
 	FormList,
@@ -159,4 +136,11 @@ fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize
 		.pack_top(3, app_bar())
 }
 
-
+fn tab_at_index(index: usize) -> MainTab {
+	match index {
+		0 => MainTab::Dialog,
+		1 => MainTab::FormList,
+		2 => MainTab::SelectionList,
+		_ => unimplemented!("No tab for index {}", index)
+	}
+}

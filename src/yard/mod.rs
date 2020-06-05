@@ -37,10 +37,10 @@ mod title;
 mod trellis;
 
 pub trait Yard {
-	fn id(&self) -> i32;
-	fn update(&self, _option: YardOption) {}
-	fn layout(&self, ctx: &mut LayoutContext) -> usize;
 	fn render(&self, ctx: &dyn RenderContext);
+	fn layout(&self, ctx: &mut LayoutContext) -> usize;
+	fn update(&self, _option: YardOption) {}
+	fn id(&self) -> i32;
 }
 
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;
