@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::thread;
@@ -11,6 +12,10 @@ pub trait YardPublisherSource {
 
 pub trait YardPublisher: Send + Sync {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>>;
+}
+
+impl YardPublisher for Arc<dyn YardPublisher> {
+	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> { self.deref().subscribe() }
 }
 
 pub fn overlay(rear: Arc<dyn YardPublisher>, fore: Arc<dyn YardPublisher>) -> Arc<dyn YardPublisher> {

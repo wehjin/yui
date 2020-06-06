@@ -1,9 +1,10 @@
+use std::sync::Arc;
+
 use crate::{Link, Spark, Story};
-use crate::app::yard_stack;
-use crate::yard::YardPublisherSource;
+use crate::app::pub_stack;
 
 pub struct Edge {
-	link: Link<yard_stack::Action>
+	link: Link<pub_stack::Action>
 }
 
 impl Clone for Edge {
@@ -15,13 +16,13 @@ impl Edge {
 		where S: Spark + Sync + Send + 'static
 	{
 		let story = spark.spark(Some(self.clone()), Some(report_link));
-		self.link.send(yard_stack::Action::Push(story.yard_publisher()));
+		self.link.send(pub_stack::Action::Push(Arc::new(story.clone())));
 		story
 	}
 
 	pub fn end_dialog(&self) {
-		self.link.send(yard_stack::Action::Pop);
+		self.link.send(pub_stack::Action::Pop);
 	}
 
-	pub(crate) fn new(link: Link<yard_stack::Action>) -> Self { Edge { link } }
+	pub(crate) fn new(link: Link<pub_stack::Action>) -> Self { Edge { link } }
 }
