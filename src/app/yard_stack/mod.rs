@@ -2,50 +2,12 @@ use std::sync::Arc;
 use std::thread;
 
 use crate::{AfterFlow, ArcYard, Create, Flow, Link, story, yard};
+use crate::app::yard_stack::state::State;
 use crate::yard::{overlay, YardPublisher};
 
+mod state;
+
 pub(crate) struct YardStack;
-
-#[derive(Clone)]
-pub(crate) struct State {
-	era: usize,
-	yard: ArcYard,
-	back_to_front: Vec<Arc<dyn YardPublisher>>,
-}
-
-impl State {
-	pub fn pop_front(&self) -> Self {
-		let mut back_to_front = self.back_to_front.to_vec();
-		back_to_front.pop();
-		State {
-			era: self.era + 1,
-			yard: self.yard.to_owned(),
-			back_to_front,
-		}
-	}
-	pub fn push_front(&self, front: Arc<dyn YardPublisher>) -> Self {
-		let mut back_to_front = self.back_to_front.to_vec();
-		back_to_front.push(front);
-		State {
-			era: self.era + 1,
-			yard: self.yard.to_owned(),
-			back_to_front,
-		}
-	}
-	pub fn set_yard(&self, yard: ArcYard) -> Self {
-		State {
-			era: self.era,
-			yard,
-			back_to_front: self.back_to_front.to_vec(),
-		}
-	}
-}
-
-pub(crate) enum Action {
-	SetYard { era: usize, yard: ArcYard },
-	PushFront(Arc<dyn YardPublisher>),
-	PopFront,
-}
 
 impl story::Spark for YardStack {
 	type State = State;
@@ -91,6 +53,12 @@ impl story::Spark for YardStack {
 			back_to_front: Vec::new(),
 		}
 	}
+}
+
+pub(crate) enum Action {
+	SetYard { era: usize, yard: ArcYard },
+	PushFront(Arc<dyn YardPublisher>),
+	PopFront,
 }
 
 fn spawn_yard_builder(back_to_front: &Vec<Arc<dyn YardPublisher>>, era: usize, link: Link<Action>) {
