@@ -27,7 +27,7 @@ pub fn run<S>(spark: S, report_link: Option<Link<S::Report>>) -> Result<(), Box<
 	stack_story.link().send({
 		let edge = Edge::new(stack_story.link());
 		let app_story = spark.spark(Some(edge), report_link);
-		yard_stack::Action::PushFront(app_story.yard_publisher())
+		yard_stack::Action::Push(app_story.yard_publisher())
 	});
 	{
 		let yard_tx = yard_tx.clone();

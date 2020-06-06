@@ -20,7 +20,7 @@ impl story::Spark for YardStack {
 
 	fn flow(ctx: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State> {
 		match action {
-			Action::PopFront => {
+			Action::Pop => {
 				if ctx.state().back_to_front.len() < 2 {
 					ctx.report(());
 					AfterFlow::Ignore
@@ -30,7 +30,7 @@ impl story::Spark for YardStack {
 					AfterFlow::ReviseQuietly(state)
 				}
 			}
-			Action::PushFront(front) => {
+			Action::Push(front) => {
 				let state = ctx.state().push_front(front);
 				spawn_yard_builder(&state.back_to_front, state.era, ctx.link().clone());
 				AfterFlow::ReviseQuietly(state)
@@ -57,8 +57,8 @@ impl story::Spark for YardStack {
 
 pub(crate) enum Action {
 	SetYard { era: usize, yard: ArcYard },
-	PushFront(Arc<dyn YardPublisher>),
-	PopFront,
+	Push(Arc<dyn YardPublisher>),
+	Pop,
 }
 
 fn spawn_yard_builder(back_to_front: &Vec<Arc<dyn YardPublisher>>, era: usize, link: Link<Action>) {

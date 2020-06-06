@@ -15,12 +15,12 @@ impl Edge {
 		where S: Spark + Sync + Send + 'static
 	{
 		let story = spark.spark(Some(self.clone()), Some(report_link));
-		self.link.send(yard_stack::Action::PushFront(story.yard_publisher()));
+		self.link.send(yard_stack::Action::Push(story.yard_publisher()));
 		story
 	}
 
 	pub fn end_dialog(&self) {
-		self.link.send(yard_stack::Action::PopFront);
+		self.link.send(yard_stack::Action::Pop);
 	}
 
 	pub(crate) fn new(link: Link<yard_stack::Action>) -> Self { Edge { link } }

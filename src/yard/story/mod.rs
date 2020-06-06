@@ -6,8 +6,6 @@ use crate::{ArcYard, RenderContext, Spark, Story};
 use crate::layout::LayoutContext;
 use crate::yard::{Yard, YardOption, YardPublisher, YardPublisherSource};
 
-pub(crate) use self::publisher::*;
-
 mod publisher;
 
 pub fn story<Sprk: Spark + Sync + Send + 'static>(story: &Story<Sprk>) -> ArcYard {
@@ -19,9 +17,7 @@ pub fn story<Sprk: Spark + Sync + Send + 'static>(story: &Story<Sprk>) -> ArcYar
 	let thread_story_yard = story_yard.clone();
 	let thread_refresh = refresh.clone();
 	thread::spawn(move || {
-		let publisher = StoryYardPublisher { story };
-		let yards = publisher.subscribe().unwrap();
-		for yard in yards {
+		for yard in story.subscribe().unwrap() {
 			{
 				let mut write = thread_story_yard.write().unwrap();
 				*write = Some(yard)
@@ -70,8 +66,6 @@ impl Yard for StoryYard {
 
 impl<S> YardPublisherSource for Story<S> where S: Spark + Sync + Send + 'static {
 	fn yard_publisher(&self) -> Arc<dyn YardPublisher> {
-		let publisher = StoryYardPublisher { story: self.clone() };
-		Arc::new(publisher)
+		Arc::new(self.clone())
 	}
 }
-

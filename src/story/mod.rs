@@ -1,9 +1,11 @@
 use std::error::Error;
 use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
+use std::thread;
 
 pub use spark::*;
 
-use crate::Link;
+use crate::{ArcYard, Link};
+use crate::yard::YardPublisher;
 
 mod scope;
 mod spark;
@@ -33,3 +35,33 @@ impl<Spk> Story<Spk> where Spk: Spark + Sync + Send + 'static
 	}
 }
 
+impl<Sprk> YardPublisher for Story<Sprk> where Sprk: Spark + Sync + Send + 'static {
+	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
+		let visions = self.visions(rand::random())?;
+		let (tx_yard, rx_yard) = sync_channel::<ArcYard>(64);
+		let link = self.link();
+		thread::spawn(move || {
+			let mut done = false;
+			while !done {
+				let vision = {
+					let mut first = visions.recv().unwrap();
+					loop {
+						let second = visions.try_recv();
+						if second.is_err() {
+							break;
+						} else {
+							first = second.unwrap();
+						}
+					}
+					first
+				};
+				if let Some(yard) = Sprk::yard(&vision, &link) {
+					if let Err(_) = tx_yard.send(yard) {
+						done = true;
+					}
+				};
+			}
+		});
+		Ok(rx_yard)
+	}
+}
