@@ -66,7 +66,7 @@ impl story::Spark for DemoSpark {
 		let Demo { main_tab, edit, value, dialog_story } = state;
 		let select_tab = link.callback(|index| Action::ShowTab(tab_at_index(index)));
 		let yard = match main_tab {
-			MainTab::Dialog => yard::story(dialog_story),
+			MainTab::Dialog => yard::publisher(dialog_story),
 			MainTab::FormList => tab::form_list::render(&edit, link, select_tab),
 			MainTab::SelectionList => tab::selector_list::render(*value, link, select_tab)
 		};
