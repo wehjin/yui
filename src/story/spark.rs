@@ -30,12 +30,16 @@ pub trait Spark {
 			});
 			for msg in rx {
 				match msg {
-					Msg::Subscribe(subscriber_id, watcher) =>
-						ctx.add_watcher(subscriber_id, watcher),
+					Msg::Subscribe(subscriber_id, watcher) => ctx.add_watcher(subscriber_id, watcher),
 					Msg::Update(action) => match Self::flow(&ctx, action) {
 						AfterFlow::ReviseQuietly(next) => ctx.set_vision(next, false),
 						AfterFlow::Revise(next) => ctx.set_vision(next, true),
 						AfterFlow::Ignore => (),
+						AfterFlow::Report(report) => ctx.report(report),
+						AfterFlow::Close(report) => {
+							if let Some(report) = report { ctx.report(report) }
+							ctx.end_prequel();
+						}
 					},
 				}
 			}
@@ -44,7 +48,7 @@ pub trait Spark {
 	}
 
 	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State>;
+	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report>;
 	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State;
 }
 
@@ -69,8 +73,10 @@ pub trait Flow<State, Action, Report> {
 }
 
 
-pub enum AfterFlow<State> {
+pub enum AfterFlow<State, Report> {
 	Ignore,
+	Report(Report),
+	Close(Option<Report>),
 	Revise(State),
 	ReviseQuietly(State),
 }

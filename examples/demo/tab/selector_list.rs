@@ -13,7 +13,6 @@ impl Spark for SelectorListDemo {
 		let value = *state;
 		let mut items = Vec::new();
 		for n in 1..11 {
-			let link = link.clone();
 			let quad_label = yard::quad_label(
 				&format!("Item {}", n),
 				"sub-title",
@@ -22,25 +21,19 @@ impl Spark for SelectorListDemo {
 				15,
 				FillColor::Background,
 			);
-			let item = quad_label.pad(1).pressable(move |_| link.send(Action::SetValue(n)));
+			let item = quad_label.pad(1).pressable(link.callback(move |_| Action::SetValue(n)));
 			items.push((4, item));
 		};
 		let body = yard::list(LIST_ID, value as usize - 1, items).confine_width(40, Cling::Center);
-		let page = {
-			let link = link.clone();
-			tab_page(body, 2, move |index| link.send(Action::ShowTab(index)))
-		};
+		let page = tab_page(body, 2, link.callback(|index| Action::ShowTab(index)));
 		Some(page)
 	}
 
 
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State> {
+	fn flow(_flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
 		match action {
-			Action::SetValue(v) => AfterFlow::Revise(v),
-			Action::ShowTab(index) => {
-				flow.report(index);
-				AfterFlow::Ignore
-			}
+			Action::SetValue(value) => AfterFlow::Revise(value),
+			Action::ShowTab(index) => AfterFlow::Report(index),
 		}
 	}
 

@@ -37,7 +37,7 @@ impl Spark for DialogDemo {
 	}
 
 
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State> {
+	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::Open => {
 				let (_, next_dialog, _) = *flow.state();
@@ -50,9 +50,7 @@ impl Spark for DialogDemo {
 			}
 			Action::Close => {
 				let (_, next_dialog, _) = *flow.state();
-				flow.report(Report::NextDialog(next_dialog));
-				flow.end_prequel();
-				AfterFlow::Ignore
+				AfterFlow::Close(Some(Report::NextDialog(next_dialog)))
 			}
 			Action::NextDialog(next_dialog) => {
 				let (dialog, _, ref reports) = *flow.state();

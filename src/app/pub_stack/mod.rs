@@ -26,7 +26,7 @@ impl story::Spark for PubStack {
 		}
 	}
 
-	fn flow(ctx: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State> {
+	fn flow(ctx: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::Pop => {
 				if ctx.state().len() == 1 {
