@@ -17,7 +17,8 @@ use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::StringEdit;
 
-use crate::tab::button::{DialogDemo, Report};
+use crate::tab::dialog::{DialogDemo, Report};
+use crate::tab::selector_list::SelectorListDemo;
 
 mod tab;
 
@@ -31,16 +32,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 pub struct Demo {
 	main_tab: MainTab,
 	edit: StringEdit,
-	value: i32,
 	dialog_story: Story<DialogDemo>,
+	selector_story: Story<SelectorListDemo>,
 }
 
 impl Demo {
-	fn with_value(&self, value: i32) -> Self {
-		let mut next = self.clone();
-		next.value = value;
-		next
-	}
 	fn with_edit(&self, action: stringedit::Action) -> Self {
 		let mut next = self.clone();
 		next.edit = self.edit.edit(action);
@@ -63,42 +59,47 @@ impl story::Spark for DemoSpark {
 	type Report = u32;
 
 	fn yard(state: &Demo, link: &Link<Action>) -> Option<ArcYard> {
-		let Demo { main_tab, edit, value, dialog_story } = state;
+		let Demo { main_tab, edit, selector_story, dialog_story } = state;
 		let select_tab = link.callback(|index| Action::ShowTab(tab_at_index(index)));
 		let yard = match main_tab {
 			MainTab::Dialog => yard::publisher(dialog_story),
 			MainTab::FormList => tab::form_list::render(&edit, link, select_tab),
-			MainTab::SelectionList => tab::selector_list::render(*value, link, select_tab)
+			MainTab::SelectorList => yard::publisher(selector_story),
 		};
 		Some(yard)
 	}
 
 	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Action) -> AfterFlow<Demo> {
 		match action {
-			Action::SetValue(value) => AfterFlow::Revise(flow.state().with_value(value)),
 			Action::StringEdit(edit) => AfterFlow::Revise(flow.state().with_edit(edit)),
 			Action::ShowTab(tab) => AfterFlow::Revise(flow.state().with_tab(tab)),
 		}
 	}
 
 	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
-		let action_link = create.link().clone();
-		let report_link = create.report_link().clone();
-		let dialog_reports = Link::new(move |report| {
-			match report {
-				Report::SelectedTab(index) => action_link.send(Action::ShowTab(tab_at_index(index))),
-				Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
-			}
-		});
 		Demo {
 			main_tab: MainTab::Dialog,
 			edit: StringEdit::empty(Validity::UnsignedInt),
-			value: 1,
-			dialog_story: DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 }
-				.spark(
+			selector_story: {
+				let action_link = create.link().clone();
+				SelectorListDemo {}.spark(
 					create.edge().clone(),
-					Some(dialog_reports),
-				),
+					Some(Link::new(move |report| action_link.send(Action::ShowTab(tab_at_index(report))))),
+				)
+			},
+			dialog_story: {
+				let action_link = create.link().clone();
+				let report_link = create.report_link().clone();
+				DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 }.spark(
+					create.edge().clone(),
+					Some(Link::new(move |report| {
+						match report {
+							Report::SelectedTab(index) => action_link.send(Action::ShowTab(tab_at_index(index))),
+							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
+						}
+					})),
+				)
+			},
 		}
 	}
 }
@@ -106,7 +107,6 @@ impl story::Spark for DemoSpark {
 
 #[derive(Clone, Debug)]
 pub enum Action {
-	SetValue(i32),
 	StringEdit(stringedit::Action),
 	ShowTab(MainTab),
 }
@@ -115,7 +115,7 @@ pub enum Action {
 pub enum MainTab {
 	Dialog,
 	FormList,
-	SelectionList,
+	SelectorList,
 }
 
 static TABS: &'static [(i32, &str)] = &[
@@ -140,7 +140,7 @@ fn tab_at_index(index: usize) -> MainTab {
 	match index {
 		0 => MainTab::Dialog,
 		1 => MainTab::FormList,
-		2 => MainTab::SelectionList,
+		2 => MainTab::SelectorList,
 		_ => unimplemented!("No tab for index {}", index)
 	}
 }
