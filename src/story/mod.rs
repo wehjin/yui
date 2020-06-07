@@ -55,7 +55,7 @@ impl<Sprk> YardPublisher for Story<Sprk> where Sprk: Spark + Sync + Send + 'stat
 					}
 					first
 				};
-				if let Some(yard) = Sprk::yard(&vision, &link) {
+				if let Some(yard) = Sprk::render(&vision, &link) {
 					if let Err(_) = tx_yard.send(yard) {
 						done = true;
 					}

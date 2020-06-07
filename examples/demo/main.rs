@@ -24,16 +24,16 @@ mod tab;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	app::run(DemoSpark { dialog_id: 1 }, None)
+	app::run(Demo { dialog_id: 1 }, None)
 }
 
-impl story::Spark for DemoSpark {
-	type State = Demo;
+impl story::Spark for Demo {
+	type State = State;
 	type Action = MainTab;
 	type Report = u32;
 
-	fn yard(state: &Demo, _link: &Link<Self::Action>) -> Option<ArcYard> {
-		let Demo { main_tab, dialog_story, form_story, selector_story } = state;
+	fn render(state: &State, _link: &Link<Self::Action>) -> Option<ArcYard> {
+		let State { main_tab, dialog_story, form_story, selector_story } = state;
 		let yard = match main_tab {
 			MainTab::Dialog => yard::publisher(dialog_story),
 			MainTab::FormList => yard::publisher(form_story),
@@ -42,12 +42,13 @@ impl story::Spark for DemoSpark {
 		Some(yard)
 	}
 
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
-		AfterFlow::Revise(flow.state().with_tab(action))
+	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, main_tab: Self::Action) -> AfterFlow<Self::State, Self::Report> {
+		let next = flow.state().with_tab(main_tab);
+		AfterFlow::Revise(next)
 	}
 
 	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
-		Demo {
+		State {
 			main_tab: MainTab::Dialog,
 			dialog_story: {
 				let report_link = create.report_link().clone();
@@ -62,27 +63,21 @@ impl story::Spark for DemoSpark {
 					})),
 				)
 			},
-			form_story: {
-				let action_link = create.link().clone();
-				FormListDemo {}.spark(
-					create.edge().clone(),
-					Some(Link::new(move |report| action_link.send(tab_at_index(report)))),
-				)
-			},
-			selector_story: {
-				let action_link = create.link().clone();
-				SelectorListDemo {}.spark(
-					create.edge().clone(),
-					Some(Link::new(move |report| action_link.send(tab_at_index(report)))),
-				)
-			},
+			form_story: FormListDemo {}.spark(
+				create.edge().clone(),
+				Some(Link::new(create.link().callback(|report| tab_at_index(report)))),
+			),
+			selector_story: SelectorListDemo {}.spark(
+				create.edge().clone(),
+				Some(Link::new(create.link().callback(|report| tab_at_index(report)))),
+			),
 		}
 	}
 }
 
-pub struct DemoSpark { dialog_id: u32 }
+pub struct Demo { dialog_id: u32 }
 
-impl Demo {
+impl State {
 	fn with_tab(&self, main_tab: MainTab) -> Self {
 		let mut next = self.clone();
 		next.main_tab = main_tab;
@@ -91,7 +86,7 @@ impl Demo {
 }
 
 #[derive(Debug, Clone)]
-pub struct Demo {
+pub struct State {
 	main_tab: MainTab,
 	dialog_story: Story<DialogDemo>,
 	form_story: Story<FormListDemo>,

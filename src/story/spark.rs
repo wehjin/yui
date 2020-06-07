@@ -47,7 +47,7 @@ pub trait Spark {
 		story
 	}
 
-	fn yard(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
+	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
 	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report>;
 	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State;
 }

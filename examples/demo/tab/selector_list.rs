@@ -9,7 +9,7 @@ impl Spark for SelectorListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn yard(state: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
 		let value = *state;
 		let mut items = Vec::new();
 		for n in 1..11 {
@@ -28,7 +28,6 @@ impl Spark for SelectorListDemo {
 		let page = tab_page(body, 2, link.callback(|index| Action::ShowTab(index)));
 		Some(page)
 	}
-
 
 	fn flow(_flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
 		match action {

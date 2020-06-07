@@ -12,7 +12,7 @@ impl Spark for FormListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn yard(edit: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(edit: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
 		let mirror = yard::label(
 			&String::from_iter(edit.chars.to_vec()),
 			StrokeColor::BodyOnBackground,

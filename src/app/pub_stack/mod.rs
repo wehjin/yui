@@ -10,7 +10,7 @@ impl story::Spark for PubStack {
 	type Action = Action;
 	type Report = ();
 
-	fn yard(vision: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(vision: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
 		if let Some(first_publisher) = vision.first() {
 			let yard = vision[1..].iter().fold(
 				yard::publisher(first_publisher),
