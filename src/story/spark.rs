@@ -31,7 +31,7 @@ pub trait Spark {
 			for msg in rx {
 				match msg {
 					Msg::Subscribe(subscriber_id, watcher) => ctx.add_watcher(subscriber_id, watcher),
-					Msg::Update(action) => match Self::flow(&ctx, action) {
+					Msg::Update(action) => match Self::flow(&self, &ctx, action) {
 						AfterFlow::ReviseQuietly(next) => ctx.set_vision(next, false),
 						AfterFlow::Revise(next) => ctx.set_vision(next, true),
 						AfterFlow::Ignore => (),
@@ -48,7 +48,7 @@ pub trait Spark {
 	}
 
 	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
-	fn flow(flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report>;
+	fn flow(&self, flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report>;
 	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State;
 }
 

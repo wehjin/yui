@@ -26,20 +26,20 @@ impl story::Spark for PubStack {
 		}
 	}
 
-	fn flow(ctx: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
+	fn flow(&self, flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::Pop => {
-				if ctx.state().len() == 1 {
-					ctx.report(());
+				if flow.state().len() == 1 {
+					flow.report(());
 					AfterFlow::Ignore
 				} else {
-					let mut next_state = ctx.state().to_vec();
+					let mut next_state = flow.state().to_vec();
 					next_state.pop();
 					AfterFlow::Revise(next_state)
 				}
 			}
 			Action::Push(front) => {
-				let mut next_state = ctx.state().to_vec();
+				let mut next_state = flow.state().to_vec();
 				next_state.push(front);
 				AfterFlow::Revise(next_state)
 			}
