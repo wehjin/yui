@@ -10,6 +10,9 @@ use crate::yard::YardPublisher;
 mod scope;
 mod spark;
 
+/// Stories are evolving elements in an interaction.  They
+/// maintain state, respond to actions, and emit reports.
+/// Every story begins with a Spark.
 #[derive(Debug)]
 pub struct Story<Spk: Spark> { tx: SyncSender<Msg<Spk>> }
 
