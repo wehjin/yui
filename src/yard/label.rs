@@ -22,7 +22,7 @@ impl Yard for LabelYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			let chars: Vec<char> = self.string.chars().filter(|it| it.is_ascii() && !it.is_control()).collect();
+			let chars: Vec<char> = self.string.chars().filter(|it| !it.is_control()).collect();
 			let (extra_width, extra_height) = (bounds.width() - chars.len() as i32, bounds.height() - 1);
 			let (x, y) = self.cling.into();
 			let (extra_left, extra_top) = ((extra_width as f32 * x) as i32, (extra_height as f32 * y) as i32);
