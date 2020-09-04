@@ -175,7 +175,7 @@ impl<'a> CursesRenderContext<'a> {
 			color_attr
 		};
 		attrset(attr);
-		addch(glyph as chtype);
+		addstr(&glyph.to_string());
 	}
 }
 

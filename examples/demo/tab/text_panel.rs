@@ -18,7 +18,7 @@ impl Spark for TextDemo {
 	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
 		let trellis = yard::trellis(1, 1, vec![
 			yard::label("[left]", StrokeColor::BodyOnBackground, Cling::Left),
-			yard::label("[日本語]", StrokeColor::BodyOnBackground, Cling::Center),
+			yard::label("[中心]", StrokeColor::BodyOnBackground, Cling::Center),
 			yard::label("[right]", StrokeColor::BodyOnBackground, Cling::Right),
 		]);
 		let rendering = trellis.pad(2);

@@ -42,6 +42,7 @@ impl Projector {
 	}
 
 	pub fn run_blocking(stop_rx: Receiver<()>, block: impl Fn(Projector) + Send + 'static) {
+		setlocale(LcCategory::all, "en_US.UTF-8");
 		initscr();
 		if !has_colors() {
 			endwin();

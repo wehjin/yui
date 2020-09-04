@@ -10,8 +10,8 @@ name = "yui"
 path = "src/lib.rs"
 
 [dependencies]
-ncurses="5.99.0"
-rand="0.7.3"
-log="0.4.8"
-simplelog="0.7.4"
-stringedit={ git="https://github.com/wehjin/stringedit.git" }
+ncurses = { version = "5.99.0", features = ["wide"] }
+rand = "0.7.3"
+log = "0.4.8"
+simplelog = "0.7.4"
+stringedit = { git = "https://github.com/wehjin/stringedit.git" }
