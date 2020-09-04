@@ -29,7 +29,7 @@ impl Spark for SelectorListDemo {
 		Some(page)
 	}
 
-	fn flow(&self, _flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
+	fn flow(&self, action: Self::Action, _flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::SetValue(value) => AfterFlow::Revise(value),
 			Action::ShowTab(index) => AfterFlow::Report(index),

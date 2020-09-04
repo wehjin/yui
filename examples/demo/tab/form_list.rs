@@ -48,7 +48,7 @@ impl Spark for FormListDemo {
 	}
 
 
-	fn flow(&self, flow: &impl Flow<Self::State, Self::Action, Self::Report>, action: Self::Action) -> AfterFlow<Self::State, Self::Report> {
+	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::StringEdit(edit_action) => AfterFlow::Revise(flow.state().edit(edit_action)),
 			Action::ShowTab(index) => AfterFlow::Report(index),

@@ -42,7 +42,7 @@ impl story::Spark for Demo {
 		Some(yard)
 	}
 
-	fn flow(&self, flow: &impl Flow<Self::State, Self::Action, Self::Report>, main_tab: Self::Action) -> AfterFlow<Self::State, Self::Report> {
+	fn flow(&self, main_tab: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		let next = flow.state().with_tab(main_tab);
 		AfterFlow::Revise(next)
 	}

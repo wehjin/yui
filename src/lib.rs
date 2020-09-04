@@ -7,8 +7,9 @@ extern crate stringedit;
 pub use link::*;
 pub use story::*;
 pub use yard::ArcYard;
-pub use yui::*;
 pub use yui_curses::*;
+
+pub use self::yui::*;
 
 pub mod app;
 pub mod palette;
