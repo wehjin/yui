@@ -37,6 +37,10 @@ impl Spark for DialogDemo {
 	}
 
 
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
+		(self.dialog, self.next_dialog, create.report_link().clone())
+	}
+
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::Open => {
@@ -58,10 +62,6 @@ impl Spark for DialogDemo {
 				AfterFlow::Revise(next)
 			}
 		}
-	}
-
-	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
-		(self.dialog, self.next_dialog, create.report_link().clone())
 	}
 }
 

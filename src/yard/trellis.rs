@@ -1,6 +1,8 @@
 use crate::{ArcYard, Cling, Confine, Pack};
 
 pub fn trellis(height: i32, gap: i32, strands: Vec<ArcYard>) -> ArcYard {
+	//! Generate a yard that displays other yards in a vertical stack
+	//! with uniform height and gaps between them.
 	let tip = &strands[0];
 	let tail = &strands[1..];
 	tail.iter().fold(

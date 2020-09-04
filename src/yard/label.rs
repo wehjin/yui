@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use crate::{Cling, RenderContext};
+use crate::palette::StrokeColor;
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::layout::LayoutContext;
-use crate::palette::StrokeColor;
 
 pub fn label<S: AsRef<str>>(string: S, color: StrokeColor, cling: Cling) -> ArcYard {
+	//! Generate a yard that displays a string of characters.
 	Arc::new(LabelYard { id: rand::random(), color, string: string.as_ref().to_string(), cling })
 }
 
@@ -17,17 +18,6 @@ struct LabelYard {
 }
 
 impl Yard for LabelYard {
-	fn id(&self) -> i32 {
-		self.id
-	}
-	fn update(&self, _option: YardOption) {}
-
-	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		let (bounds_id, _bounds) = ctx.edge_bounds();
-		ctx.set_yard_bounds(self.id(), bounds_id);
-		bounds_id
-	}
-
 	fn render(&self, ctx: &dyn RenderContext) {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
@@ -46,5 +36,16 @@ impl Yard for LabelYard {
 			};
 			ctx.set_glyph(glyph, self.color, bounds.z);
 		}
+	}
+	fn layout(&self, ctx: &mut LayoutContext) -> usize {
+		let (bounds_id, _bounds) = ctx.edge_bounds();
+		ctx.set_yard_bounds(self.id(), bounds_id);
+		bounds_id
+	}
+
+	fn update(&self, _option: YardOption) {}
+
+	fn id(&self) -> i32 {
+		self.id
 	}
 }

@@ -48,14 +48,14 @@ impl Spark for FormListDemo {
 	}
 
 
+	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(Validity::UnsignedInt) }
+
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::StringEdit(edit_action) => AfterFlow::Revise(flow.state().edit(edit_action)),
 			Action::ShowTab(index) => AfterFlow::Report(index),
 		}
 	}
-
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(Validity::UnsignedInt) }
 }
 
 #[derive(Debug)]

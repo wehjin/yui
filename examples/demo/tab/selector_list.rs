@@ -29,14 +29,14 @@ impl Spark for SelectorListDemo {
 		Some(page)
 	}
 
+	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { 1 }
+
 	fn flow(&self, action: Self::Action, _flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
 			Action::SetValue(value) => AfterFlow::Revise(value),
 			Action::ShowTab(index) => AfterFlow::Report(index),
 		}
 	}
-
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { 1 }
 }
 
 #[derive(Debug)]
