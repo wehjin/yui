@@ -15,13 +15,17 @@ impl Spark for ButtonDemo {
 	}
 
 	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
-		let dark_fill = yard::fill(FillColor::Primary);
-		let buttons = yard::trellis(1, 1, Cling::Center, vec![
-			yard::button_enabled("Simon", |_| {}),
-			yard::button_enabled("Garfunkel", |_| {})
-		]);
-		let dark_half = buttons.pad(3).before(dark_fill);
-		let full = yard::empty().pack_right(40, dark_half);
-		Some(full.pad(2))
+		let dark_half =
+			yard::trellis(1, 1, Cling::Center, vec![
+				yard::button_enabled("Beavis", |_| info!("Beavis")),
+				yard::button_enabled("Butthead", |_| info!("Butthead")),
+			]).pad(3).before(yard::fill(FillColor::Primary));
+		let light_half =
+			yard::trellis(1, 1, Cling::Center, vec![
+				yard::button_enabled("Garfunkel", |_| info!("Garfunkel")),
+				yard::button_enabled("Simon", |_| info!("Simon")),
+			]).pad(3).before(yard::fill(FillColor::Background));
+		let full = light_half.pack_right(40, dark_half).pad(1);
+		Some(full)
 	}
 }

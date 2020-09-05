@@ -90,6 +90,7 @@ impl story::Spark for Main {
 	}
 
 	fn flow(&self, main_tab: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		info!("{:?}", main_tab);
 		let next = flow.state().with_tab(main_tab);
 		AfterFlow::Revise(next)
 	}

@@ -8,7 +8,7 @@ use ncurses::*;
 
 pub(crate) use spot_stack::*;
 
-use crate::palette::{FillColor, Palette, StrokeColor};
+use crate::palette::{FillColor, FillGrade, Palette, StrokeColor};
 use crate::yard;
 use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
@@ -187,23 +187,21 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 	fn focus_id(&self) -> i32 {
 		self.focus_id
 	}
-
 	fn spot(&self) -> (i32, i32) {
 		(self.row as i32, self.col as i32)
 	}
-
 	fn yard_bounds(&self, yard_id: i32) -> Bounds {
 		self.bounds_hold.borrow().yard_bounds(yard_id).to_owned()
 	}
-
 	fn set_fill(&self, color: FillColor, z: i32) {
 		self.spot_stack().borrow_mut().set_fill(color, z);
 	}
-
+	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32) {
+		self.spot_stack().borrow_mut().set_fill_grade(fill_grade, z);
+	}
 	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32) {
 		self.spot_stack().borrow_mut().set_stroke(glyph, color, z);
 	}
-
 	fn set_dark(&self, z: i32) {
 		self.spot_stack().borrow_mut().set_dark(z);
 	}

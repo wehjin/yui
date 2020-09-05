@@ -1,5 +1,4 @@
 use std::cell::{Cell, RefCell};
-use std::cmp::{max, min};
 use std::collections::HashMap;
 
 use ncurses::{init_color, init_pair, start_color, use_default_colors};
@@ -29,6 +28,7 @@ pub enum FillColor {
 pub enum FillGrade {
 	Plain,
 	Focus,
+	Press,
 }
 
 fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
@@ -43,6 +43,7 @@ fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
 	let graded = match grade {
 		FillGrade::Plain => color,
 		FillGrade::Focus => center(1, color),
+		FillGrade::Press => center(2, color),
 	};
 	if dimmed {
 		darken(graded)
@@ -76,7 +77,7 @@ fn stroke_i16((color, dimmed): (StrokeColor, bool)) -> i16 {
 
 #[derive(Debug)]
 pub struct Palette {
-	indices: RefCell<HashMap<(StrokeColor, FillColor, bool), i16>>,
+	indices: RefCell<HashMap<(StrokeColor, FillColor, FillGrade, bool), i16>>,
 	next_index: Cell<i16>,
 }
 
@@ -102,24 +103,24 @@ impl Palette {
 		}
 	}
 
-	pub fn color_pair_index(&self, stroke: StrokeColor, fill_color: FillColor, fill_grade: FillGrade, dimmed: bool) -> i16 {
-		let index_key = (stroke, fill_color, dimmed);
-		match self.existing_index(&index_key) {
+	pub fn color_pair_index(&self, key: (StrokeColor, FillColor, FillGrade, bool)) -> i16 {
+		match self.existing_index(&key) {
+			Some(index) => index,
 			None => {
+				let (stroke, fill, fill_grade, dimmed) = key;
 				let index = self.advance_index();
 				init_pair(
 					index,
 					stroke_i16((stroke, dimmed)),
-					fill_i16(fill_color, fill_grade, dimmed),
+					fill_i16(fill, fill_grade, dimmed),
 				);
-				self.indices.borrow_mut().insert(index_key, index);
+				self.indices.borrow_mut().insert(key, index);
 				index
 			}
-			Some(index) => index
 		}
 	}
 
-	fn existing_index(&self, index_key: &(StrokeColor, FillColor, bool)) -> Option<i16> {
+	fn existing_index(&self, index_key: &(StrokeColor, FillColor, FillGrade, bool)) -> Option<i16> {
 		self.indices.borrow().get(&index_key).map(|it| it.to_owned())
 	}
 
@@ -156,9 +157,9 @@ fn darken(color_i16: i16) -> i16 {
 
 fn center(magnitude: i16, color_i16: i16) -> i16 {
 	if color_i16 <= COLOR_BASE00 {
-		min(color_i16 + magnitude, COLOR_BASE00)
-	} else if color_i16 < COLOR_BASE3 {
-		max(color_i16 - magnitude, COLOR_BASE0)
+		(color_i16 + magnitude).min(COLOR_BASE00)
+	} else if color_i16 <= COLOR_BASE3 {
+		(color_i16 - magnitude).max(COLOR_BASE0)
 	} else {
 		color_i16
 	}
