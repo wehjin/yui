@@ -11,7 +11,7 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{app, Create, Flow, Link, Story};
+use yui::{Create, Flow, Link, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 
@@ -25,24 +25,15 @@ mod tab;
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
-	app::run(Demo { dialog_id: 1 }, None)
+	yui::main(Main { dialog_id: 1 })
 }
 
-impl story::Spark for Demo {
+pub struct Main { dialog_id: u32 }
+
+impl story::Spark for Main {
 	type State = State;
 	type Action = MainTab;
 	type Report = u32;
-
-	fn render(state: &State, _link: &Link<Self::Action>) -> Option<ArcYard> {
-		let State { main_tab, dialog_story, form_story, selector_story, text_story } = state;
-		let yard = match main_tab {
-			MainTab::Dialog => yard::publisher(dialog_story),
-			MainTab::FormList => yard::publisher(form_story),
-			MainTab::SelectorList => yard::publisher(selector_story),
-			MainTab::Text => yard::publisher(text_story)
-		};
-		Some(yard)
-	}
 
 	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		State {
@@ -79,9 +70,18 @@ impl story::Spark for Demo {
 		let next = flow.state().with_tab(main_tab);
 		AfterFlow::Revise(next)
 	}
-}
 
-pub struct Demo { dialog_id: u32 }
+	fn render(state: &State, _link: &Link<Self::Action>) -> Option<ArcYard> {
+		let State { main_tab, dialog_story, form_story, selector_story, text_story } = state;
+		let yard = match main_tab {
+			MainTab::Dialog => yard::publisher(dialog_story),
+			MainTab::FormList => yard::publisher(form_story),
+			MainTab::SelectorList => yard::publisher(selector_story),
+			MainTab::Text => yard::publisher(text_story)
+		};
+		Some(yard)
+	}
+}
 
 impl State {
 	fn with_tab(&self, main_tab: MainTab) -> Self {

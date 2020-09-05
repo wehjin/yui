@@ -1,7 +1,7 @@
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Padding, Spark, yard};
 use yui::palette::{FillColor, StrokeColor};
 
-use crate::{Demo, tab_page};
+use crate::{Main, tab_page};
 
 impl Spark for DialogDemo {
 	type State = (u32, u32, Option<Link<Self::Report>>);
@@ -47,7 +47,7 @@ impl Spark for DialogDemo {
 				let (_, next_dialog, _) = *flow.state();
 				let link = flow.link().clone();
 				flow.start_prequel(
-					Demo { dialog_id: next_dialog },
+					Main { dialog_id: next_dialog },
 					move |next_dialog| link.send(Action::NextDialog(next_dialog)),
 				);
 				AfterFlow::Ignore

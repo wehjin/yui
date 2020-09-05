@@ -1,4 +1,5 @@
 use std::{fmt, thread};
+use std::error::Error;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
@@ -8,6 +9,7 @@ pub use stringedit::*;
 
 pub use multi_layout::*;
 
+use crate::{app, Spark};
 use crate::palette::{FillColor, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard};
 
@@ -21,6 +23,11 @@ pub mod pack;
 pub mod place;
 pub mod confine;
 mod multi_layout;
+
+pub fn main<T>(spark: T) -> Result<(), Box<dyn Error>> where T: Spark + Sync + Send + 'static {
+	//! Activate the main yui interaction.
+	app::run(spark, None)
+}
 
 pub enum FocusAction {
 	Go,
