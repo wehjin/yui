@@ -24,7 +24,7 @@ impl Spark for DialogDemo {
 			},
 		];
 		let min_trellis_height = rows.len() as i32 * (row_height + gap_height) - gap_height;
-		let trellis = yard::trellis(row_height, gap_height, rows);
+		let trellis = yard::trellis(row_height, gap_height, Cling::Center, rows);
 		let content = trellis.confine(32, min_trellis_height, Cling::Center)
 			.pad(1)
 			.before(yard::fill(FillColor::Background));

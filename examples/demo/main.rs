@@ -15,12 +15,43 @@ use yui::{Create, Flow, Link, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 
+use crate::tab::button_panel::ButtonDemo;
 use crate::tab::dialog::{DialogDemo, Report};
 use crate::tab::form_list::FormListDemo;
 use crate::tab::selector_list::SelectorListDemo;
 use crate::tab::text_panel::TextDemo;
 
 mod tab;
+
+static TABS: &'static [(i32, &str)] = &[
+	(1, "Dialog"),
+	(2, "Form List"),
+	(3, "Selector List"),
+	(4, "Text"),
+	(5, "Buttons"),
+];
+
+#[derive(Debug, Clone)]
+pub enum MainTab {
+	Dialog,
+	FormList,
+	SelectorList,
+	Text,
+	Buttons,
+}
+
+impl From<usize> for MainTab {
+	fn from(index: usize) -> Self {
+		match index {
+			0 => MainTab::Dialog,
+			1 => MainTab::FormList,
+			2 => MainTab::SelectorList,
+			3 => MainTab::Text,
+			4 => MainTab::Buttons,
+			_ => unimplemented!("No tab for index {}", index)
+		}
+	}
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
@@ -45,24 +76,16 @@ impl story::Spark for Main {
 					ctx.edge().clone(),
 					Some(Link::new(move |report| {
 						match report {
-							Report::SelectedTab(index) => action_link.send(tab_at_index(index)),
+							Report::SelectedTab(index) => action_link.send(MainTab::from(index)),
 							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
 						}
 					})),
 				)
 			},
-			form_story: FormListDemo {}.spark(
-				ctx.edge().clone(),
-				Some(Link::new(ctx.link().callback(|report| tab_at_index(report)))),
-			),
-			selector_story: SelectorListDemo {}.spark(
-				ctx.edge().clone(),
-				Some(Link::new(ctx.link().callback(|report| tab_at_index(report)))),
-			),
-			text_story: TextDemo {}.spark(
-				ctx.edge().clone(),
-				Some(Link::new(ctx.link().callback(|report| tab_at_index(report)))),
-			),
+			form_story: FormListDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			selector_story: SelectorListDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			text_story: TextDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			buttons_story: ButtonDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
 		}
 	}
 
@@ -72,12 +95,12 @@ impl story::Spark for Main {
 	}
 
 	fn render(state: &State, _link: &Link<Self::Action>) -> Option<ArcYard> {
-		let State { main_tab, dialog_story, form_story, selector_story, text_story } = state;
-		let yard = match main_tab {
-			MainTab::Dialog => yard::publisher(dialog_story),
-			MainTab::FormList => yard::publisher(form_story),
-			MainTab::SelectorList => yard::publisher(selector_story),
-			MainTab::Text => yard::publisher(text_story)
+		let yard = match state.main_tab {
+			MainTab::Dialog => yard::publisher(&state.dialog_story),
+			MainTab::FormList => yard::publisher(&state.form_story),
+			MainTab::SelectorList => yard::publisher(&state.selector_story),
+			MainTab::Text => yard::publisher(&state.text_story),
+			MainTab::Buttons => yard::publisher(&state.buttons_story),
 		};
 		Some(yard)
 	}
@@ -98,23 +121,8 @@ pub struct State {
 	form_story: Story<FormListDemo>,
 	selector_story: Story<SelectorListDemo>,
 	text_story: Story<TextDemo>,
+	buttons_story: Story<ButtonDemo>,
 }
-
-
-#[derive(Debug, Clone)]
-pub enum MainTab {
-	Dialog,
-	FormList,
-	SelectorList,
-	Text,
-}
-
-static TABS: &'static [(i32, &str)] = &[
-	(1, "Dialog"),
-	(2, "Form List"),
-	(3, "Selector List"),
-	(4, "Text"),
-];
 
 fn app_bar() -> ArcYard {
 	let tool_bar = yard::title("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
@@ -126,14 +134,4 @@ fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize
 	content
 		.pack_top(3, yard::tabbar(TABS, active_tab_index, select_tab))
 		.pack_top(3, app_bar())
-}
-
-fn tab_at_index(index: usize) -> MainTab {
-	match index {
-		0 => MainTab::Dialog,
-		1 => MainTab::FormList,
-		2 => MainTab::SelectorList,
-		3 => MainTab::Text,
-		_ => unimplemented!("No tab for index {}", index)
-	}
 }
