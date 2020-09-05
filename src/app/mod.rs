@@ -3,8 +3,9 @@ use std::sync::Arc;
 use std::sync::mpsc::sync_channel;
 use std::thread;
 
-use crate::{Link, Projector, Spark};
+use crate::{Link, Projector};
 use crate::app::pub_stack::PubStack;
+use crate::prelude::*;
 use crate::yard::YardPublisher;
 
 pub use self::edge::*;

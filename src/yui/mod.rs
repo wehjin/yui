@@ -24,6 +24,8 @@ pub mod place;
 pub mod confine;
 mod multi_layout;
 
+pub mod prelude;
+
 pub fn main<T>(spark: T) -> Result<(), Box<dyn Error>> where T: Spark + Sync + Send + 'static {
 	//! Activate the main yui interaction.
 	app::run(spark, None)
