@@ -16,23 +16,21 @@ pub fn button_disabled<S: AsRef<str>>(text: S) -> ArcYard {
 
 pub fn button<S: AsRef<str>>(text: S, active_state: ActiveState) -> ArcYard {
 	let id = rand::random();
-	Arc::new(ButtonYard {
-		id,
-		label_yard: yard::label(
-			&text.as_ref().to_uppercase(),
-			match &active_state {
-				ActiveState::Enabled(_) => StrokeColor::EnabledOnBackground,
-				ActiveState::Disabled => StrokeColor::CommentOnBackground,
-			},
-			Cling::Center,
-		),
-		fill_yard: yard::fill(FillColor::BackgroundWithFocus),
-		is_pressed: Arc::new(RwLock::new(false)),
-		click_option: match active_state {
-			ActiveState::Enabled(on_click) => Some(Arc::new(move || on_click(id))),
-			ActiveState::Disabled => None,
+	let label_yard = yard::label(
+		&text.as_ref().to_uppercase(),
+		match &active_state {
+			ActiveState::Enabled(_) => StrokeColor::EnabledOnBackground,
+			ActiveState::Disabled => StrokeColor::CommentOnBackground,
 		},
-	})
+		Cling::Center,
+	);
+	let fill_yard = yard::fill(FillColor::BackgroundWithFocus);
+	let is_pressed = Arc::new(RwLock::new(false));
+	let click_option: Option<ArcTouch> = match active_state {
+		ActiveState::Enabled(on_click) => Some(Arc::new(move || on_click(id))),
+		ActiveState::Disabled => None,
+	};
+	Arc::new(ButtonYard { id, label_yard, fill_yard, is_pressed, click_option })
 }
 
 pub enum ActiveState {
@@ -49,9 +47,22 @@ struct ButtonYard {
 }
 
 impl Yard for ButtonYard {
-	fn id(&self) -> i32 { self.id }
-
-	fn update(&self, _option: YardOption) {}
+	fn render(&self, ctx: &dyn RenderContext) {
+		let focus_id = ctx.focus_id();
+		let fill_color = if focus_id == self.id {
+			let is_pressed = { *self.is_pressed.read().unwrap() };
+			if is_pressed {
+				FillColor::BackgroundWithPress
+			} else {
+				FillColor::BackgroundWithFocus
+			}
+		} else {
+			FillColor::Background
+		};
+		self.fill_yard.update(YardOption::FillColor(fill_color));
+		self.fill_yard.render(ctx);
+		self.label_yard.render(ctx);
+	}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
@@ -73,21 +84,8 @@ impl Yard for ButtonYard {
 		edge_index
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		let focus_id = ctx.focus_id();
-		let fill_color = if focus_id == self.id {
-			let is_pressed = { *self.is_pressed.read().unwrap() };
-			if is_pressed {
-				FillColor::BackgroundWithPress
-			} else {
-				FillColor::BackgroundWithFocus
-			}
-		} else {
-			FillColor::Background
-		};
-		self.fill_yard.update(YardOption::FillColor(fill_color));
-		self.fill_yard.render(ctx);
-		self.label_yard.render(ctx);
-	}
+	fn update(&self, _option: YardOption) {}
+
+	fn id(&self) -> i32 { self.id }
 }
 
