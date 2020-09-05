@@ -6,12 +6,16 @@ use std::thread;
 
 use ncurses::*;
 
+pub(crate) use spot_stack::*;
+
 use crate::palette::{FillColor, Palette, StrokeColor};
 use crate::yard;
 use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::layout::{ActiveFocus, LayoutContext};
 use crate::yui::RenderContext;
+
+mod spot_stack;
 
 #[derive(Clone)]
 pub(crate) struct CursesScreen {}
@@ -202,66 +206,6 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 
 	fn set_dark(&self, z: i32) {
 		self.spot_stack().borrow_mut().set_dark(z);
-	}
-}
-
-
-#[derive(Copy, Clone, Debug)]
-struct SpotStack<'a> {
-	fill_color: FillColor,
-	fill_z: i32,
-	stroke_type: Option<(char, StrokeColor)>,
-	stroke_z: i32,
-	dark_z: i32,
-	palette: &'a Palette,
-}
-
-impl<'a> SpotStack<'a> {
-	fn new(palette: &'a Palette) -> Self {
-		SpotStack {
-			fill_color: FillColor::Background,
-			fill_z: i32::max_value(),
-			stroke_type: Option::None,
-			stroke_z: i32::max_value(),
-			dark_z: i32::max_value(),
-			palette,
-		}
-	}
-
-	fn set_dark(&mut self, z: i32) {
-		if z <= self.dark_z {
-			self.dark_z = z;
-		}
-	}
-
-	fn set_fill(&mut self, color: FillColor, z: i32) {
-		if z <= self.fill_z {
-			self.fill_z = z;
-			self.fill_color = color;
-		}
-	}
-
-	fn set_stroke(&mut self, glyph: char, color: StrokeColor, z: i32) {
-		if z <= self.stroke_z {
-			self.stroke_z = z;
-			self.stroke_type = Option::Some((glyph, color))
-		}
-	}
-
-	fn color_details(&self) -> (i16, char, bool) {
-		let fill_color = self.fill_color;
-		let (glyph, stroke_color) = match self.stroke_type {
-			None => (' ', StrokeColor::BodyOnBackground),
-			Some((glyph, color)) =>
-				if self.stroke_z <= self.fill_z {
-					(glyph, color)
-				} else {
-					(' ', StrokeColor::BodyOnBackground)
-				},
-		};
-		let darken = self.dark_z < self.fill_z;
-		let color_pair = self.palette.color_pair_index(stroke_color, fill_color, darken);
-		(color_pair, glyph, darken)
 	}
 }
 

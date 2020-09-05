@@ -1,14 +1,17 @@
 use std::cell::{Cell, RefCell};
+use std::cmp::{max, min};
 use std::collections::HashMap;
 
 use ncurses::{init_color, init_pair, start_color, use_default_colors};
 
 pub fn body_and_comment_for_fill(fill_color: FillColor) -> (StrokeColor, StrokeColor) {
 	match fill_color {
-		FillColor::Background | FillColor::BackgroundWithFocus | FillColor::BackgroundWithPress =>
-			(StrokeColor::BodyOnBackground, StrokeColor::CommentOnBackground),
-		FillColor::Primary | FillColor::PrimaryWithFocus | FillColor::PrimaryWithPress =>
-			(StrokeColor::BodyOnPrimary, StrokeColor::CommentOnPrimary),
+		FillColor::Background |
+		FillColor::BackgroundWithFocus |
+		FillColor::BackgroundWithPress => (StrokeColor::BodyOnBackground, StrokeColor::CommentOnBackground),
+		FillColor::Primary |
+		FillColor::PrimaryWithFocus |
+		FillColor::PrimaryWithPress => (StrokeColor::BodyOnPrimary, StrokeColor::CommentOnPrimary),
 	}
 }
 
@@ -22,16 +25,30 @@ pub enum FillColor {
 	PrimaryWithPress,
 }
 
-fn fill_i16((color, dimmed): (FillColor, bool)) -> i16 {
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub enum FillGrade {
+	Plain,
+	Focus,
+}
+
+fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
 	let color = match color {
 		FillColor::Background => COLOR_BASE3,
 		FillColor::BackgroundWithFocus => COLOR_BASE2,
 		FillColor::BackgroundWithPress => COLOR_BASE1,
-		FillColor::Primary => COLOR_BASE02,
-		FillColor::PrimaryWithFocus => COLOR_BASE01,
 		FillColor::PrimaryWithPress => COLOR_BASE00,
+		FillColor::PrimaryWithFocus => COLOR_BASE01,
+		FillColor::Primary => COLOR_BASE02,
 	};
-	if dimmed { darken(color) } else { color }
+	let graded = match grade {
+		FillGrade::Plain => color,
+		FillGrade::Focus => center(1, color),
+	};
+	if dimmed {
+		darken(graded)
+	} else {
+		graded
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -85,15 +102,15 @@ impl Palette {
 		}
 	}
 
-	pub fn color_pair_index(&self, stroke: StrokeColor, fill: FillColor, dimmed: bool) -> i16 {
-		let index_key = (stroke, fill, dimmed);
+	pub fn color_pair_index(&self, stroke: StrokeColor, fill_color: FillColor, fill_grade: FillGrade, dimmed: bool) -> i16 {
+		let index_key = (stroke, fill_color, dimmed);
 		match self.existing_index(&index_key) {
 			None => {
 				let index = self.advance_index();
 				init_pair(
 					index,
 					stroke_i16((stroke, dimmed)),
-					fill_i16((fill, dimmed)),
+					fill_i16(fill_color, fill_grade, dimmed),
 				);
 				self.indices.borrow_mut().insert(index_key, index);
 				index
@@ -132,6 +149,16 @@ fn darken(color_i16: i16) -> i16 {
 		0
 	} else if color_i16 <= COLOR_BASE3 {
 		color_i16 - delta
+	} else {
+		color_i16
+	}
+}
+
+fn center(magnitude: i16, color_i16: i16) -> i16 {
+	if color_i16 <= COLOR_BASE00 {
+		min(color_i16 + magnitude, COLOR_BASE00)
+	} else if color_i16 < COLOR_BASE3 {
+		max(color_i16 - magnitude, COLOR_BASE0)
 	} else {
 		color_i16
 	}

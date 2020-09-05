@@ -14,6 +14,14 @@ pub fn button_disabled<S: AsRef<str>>(text: S) -> ArcYard {
 	button(text, ActiveState::Disabled)
 }
 
+struct ButtonYard {
+	id: i32,
+	label_yard: ArcYard,
+	fill_yard: ArcYard,
+	is_pressed: Arc<RwLock<bool>>,
+	click_option: Option<ArcTouch>,
+}
+
 pub fn button<S: AsRef<str>>(text: S, active_state: ActiveState) -> ArcYard {
 	let id = rand::random();
 	let label_yard = yard::label(
@@ -36,14 +44,6 @@ pub fn button<S: AsRef<str>>(text: S, active_state: ActiveState) -> ArcYard {
 pub enum ActiveState {
 	Enabled(Box<dyn Fn(i32) + Send + Sync + 'static>),
 	Disabled,
-}
-
-struct ButtonYard {
-	id: i32,
-	label_yard: ArcYard,
-	fill_yard: ArcYard,
-	is_pressed: Arc<RwLock<bool>>,
-	click_option: Option<ArcTouch>,
 }
 
 impl Yard for ButtonYard {
