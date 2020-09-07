@@ -26,9 +26,9 @@ impl Spark for TextDemo {
 			yard::label("[かいさつぐち]", StrokeColor::BodyOnPrimary, Cling::Center),
 			yard::label("[right]", StrokeColor::BodyOnPrimary, Cling::Right),
 		];
-		let light_half = yard::trellis(1, 1, Cling::Center, light_innards);
-		let dark_half = cluster(dark_innards).before(yard::fill(FillColor::Primary));
-		let rendering = light_half.pad(2).pack_right(50, dark_half);
+		let light_half = cluster(light_innards).pad(1);
+		let dark_half = cluster(dark_innards).pad(1).before(yard::fill(FillColor::Primary));
+		let rendering = light_half.pack_right(50, dark_half);
 		Some(rendering)
 	}
 }

@@ -180,7 +180,9 @@ impl<'a> CursesRenderContext<'a> {
 			color_attr
 		};
 		attrset(attr);
-		addstr(glyph);
+		if !glyph.is_empty() {
+			addstr(glyph);
+		}
 	}
 }
 

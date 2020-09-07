@@ -3,6 +3,7 @@ extern crate log;
 extern crate ncurses;
 extern crate simplelog;
 extern crate stringedit;
+extern crate unicode_width;
 
 pub use link::*;
 pub use story::*;
