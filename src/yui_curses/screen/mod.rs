@@ -84,6 +84,7 @@ impl CursesScreen {
 							&palette,
 							active_focus.focus_id(),
 						);
+						clear();
 						for row in 0..max_y {
 							ctx.row = row;
 							for col in 0..max_x {
@@ -179,11 +180,7 @@ impl<'a> CursesRenderContext<'a> {
 			color_attr
 		};
 		attrset(attr);
-		if glyph == ' ' {
-			addch(glyph as chtype);
-		} else {
-			addstr(&glyph.to_string());
-		}
+		addstr(&glyph.to_string());
 	}
 }
 
