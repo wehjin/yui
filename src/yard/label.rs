@@ -34,7 +34,7 @@ impl Yard for LabelYard {
 			} else {
 				chars[string_indent as usize]
 			};
-			ctx.set_glyph(glyph, self.color, bounds.z);
+			ctx.set_glyph(glyph.to_string(), self.color, bounds.z);
 		}
 	}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {

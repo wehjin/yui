@@ -1,12 +1,12 @@
 use crate::palette::{FillColor, FillGrade, Palette, StrokeColor};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct SpotStack<'a> {
 	fill_color: FillColor,
 	fill_color_z: i32,
 	fill_grade: FillGrade,
 	fill_grade_z: i32,
-	stroke_type: Option<(char, StrokeColor)>,
+	stroke_type: Option<(String, StrokeColor)>,
 	stroke_z: i32,
 	dark_z: i32,
 	palette: &'a Palette,
@@ -46,21 +46,21 @@ impl<'a> SpotStack<'a> {
 		}
 	}
 
-	pub fn set_stroke(&mut self, glyph: char, color: StrokeColor, z: i32) {
+	pub fn set_stroke(&mut self, glyph: String, color: StrokeColor, z: i32) {
 		if z <= self.stroke_z {
 			self.stroke_z = z;
 			self.stroke_type = Option::Some((glyph, color))
 		}
 	}
 
-	pub fn color_details(&self) -> (i16, char, bool) {
+	pub fn spot_details(&self) -> (i16, &str, bool) {
 		let (glyph, stroke_color) = match self.stroke_type {
-			None => (' ', StrokeColor::BodyOnBackground),
-			Some((glyph, color)) =>
+			None => (" ", StrokeColor::BodyOnBackground),
+			Some((ref glyph, color)) =>
 				if self.stroke_z <= self.fill_color_z {
-					(glyph, color)
+					(glyph.as_str(), color)
 				} else {
-					(' ', StrokeColor::BodyOnBackground)
+					(" ", StrokeColor::BodyOnBackground)
 				},
 		};
 		let darken = self.dark_z < self.fill_color_z;

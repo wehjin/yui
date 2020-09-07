@@ -157,7 +157,7 @@ pub trait RenderContext {
 	fn yard_bounds(&self, yard_id: i32) -> Bounds;
 	fn set_fill(&self, color: FillColor, z: i32);
 	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32);
-	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32);
+	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32);
 	fn set_dark(&self, z: i32);
 }
 
@@ -240,6 +240,6 @@ impl<'a> RenderContext for FocusIdRenderContext<'a> {
 	fn yard_bounds(&self, yard_id: i32) -> Bounds { self.parent.yard_bounds(yard_id) }
 	fn set_fill(&self, color: FillColor, z: i32) { self.parent.set_fill(color, z) }
 	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32) { self.parent.set_fill_grade(fill_grade, z) }
-	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32) { self.parent.set_glyph(glyph, color, z) }
+	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32) { self.parent.set_glyph(glyph, color, z) }
 	fn set_dark(&self, z: i32) { self.parent.set_dark(z) }
 }

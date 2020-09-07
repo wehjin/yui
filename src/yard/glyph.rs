@@ -35,7 +35,7 @@ impl Yard for GlyphYard {
 		if bounds.intersects(row, col) {
 			let glyph = (*self.glyph)();
 			if !glyph.is_control() {
-				ctx.set_glyph(glyph, self.color, bounds.z);
+				ctx.set_glyph(glyph.to_string(), self.color, bounds.z);
 			}
 		}
 	}

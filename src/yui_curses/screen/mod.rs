@@ -171,8 +171,8 @@ impl<'a> CursesRenderContext<'a> {
 
 	fn publish(&self) {
 		mv(self.row as i32, self.col as i32);
-		let stack = self.spot_stack();
-		let (color_pair_index, glyph, darken) = stack.borrow().color_details();
+		let stack = self.spot_stack().borrow();
+		let (color_pair_index, glyph, darken) = stack.spot_details();
 		let color_attr = COLOR_PAIR(color_pair_index);
 		let attr = if darken {
 			color_attr | A_DIM()
@@ -180,7 +180,7 @@ impl<'a> CursesRenderContext<'a> {
 			color_attr
 		};
 		attrset(attr);
-		addstr(&glyph.to_string());
+		addstr(glyph);
 	}
 }
 
@@ -200,7 +200,7 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32) {
 		self.spot_stack().borrow_mut().set_fill_grade(fill_grade, z);
 	}
-	fn set_glyph(&self, glyph: char, color: StrokeColor, z: i32) {
+	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32) {
 		self.spot_stack().borrow_mut().set_stroke(glyph, color, z);
 	}
 	fn set_dark(&self, z: i32) {

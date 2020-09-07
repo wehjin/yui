@@ -97,10 +97,12 @@ impl Yard for TextfieldYard {
 			if char_index >= 0 && (char_index as usize) < self.label_chars.len() {
 				let char_index = char_index as usize;
 				if ctx.focus_id() == self.id {
-					ctx.set_glyph(self.label_chars[char_index], StrokeColor::EnabledOnBackground, head_bounds.z)
+					let glyph = self.label_chars[char_index].to_string();
+					ctx.set_glyph(glyph, StrokeColor::EnabledOnBackground, head_bounds.z)
 				} else {
 					if edit.chars.len() > 0 {
-						ctx.set_glyph(self.label_chars[char_index], StrokeColor::CommentOnBackground, head_bounds.z)
+						let glyph = self.label_chars[char_index].to_string();
+						ctx.set_glyph(glyph, StrokeColor::CommentOnBackground, head_bounds.z)
 					}
 				}
 			}
@@ -113,7 +115,7 @@ impl Yard for TextfieldYard {
 			} else {
 				StrokeColor::CommentOnBackground
 			};
-			ctx.set_glyph('_', color, foot_bounds.z)
+			ctx.set_glyph('_'.to_string(), color, foot_bounds.z)
 		}
 
 		let body_bounds = body_bounds.pad(1, 1, 0, 0);
@@ -122,7 +124,7 @@ impl Yard for TextfieldYard {
 				let char_index = col - body_bounds.left;
 				if char_index >= 0 && (char_index as usize) < self.label_chars.len() {
 					let char_index = char_index as usize;
-					ctx.set_glyph(self.label_chars[char_index], StrokeColor::CommentOnBackground, body_bounds.z)
+					ctx.set_glyph(self.label_chars[char_index].to_string(), StrokeColor::CommentOnBackground, body_bounds.z)
 				}
 			} else {
 				let char_count = edit.chars.len();
@@ -143,7 +145,7 @@ impl Yard for TextfieldYard {
 							ctx.set_fill(FillColor::BackgroundWithPress, body_bounds.z);
 						}
 						if spot.char != '\n' {
-							ctx.set_glyph(spot.char, StrokeColor::BodyOnBackground, body_bounds.z);
+							ctx.set_glyph(spot.char.to_string(), StrokeColor::BodyOnBackground, body_bounds.z);
 						}
 					}
 				}
