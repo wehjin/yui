@@ -1,5 +1,5 @@
-use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Link, Padding, Spark, yard};
 use yui::palette::StrokeColor;
+use yui::prelude::*;
 
 #[derive(Debug)]
 pub struct TextDemo {}
@@ -16,12 +16,24 @@ impl Spark for TextDemo {
 	}
 
 	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
-		let trellis = yard::trellis(1, 1, Cling::Center, vec![
+		let light_innards = vec![
 			yard::label("[left]", StrokeColor::BodyOnBackground, Cling::Left),
-			yard::label("[中心]", StrokeColor::BodyOnBackground, Cling::Center),
+			yard::label("[かいさつぐち]", StrokeColor::BodyOnBackground, Cling::Center),
 			yard::label("[right]", StrokeColor::BodyOnBackground, Cling::Right),
-		]);
-		let rendering = trellis.pad(2);
+		];
+		let dark_innards = vec![
+			yard::label("[left]", StrokeColor::BodyOnPrimary, Cling::Left),
+			yard::label("[かいさつぐち]", StrokeColor::BodyOnPrimary, Cling::Center),
+			yard::label("[right]", StrokeColor::BodyOnPrimary, Cling::Right),
+		];
+		let light_half = yard::trellis(1, 1, Cling::Center, light_innards);
+		let dark_half = cluster(dark_innards).before(yard::fill(FillColor::Primary));
+		let rendering = light_half.pad(2).pack_right(50, dark_half);
 		Some(rendering)
 	}
+}
+
+fn cluster(innards: Vec<ArcYard>) -> ArcYard {
+	let arc = yard::trellis(1, 1, Cling::Center, innards);
+	arc
 }
