@@ -25,7 +25,7 @@ impl Spark for ButtonDemo {
 				yard::button_enabled("Garfunkel", |_| info!("Garfunkel")),
 				yard::button_enabled("Simon", |_| info!("Simon")),
 			]).pad(3).before(yard::fill(FillColor::Background));
-		let full = light_half.pack_right(40, dark_half).pad(1);
+		let full = light_half.pack_right(40, dark_half);
 		Some(full)
 	}
 }
