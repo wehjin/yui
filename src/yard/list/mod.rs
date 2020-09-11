@@ -134,6 +134,7 @@ impl ListYard {
 			yard_id: self.id,
 			focus_type,
 			bounds: bounds.to_owned(),
+			priority: 0,
 			action_block: Arc::new(move |ctx| {
 				if let Some(sub_focus) = &sub_focus {
 					(*sub_focus.action_block)(ctx);

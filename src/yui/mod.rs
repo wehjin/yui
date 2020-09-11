@@ -41,6 +41,7 @@ pub struct Focus {
 	pub yard_id: i32,
 	pub focus_type: FocusType,
 	pub bounds: Bounds,
+	pub priority: u32,
 	pub action_block: Arc<dyn Fn(&FocusActionContext) + Send + Sync>,
 }
 

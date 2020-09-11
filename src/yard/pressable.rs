@@ -44,6 +44,7 @@ impl Yard for PressYard {
 				yard_id: self.id(),
 				focus_type: FocusType::Submit,
 				bounds: edge_bounds,
+				priority: 0,
 				action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx, &on_press)),
 			});
 		}

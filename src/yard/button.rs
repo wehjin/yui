@@ -6,12 +6,46 @@ use crate::yard;
 use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 
-pub fn button_enabled<S: AsRef<str> + std::fmt::Display>(text: S, on_click: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
-	button(text, ActiveState::Enabled(Box::new(on_click)))
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Priority {
+	None,
+	Default,
 }
 
-pub fn button_disabled<S: AsRef<str> + std::fmt::Display>(text: S) -> ArcYard {
-	button(text, ActiveState::Disabled)
+pub enum ButtonState {
+	Enabled(Priority, Box<dyn Fn(i32) + Send + Sync + 'static>),
+	Disabled,
+}
+
+impl ButtonState {
+	pub fn is_enabled(&self) -> bool {
+		match self {
+			ButtonState::Enabled(_, _) => true,
+			ButtonState::Disabled => false,
+		}
+	}
+	pub fn enabled(click: impl Fn(i32) + Send + Sync + 'static) -> Self { ButtonState::Enabled(Priority::None, Box::new(click)) }
+	pub fn default(click: impl Fn(i32) + Send + Sync + 'static) -> Self { ButtonState::Enabled(Priority::Default, Box::new(click)) }
+	pub fn disabled() -> Self { ButtonState::Disabled }
+}
+
+pub fn button<S: AsRef<str> + std::fmt::Display>(text: S, state: ButtonState) -> ArcYard {
+	let id = rand::random();
+	let stroke_color = if state.is_enabled() { StrokeColor::EnabledOnBackground } else { StrokeColor::CommentOnBackground };
+	let uppercase_text = &text.as_ref().to_uppercase();
+	let label_yard = yard::label(uppercase_text, stroke_color, Cling::Center);
+	let is_pressed = Arc::new(RwLock::new(false));
+	let (priority, click_option) = match state {
+		ButtonState::Enabled(priority, click) => {
+			let priority = match priority {
+				Priority::None => 0,
+				Priority::Default => 1000,
+			};
+			(priority, Some(Arc::new(move || click(id)) as ArcTouch))
+		}
+		ButtonState::Disabled => (0, None),
+	};
+	Arc::new(ButtonYard { id, label_yard, is_pressed, click_option, priority })
 }
 
 struct ButtonYard {
@@ -19,29 +53,7 @@ struct ButtonYard {
 	label_yard: ArcYard,
 	is_pressed: Arc<RwLock<bool>>,
 	click_option: Option<ArcTouch>,
-}
-
-pub fn button<S: AsRef<str> + std::fmt::Display>(text: S, active_state: ActiveState) -> ArcYard {
-	let id = rand::random();
-	let label_yard = yard::label(
-		&text.as_ref().to_uppercase(),
-		match &active_state {
-			ActiveState::Enabled(_) => StrokeColor::EnabledOnBackground,
-			ActiveState::Disabled => StrokeColor::CommentOnBackground,
-		},
-		Cling::Center,
-	);
-	let is_pressed = Arc::new(RwLock::new(false));
-	let click_option: Option<ArcTouch> = match active_state {
-		ActiveState::Enabled(on_click) => Some(Arc::new(move || on_click(id))),
-		ActiveState::Disabled => None,
-	};
-	Arc::new(ButtonYard { id, label_yard, is_pressed, click_option })
-}
-
-pub enum ActiveState {
-	Enabled(Box<dyn Fn(i32) + Send + Sync + 'static>),
-	Disabled,
+	priority: u32,
 }
 
 impl Yard for ButtonYard {
@@ -73,6 +85,7 @@ impl Yard for ButtonYard {
 					yard_id: self.id,
 					focus_type: FocusType::Submit,
 					bounds: edge_bounds,
+					priority: self.priority,
 					action_block: Arc::new(move |ctx| render_submit(&is_pressed, ctx, &on_click)),
 				});
 			}

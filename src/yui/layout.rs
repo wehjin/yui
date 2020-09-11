@@ -130,30 +130,46 @@ pub struct LayoutContext {
 	refresh_fn: Arc<dyn Fn() + Sync + Send>,
 }
 
+fn pick_priority_focus(mut candidates: Vec<Rc<Focus>>) -> (Option<Rc<Focus>>, Vec<Rc<Focus>>) {
+	let (_, max_priority_index) = candidates.iter().enumerate().fold(
+		(0, None),
+		|(max_priority, max_priority_index), (focus_index, focus)| {
+			if max_priority_index.is_none() || focus.priority > max_priority {
+				(focus.priority, Some(focus_index))
+			} else {
+				(max_priority, max_priority_index)
+			}
+		},
+	);
+	match max_priority_index {
+		None => (None, candidates),
+		Some(index) => {
+			let focus = candidates.remove(index);
+			(Some(focus), candidates)
+		}
+	}
+}
+
 impl LayoutContext {
 	pub fn refresh_fn(&self) -> Arc<dyn Fn() + Sync + Send> { self.refresh_fn.clone() }
 	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {
 		self.focus_vec.borrow().last().map(|it| it.clone())
 	}
-	pub fn pop_active_focus(&mut self, active: &ActiveFocus) -> ActiveFocus {
-		let mut all_in_range = self.all_focus_in_range();
-		let next_active = if let ActiveFocus { focus: Some(focus), .. } = active {
-			let (mut candidates, peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = all_in_range.into_iter().partition(|it| it.yard_id == focus.yard_id);
-			let next_focus = if candidates.is_empty() {
-				None
+	pub fn pop_active_focus(&mut self, past_active: &ActiveFocus) -> ActiveFocus {
+		let available_foci = self.all_focus_in_range();
+		let (focus, peers) =
+			if let ActiveFocus { focus: Some(past_focus), .. } = past_active {
+				let (mut continuity_foci, new_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
+				if continuity_foci.is_empty() {
+					pick_priority_focus(new_foci)
+				} else {
+					let focus = continuity_foci.remove(0);
+					(Some(focus), new_foci)
+				}
 			} else {
-				Some(candidates.remove(0))
+				pick_priority_focus(available_foci)
 			};
-			ActiveFocus { focus: next_focus, peers }
-		} else {
-			if all_in_range.is_empty() {
-				ActiveFocus { focus: None, peers: all_in_range }
-			} else {
-				let focus = Some(all_in_range.remove(0));
-				ActiveFocus { focus, peers: all_in_range }
-			}
-		};
-		next_active
+		ActiveFocus { focus, peers }
 	}
 
 	pub fn all_focus_in_range(&self) -> Vec<Rc<Focus>> {

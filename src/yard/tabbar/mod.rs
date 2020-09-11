@@ -79,6 +79,7 @@ impl Yard for TabYard {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds,
+			priority: 0,
 			action_block: Arc::new(move |ctx| {
 				render_submit(&is_pressed, ctx, &ignore_touch());
 				(*select)();

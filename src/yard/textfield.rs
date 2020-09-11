@@ -64,6 +64,7 @@ impl Yard for TextfieldYard {
 				}
 			})),
 			bounds: edge_bounds.clone(),
+			priority: 0,
 			action_block: Arc::new(move |ctx| {
 				match ctx.action {
 					FocusAction::Go => {}

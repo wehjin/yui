@@ -1,4 +1,5 @@
 use yui::prelude::*;
+use yui::prelude::yard::ButtonState;
 
 #[derive(Debug)]
 pub struct ButtonDemo {}
@@ -17,13 +18,13 @@ impl Spark for ButtonDemo {
 	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
 		let dark_half =
 			yard::trellis(1, 1, Cling::Center, vec![
-				yard::button_enabled("Beavis", |_| info!("Beavis")),
-				yard::button_enabled("Butthead", |_| info!("Butthead")),
+				yard::button("Beavis", ButtonState::enabled(|_| info!("Beavis"))),
+				yard::button("Butthead", ButtonState::default(|_| info!("Butthead"))),
 			]).pad(3).before(yard::fill(FillColor::Primary));
 		let light_half =
 			yard::trellis(1, 1, Cling::Center, vec![
-				yard::button_enabled("Garfunkel", |_| info!("Garfunkel")),
-				yard::button_enabled("Simon", |_| info!("Simon")),
+				yard::button("Garfunkel", ButtonState::enabled(|_| info!("Garfunkel"))),
+				yard::button("Simon", ButtonState::enabled(|_| info!("Simon"))),
 			]).pad(3).before(yard::fill(FillColor::Background));
 		let full = light_half.pack_right(40, dark_half);
 		Some(full)

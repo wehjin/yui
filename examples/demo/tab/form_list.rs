@@ -4,6 +4,7 @@ use stringedit::{StringEdit, Validity};
 
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Pack, Padding, Spark, yard};
 use yui::palette::{FillColor, StrokeColor};
+use yui::yard::ButtonState;
 
 use crate::tab_page;
 
@@ -11,6 +12,16 @@ impl Spark for FormListDemo {
 	type State = StringEdit;
 	type Action = Action;
 	type Report = usize;
+
+	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(Validity::UnsignedInt) }
+
+
+	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		match action {
+			Action::StringEdit(edit_action) => AfterFlow::Revise(flow.state().edit(edit_action)),
+			Action::ShowTab(index) => AfterFlow::Report(index),
+		}
+	}
 
 	fn render(edit: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
 		let mirror = yard::label(
@@ -29,9 +40,9 @@ impl Spark for FormListDemo {
 			},
 			{
 				let button = if edit.is_valid() {
-					yard::button_enabled("Submit", link.callback(|_| Action::ShowTab(0)))
+					yard::button("Submit", ButtonState::enabled(link.callback(|_| Action::ShowTab(0))))
 				} else {
-					yard::button_disabled("Enter N")
+					yard::button("Enter N", ButtonState::Disabled)
 				};
 				button.confine_height(3, Cling::Center)
 			}
@@ -45,16 +56,6 @@ impl Spark for FormListDemo {
 			.before(yard::fill(FillColor::Background));
 		let page = tab_page(body, 1, link.callback(|index| Action::ShowTab(index)));
 		Some(page)
-	}
-
-
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(Validity::UnsignedInt) }
-
-	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
-		match action {
-			Action::StringEdit(edit_action) => AfterFlow::Revise(flow.state().edit(edit_action)),
-			Action::ShowTab(index) => AfterFlow::Report(index),
-		}
 	}
 }
 
