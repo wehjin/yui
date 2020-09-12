@@ -125,8 +125,12 @@ impl Bounds {
 			}
 		}
 	}
+	pub fn split_from_left(&self, left_cols: i32) -> (Bounds, Bounds) {
+		let center = (self.left + left_cols).min(self.right);
+		self.split_center(center)
+	}
 	pub fn split_from_right(&self, right_cols: i32) -> (Bounds, Bounds) {
-		let center = max(self.right - right_cols, self.left);
+		let center = (self.right - right_cols).max(self.left);
 		self.split_center(center)
 	}
 	pub fn split_from_bottom(&self, bottom_rows: i32) -> (Bounds, Bounds) {

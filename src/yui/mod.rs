@@ -184,6 +184,7 @@ pub trait Before {
 pub trait Pack {
 	fn pack_top(self, rows: i32, top_yard: ArcYard) -> ArcYard;
 	fn pack_bottom(self, rows: i32, bottom_yard: ArcYard) -> ArcYard;
+	fn pack_left(self, cols: i32, left_yard: ArcYard) -> ArcYard;
 	fn pack_right(self, cols: i32, right_yard: ArcYard) -> ArcYard;
 }
 

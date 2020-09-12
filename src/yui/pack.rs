@@ -25,6 +25,15 @@ impl Pack for ArcYard {
 		})
 	}
 
+	fn pack_left(self, cols: i32, left_yard: ArcYard) -> ArcYard {
+		Arc::new(PackYard {
+			id: rand::random(),
+			first_yard: self,
+			second_yard: left_yard,
+			divide: Arc::new(move |bounds| bounds.split_from_left(cols)),
+		})
+	}
+
 	fn pack_right(self, cols: i32, right_yard: ArcYard) -> ArcYard {
 		Arc::new(PackYard {
 			id: rand::random(),
