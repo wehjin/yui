@@ -72,7 +72,8 @@ impl story::Spark for Main {
 			dialog_story: {
 				let report_link = ctx.report_link().clone();
 				let action_link = ctx.link().clone();
-				DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 }.spark(
+				story::spark(
+					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
 					ctx.edge().clone(),
 					Some(Link::new(move |report| {
 						match report {
@@ -82,10 +83,10 @@ impl story::Spark for Main {
 					})),
 				)
 			},
-			form_story: FormListDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			selector_story: SelectorListDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			text_story: TextDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			buttons_story: ButtonDemo {}.spark(ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
 		}
 	}
 
