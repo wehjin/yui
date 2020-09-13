@@ -21,12 +21,9 @@ impl<A> Clone for SyncLink<A> {
 }
 
 impl<A: Send> SyncLink<A> {
-	pub fn callback<Ctx>(&self, into_action: impl Fn(Ctx) -> A + Send) -> impl Fn(Ctx) {
-		let tx = self.tx.to_owned();
-		move |ctx: Ctx| {
-			let action = into_action(ctx);
-			(*tx)(action);
-		}
+	pub fn callback<B>(&self, f: impl Fn(B) -> A + Send) -> impl Fn(B) {
+		let link = self.clone();
+		move |b: B| link.send(f(b))
 	}
 	pub fn new(tx: impl Fn(A) + 'static + Send + Sync) -> Self { SyncLink { tx: Arc::new(tx) } }
 }
