@@ -1,4 +1,4 @@
-use std::sync::mpsc::{Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, Sender};
 
 use ncurses::*;
 
@@ -7,7 +7,7 @@ use crate::yui_curses::screen::ScreenAction;
 pub(crate) struct Keyboard;
 
 impl Keyboard {
-	pub(crate) fn read_blocking(screen_tx: SyncSender<ScreenAction>, stop_rx: Receiver<()>) {
+	pub(crate) fn read_blocking(screen_tx: Sender<ScreenAction>, stop_rx: Receiver<()>) {
 		raw();
 		keypad(stdscr(), true);
 		cbreak();

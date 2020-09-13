@@ -1,7 +1,7 @@
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::thread;
 
-use crate::{ArcYard, SyncLink, Story, Link};
+use crate::{ArcYard, Link, Story, SyncLink};
 use crate::app::Edge;
 use crate::story::scope::StoryScope;
 
@@ -81,6 +81,7 @@ pub trait Flow<State, Action, Report> {
 	fn link(&self) -> &SyncLink<Action>;
 	fn start_prequel<S>(&self, spark: S, on_report: impl Fn(S::Report) + Sync + Send + 'static) -> Story<S> where S: Spark + Sync + Send + 'static;
 	fn end_prequel(&self);
+	fn redraw(&self);
 	fn report(&self, report: Report);
 }
 

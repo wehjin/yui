@@ -1,15 +1,15 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, RecvError, SyncSender};
+use std::sync::mpsc::{Receiver, RecvError, Sender};
 use std::thread;
 
 use ncurses::*;
 
 pub(crate) use spot_stack::*;
 
+use crate::{SenderLink, yard};
 use crate::palette::{FillColor, FillGrade, Palette, StrokeColor};
-use crate::yard;
 use crate::yard::ArcYard;
 use crate::yui::bounds::{Bounds, BoundsHold};
 use crate::yui::layout::{ActiveFocus, LayoutContext};
@@ -21,8 +21,8 @@ mod spot_stack;
 pub(crate) struct CursesScreen {}
 
 impl CursesScreen {
-	pub(crate) fn start() -> SyncSender<ScreenAction> {
-		let (tx, rx) = mpsc::sync_channel(64);
+	pub(crate) fn start() -> Sender<ScreenAction> {
+		let (tx, rx) = mpsc::channel();
 		curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 		clear();
 		let loop_tx = tx.clone();
@@ -68,11 +68,11 @@ impl CursesScreen {
 					ScreenAction::ResizeRefresh => {
 						let (max_x, max_y) = Self::size();
 						let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
-						let screen = loop_tx.clone();
+
 						let mut layout_ctx = LayoutContext::new(
 							init_index,
 							init_hold.clone(),
-							move || screen.send(ScreenAction::ResizeRefresh).unwrap(),
+							SenderLink::new(loop_tx.clone(), |_| ScreenAction::ResizeRefresh),
 						);
 						yard.layout(&mut layout_ctx);
 						active_focus = layout_ctx.pop_active_focus(&active_focus);
@@ -111,7 +111,7 @@ impl CursesScreen {
 	}
 }
 
-fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &SyncSender<ScreenAction>) -> Result<ScreenAction, RecvError> {
+fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) -> Result<ScreenAction, RecvError> {
 	let mut first = rx.recv()?;
 	if let ScreenAction::ResizeRefresh = &first {
 		let mut done_trying_second = false;

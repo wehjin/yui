@@ -3,18 +3,16 @@ use std::sync::{Arc, RwLock};
 use std::sync::mpsc::channel;
 use std::thread;
 
-use crate::{ArcYard, RenderContext};
+use crate::{ArcYard, Link, RenderContext};
 use crate::layout::LayoutContext;
 use crate::yard::{Yard, YardOption, YardPublisher};
 
 mod publisher;
 
-pub fn publisher(publisher: &impl YardPublisher) -> ArcYard {
+pub fn publisher(publisher: &impl YardPublisher, refresh: impl Link<()> + Send + 'static) -> ArcYard {
 	let id = rand::random();
 	let yard_lock: Arc<RwLock<(u64, Option<ArcYard>)>> = Arc::new(RwLock::new((0, None)));
-	let refresh_lock: Arc<RwLock<Option<Arc<dyn Fn() + Sync + Send>>>> = Arc::new(RwLock::new(None));
 	let thread_yard_lock = yard_lock.clone();
-	let thread_refresh_lock = refresh_lock.clone();
 	let yards = publisher.subscribe().unwrap();
 	let (emit_yard_found, recv_yard_found) = channel();
 	thread::spawn(move || {
@@ -29,20 +27,16 @@ pub fn publisher(publisher: &impl YardPublisher) -> ArcYard {
 				yard_found = true;
 				emit_yard_found.send(()).unwrap();
 			}
-			{
-				let read = thread_refresh_lock.read().unwrap();
-				if let Some(refresh) = read.deref() { (*refresh)() }
-			}
+			refresh.send(());
 		}
 	});
 	recv_yard_found.recv().unwrap();
-	Arc::new(PublisherYard { id, yard_lock, refresh_lock, layout_yard_num_lock: Arc::new(RwLock::new(0)) })
+	Arc::new(PublisherYard { id, yard_lock, layout_yard_num_lock: Arc::new(RwLock::new(0)) })
 }
 
 struct PublisherYard {
 	id: i32,
 	yard_lock: Arc<RwLock<(u64, Option<ArcYard>)>>,
-	refresh_lock: Arc<RwLock<Option<Arc<dyn Fn() + Sync + Send>>>>,
 	layout_yard_num_lock: Arc<RwLock<u64>>,
 }
 
@@ -58,10 +52,6 @@ impl Yard for PublisherYard {
 		}
 	}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		{
-			let mut write = self.refresh_lock.write().unwrap();
-			*write = Some(ctx.refresh_fn().clone());
-		}
 		let (yard_num, bounds_id) = {
 			let (yard_num, some_yard) = self.yard_lock.read().unwrap().deref().clone();
 			(

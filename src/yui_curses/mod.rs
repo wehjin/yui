@@ -5,8 +5,9 @@ use std::thread;
 use ncurses::*;
 
 use keyboard::Keyboard;
-use screen::{CursesScreen, ScreenAction};
+pub(crate) use screen::{CursesScreen, ScreenAction};
 
+use crate::{Link, SenderLink};
 use crate::yard::ArcYard;
 
 mod screen;
@@ -27,9 +28,9 @@ impl Projector {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn project_yards(yards: Receiver<Option<ArcYard>>) -> Result<(), Box<dyn Error>> {
+	pub fn project_yards(yards: Receiver<Option<ArcYard>>, enable_refresher: SenderLink<SenderLink<()>>) -> Result<(), Box<dyn Error>> {
 		let (stop_tx, stop_rx) = sync_channel(1);
-		Self::run_blocking(stop_rx, move |ctx| {
+		Self::run_blocking(stop_rx, enable_refresher, move |ctx| {
 			for yard in &yards {
 				match yard {
 					Some(yard) => ctx.set_yard(yard),
@@ -41,7 +42,11 @@ impl Projector {
 		Ok(())
 	}
 
-	pub fn run_blocking(stop_rx: Receiver<()>, block: impl Fn(Projector) + Send + 'static) {
+	pub fn run_blocking(
+		stop_rx: Receiver<()>,
+		enable_refresher: SenderLink<SenderLink<()>>,
+		block: impl Fn(Projector) + Send + 'static,
+	) {
 		setlocale(LcCategory::all, "en_US.UTF-8");
 		initscr();
 		if !has_colors() {
@@ -50,16 +55,17 @@ impl Projector {
 			std::process::exit(1);
 		}
 		let screen_tx = CursesScreen::start();
-		{
+		enable_refresher.send(SenderLink::new(screen_tx.clone(), |_| ScreenAction::ResizeRefresh));
+		thread::spawn({
 			let screen_tx = screen_tx.clone();
-			thread::spawn(move || {
-				let projector = Projector::new(move |yard| {
-					screen_tx.send(ScreenAction::SetYard(yard)).unwrap()
-				});
+			move || {
+				let projector = Projector::new(
+					move |yard| screen_tx.send(ScreenAction::SetYard(yard)).unwrap()
+				);
 				block(projector);
-			});
-		}
-		Keyboard::read_blocking(screen_tx.clone(), stop_rx)
+			}
+		});
+		Keyboard::read_blocking(screen_tx.clone(), stop_rx);
 	}
 }
 

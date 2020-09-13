@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{AfterFlow, ArcYard, Create, Fade, Flow, SyncLink, story, yard};
+use crate::{AfterFlow, ArcYard, Create, Fade, Flow, story, SyncLink, yard};
 use crate::yard::YardPublisher;
 
 pub(crate) struct PubStack {}
@@ -10,21 +10,7 @@ impl story::Spark for PubStack {
 	type Action = Action;
 	type Report = ();
 
-	fn render(vision: &Self::State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> {
-		if let Some(first_publisher) = vision.first() {
-			let yard = vision[1..].iter().fold(
-				yard::publisher(first_publisher),
-				|rear_yard, publisher| {
-					let fore_yard = yard::publisher(publisher);
-					rear_yard.fade((10, 10), fore_yard)
-				},
-			);
-			info!("New yard for YardStack");
-			Some(yard)
-		} else {
-			None
-		}
-	}
+	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { Vec::new() }
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {
@@ -43,13 +29,34 @@ impl story::Spark for PubStack {
 				next_state.push(front);
 				AfterFlow::Revise(next_state)
 			}
+			Action::Refresh => {
+				flow.redraw();
+				AfterFlow::Ignore
+			}
 		}
 	}
 
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { Vec::new() }
+	fn render(vision: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+		let refresh = link.clone().map(|_| Action::Refresh);
+		if let Some(first_publisher) = vision.first() {
+			let publisher = yard::publisher(first_publisher, refresh.clone());
+			let yard = vision[1..].iter().fold(
+				publisher,
+				|rear_yard, publisher| {
+					let fore_yard = yard::publisher(publisher, refresh.clone());
+					rear_yard.fade((10, 10), fore_yard)
+				},
+			);
+			info!("New yard for YardStack");
+			Some(yard)
+		} else {
+			None
+		}
+	}
 }
 
 pub(crate) enum Action {
 	Push(Arc<dyn YardPublisher>),
 	Pop,
+	Refresh,
 }

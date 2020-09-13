@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Flow, SyncLink, Spark, Story};
+use crate::{Flow, Spark, Story, SyncLink};
 use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A, R> {
@@ -55,6 +55,14 @@ impl<S, A, R> Flow<S, A, R> for StoryScope<S, A, R> {
 			Some(ctx) => ctx.end_dialog(),
 		}
 	}
+
+	fn redraw(&self) {
+		match &self.edge {
+			None => panic!("No edge in StoryScope"),
+			Some(ctx) => ctx.redraw(),
+		}
+	}
+
 
 	fn report(&self, report: R) {
 		(*self.on_report)(report)

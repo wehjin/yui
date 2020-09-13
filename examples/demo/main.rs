@@ -11,10 +11,11 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{Create, Flow, SyncLink, Story, Link};
+use yui::{Create, Flow, Link, Story, SyncLink};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 
+use crate::MainAction::SetTab;
 use crate::tab::button_panel::ButtonDemo;
 use crate::tab::dialog::{DialogDemo, Report};
 use crate::tab::form_list::FormListDemo;
@@ -53,6 +54,11 @@ impl From<usize> for MainTab {
 	}
 }
 
+fn select_tab(index: usize) -> MainAction {
+	let tab = MainTab::from(index);
+	MainAction::SetTab(tab)
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
 	info!("Demo");
@@ -61,9 +67,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 pub struct Main { dialog_id: u32 }
 
+#[derive(Debug)]
+pub enum MainAction {
+	SetTab(MainTab),
+	Refresh,
+}
+
 impl story::Spark for Main {
 	type State = State;
-	type Action = MainTab;
+	type Action = MainAction;
 	type Report = u32;
 
 	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
@@ -77,32 +89,41 @@ impl story::Spark for Main {
 					ctx.edge().clone(),
 					Some(SyncLink::new(move |report| {
 						match report {
-							Report::SelectedTab(index) => action_link.send(MainTab::from(index)),
+							Report::SelectedTab(index) => action_link.send(SetTab(MainTab::from(index))),
 							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
 						}
 					})),
 				)
 			},
-			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
-			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
-			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
-			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
+			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
+			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
+			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
+			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
 		}
 	}
 
-	fn flow(&self, main_tab: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
-		info!("{:?}", main_tab);
-		let next = flow.state().with_tab(main_tab);
-		AfterFlow::Revise(next)
+	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		info!("{:?}", action);
+		match action {
+			SetTab(tab) => {
+				let next = flow.state().with_tab(tab);
+				AfterFlow::Revise(next)
+			}
+			MainAction::Refresh => {
+				flow.redraw();
+				AfterFlow::Ignore
+			}
+		}
 	}
 
-	fn render(state: &State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+		let refresh_link = link.clone().map(|_| MainAction::Refresh);
 		let yard = match state.main_tab {
-			MainTab::Dialog => yard::publisher(&state.dialog_story),
-			MainTab::FormList => yard::publisher(&state.form_story),
-			MainTab::SelectorList => yard::publisher(&state.selector_story),
-			MainTab::Text => yard::publisher(&state.text_story),
-			MainTab::Buttons => yard::publisher(&state.buttons_story),
+			MainTab::Dialog => yard::publisher(&state.dialog_story, refresh_link.clone()),
+			MainTab::FormList => yard::publisher(&state.form_story, refresh_link.clone()),
+			MainTab::SelectorList => yard::publisher(&state.selector_story, refresh_link.clone()),
+			MainTab::Text => yard::publisher(&state.text_story, refresh_link.clone()),
+			MainTab::Buttons => yard::publisher(&state.buttons_story, refresh_link.clone()),
 		};
 		Some(yard)
 	}
