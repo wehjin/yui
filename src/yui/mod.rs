@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-pub use stringedit::{Action as StringEditAction, StringEdit, Validity as Validator};
+pub use stringedit::{Action as StringEditAction, StringEdit, Validity as ValidIf};
 
 pub use multi_layout::*;
 

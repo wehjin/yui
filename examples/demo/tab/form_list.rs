@@ -1,6 +1,5 @@
 use std::iter::FromIterator;
 
-use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Pack, Padding, Spark, Validator, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::prelude::*;
 use yui::yard::ButtonState;
@@ -12,7 +11,7 @@ impl Spark for FormListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(Validator::UnsignedInt) }
+	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(ValidIf::UnsignedInt) }
 
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
