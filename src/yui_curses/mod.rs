@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::sync::mpsc::{Receiver, sync_channel};
+use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 use ncurses::*;
@@ -29,7 +29,7 @@ impl Projector {
 	}
 
 	pub fn project_yards(yards: Receiver<Option<ArcYard>>, enable_refresher: SenderLink<SenderLink<()>>) -> Result<(), Box<dyn Error>> {
-		let (stop_tx, stop_rx) = sync_channel(1);
+		let (stop_tx, stop_rx) = channel();
 		Self::run_blocking(stop_rx, enable_refresher, move |ctx| {
 			for yard in &yards {
 				match yard {
