@@ -1,11 +1,11 @@
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::thread;
 
-use crate::{ArcYard, Link, Story};
+use crate::{ArcYard, SyncLink, Story, Link};
 use crate::app::Edge;
 use crate::story::scope::StoryScope;
 
-pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<Link<S::Report>>) -> Story<S>
+pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<SyncLink<S::Report>>) -> Story<S>
 	where S: Sized + Sync + Send + 'static
 {
 	let (tx, rx) = sync_channel::<Msg<S>>(100);
@@ -60,25 +60,25 @@ pub trait Spark {
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report>;
 
 	/// Produce a rendering for a state of the story.
-	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> { None }
+	fn render(_state: &Self::State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> { None }
 }
 
 pub struct Create<Action, Report> {
-	action_link: Link<Action>,
-	report_link: Option<Link<Report>>,
+	action_link: SyncLink<Action>,
+	report_link: Option<SyncLink<Report>>,
 	edge: Option<Edge>,
 }
 
 impl<Action, Report> Create<Action, Report> {
-	pub fn link(&self) -> &Link<Action> { &self.action_link }
-	pub fn report_link(&self) -> &Option<Link<Report>> { &self.report_link }
+	pub fn link(&self) -> &SyncLink<Action> { &self.action_link }
+	pub fn report_link(&self) -> &Option<SyncLink<Report>> { &self.report_link }
 	pub fn edge(&self) -> &Option<Edge> { &self.edge }
 }
 
 pub trait Flow<State, Action, Report> {
 	//! TODO: Move start_prequel and end_prequel into edge component.
 	fn state(&self) -> &State;
-	fn link(&self) -> &Link<Action>;
+	fn link(&self) -> &SyncLink<Action>;
 	fn start_prequel<S>(&self, spark: S, on_report: impl Fn(S::Report) + Sync + Send + 'static) -> Story<S> where S: Spark + Sync + Send + 'static;
 	fn end_prequel(&self);
 	fn report(&self, report: Report);

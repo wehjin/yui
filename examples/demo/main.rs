@@ -11,7 +11,7 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{Create, Flow, Link, Story};
+use yui::{Create, Flow, SyncLink, Story, Link};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 
@@ -75,7 +75,7 @@ impl story::Spark for Main {
 				story::spark(
 					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
 					ctx.edge().clone(),
-					Some(Link::new(move |report| {
+					Some(SyncLink::new(move |report| {
 						match report {
 							Report::SelectedTab(index) => action_link.send(MainTab::from(index)),
 							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
@@ -83,10 +83,10 @@ impl story::Spark for Main {
 					})),
 				)
 			},
-			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
-			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(Link::new(ctx.link().callback(MainTab::from)))),
+			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
+			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
+			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
+			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(MainTab::from)))),
 		}
 	}
 
@@ -96,7 +96,7 @@ impl story::Spark for Main {
 		AfterFlow::Revise(next)
 	}
 
-	fn render(state: &State, _link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> {
 		let yard = match state.main_tab {
 			MainTab::Dialog => yard::publisher(&state.dialog_story),
 			MainTab::FormList => yard::publisher(&state.form_story),

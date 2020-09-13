@@ -15,7 +15,7 @@ impl Spark for ButtonDemo {
 		AfterFlow::Ignore
 	}
 
-	fn render(_state: &Self::State, _link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(_state: &Self::State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> {
 		let dark_half =
 			yard::trellis(1, 1, Cling::Center, vec![
 				yard::button("Beavis", ButtonState::enabled(|_| info!("Beavis"))),

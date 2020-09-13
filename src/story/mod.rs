@@ -4,7 +4,7 @@ use std::thread;
 
 pub use spark::*;
 
-use crate::{ArcYard, Link};
+use crate::{ArcYard, SyncLink};
 use crate::yard::YardPublisher;
 
 mod scope;
@@ -24,9 +24,9 @@ impl<Spk: Spark> Clone for Story<Spk> {
 
 impl<Spk> Story<Spk> where Spk: Spark + Sync + Send + 'static
 {
-	pub fn link(&self) -> Link<Spk::Action> {
+	pub fn link(&self) -> SyncLink<Spk::Action> {
 		let sender = self.tx.to_owned();
-		Link::new(move |action: Spk::Action| { sender.send(Msg::Update(action)).unwrap(); })
+		SyncLink::new(move |action: Spk::Action| { sender.send(Msg::Update(action)).unwrap(); })
 	}
 
 	pub fn visions(&self, id: i32) -> Result<Receiver<Spk::State>, Box<dyn Error>> {

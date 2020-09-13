@@ -1,4 +1,4 @@
-use yui::{AfterFlow, ArcYard, Cling, Confine, Create, Flow, Link, Padding, Spark, yard};
+use yui::{AfterFlow, ArcYard, Cling, Confine, Create, Flow, SyncLink, Padding, Spark, yard};
 use yui::palette::FillColor;
 use yui::yard::Pressable;
 
@@ -9,7 +9,7 @@ impl Spark for SelectorListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn render(state: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
 		let value = *state;
 		let mut items = Vec::new();
 		for n in 1..11 {

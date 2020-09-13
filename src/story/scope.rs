@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use crate::{Flow, Link, Spark, Story};
+use crate::{Flow, SyncLink, Spark, Story};
 use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A, R> {
 	vision: V,
 	watchers: HashMap<i32, SyncSender<V>>,
-	link: Link<A>,
+	link: SyncLink<A>,
 	edge: Option<Edge>,
 	on_report: Arc<dyn Fn(R) + Sync + Send + 'static>,
 }
@@ -29,7 +29,7 @@ impl<V: Clone, A, R> StoryScope<V, A, R> {
 		watcher.send(self.vision.clone()).unwrap();
 	}
 
-	pub fn new(vision: V, link: Link<A>, edge: Option<Edge>, on_report: impl Fn(R) + Sync + Send + 'static) -> Self {
+	pub fn new(vision: V, link: SyncLink<A>, edge: Option<Edge>, on_report: impl Fn(R) + Sync + Send + 'static) -> Self {
 		StoryScope { vision, watchers: HashMap::new(), link, on_report: Arc::new(on_report), edge }
 	}
 }
@@ -37,12 +37,12 @@ impl<V: Clone, A, R> StoryScope<V, A, R> {
 impl<S, A, R> Flow<S, A, R> for StoryScope<S, A, R> {
 	fn state(&self) -> &S { &self.vision }
 
-	fn link(&self) -> &Link<A> { &self.link }
+	fn link(&self) -> &SyncLink<A> { &self.link }
 
 	fn start_prequel<Sprk>(&self, spark: Sprk, on_report: impl Fn(Sprk::Report) + Sync + Send + 'static) -> Story<Sprk>
 		where Sprk: Spark + Sync + Send + 'static
 	{
-		let report_link = Link::new(on_report);
+		let report_link = SyncLink::new(on_report);
 		match &self.edge {
 			None => panic!("No edge in StoryScope"),
 			Some(ctx) => ctx.start_dialog::<Sprk>(spark, report_link),

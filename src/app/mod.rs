@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::mpsc::sync_channel;
 use std::thread;
 
-use crate::{Link, Projector, story, Story};
+use crate::{SyncLink, Projector, story, Story, Link};
 use crate::app::pub_stack::PubStack;
 use crate::prelude::*;
 use crate::yard::YardPublisher;
@@ -14,13 +14,13 @@ pub(crate) mod pub_stack;
 
 mod edge;
 
-pub fn run<S>(spark: S, report_link: Option<Link<S::Report>>) -> Result<(), Box<dyn Error>>
+pub fn run<S>(spark: S, report_link: Option<SyncLink<S::Report>>) -> Result<(), Box<dyn Error>>
 	where S: Spark + Sync + Send + 'static
 {
 	let (yard_tx, yard_rx) = sync_channel(64);
-	let on_close: Link<()> = {
+	let on_close: SyncLink<()> = {
 		let yard_tx = yard_tx.clone();
-		Link::new(move |_| yard_tx.send(None).unwrap())
+		SyncLink::new(move |_| yard_tx.send(None).unwrap())
 	};
 	let stack_story: Story<PubStack> = story::spark(PubStack {}, None, Some(on_close));
 	stack_story.link().send({

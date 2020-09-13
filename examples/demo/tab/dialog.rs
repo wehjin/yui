@@ -1,11 +1,11 @@
-use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Padding, Spark, yard};
+use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, SyncLink, Padding, Spark, yard, Link};
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::ButtonState;
 
 use crate::{Main, tab_page};
 
 impl Spark for DialogDemo {
-	type State = (u32, u32, Option<Link<Self::Report>>);
+	type State = (u32, u32, Option<SyncLink<Self::Report>>);
 	type Action = Action;
 	type Report = Report;
 
@@ -37,7 +37,7 @@ impl Spark for DialogDemo {
 		}
 	}
 
-	fn render(state: &Self::State, link: &Link<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
 		let (this_dialog, next_dialog, ref report_link) = *state;
 		let gap_height = 1;
 		let row_height = 3;
