@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use std::sync::mpsc::SyncSender;
+use std::sync::mpsc::Sender;
 
 use crate::{Flow, Link, SenderLink, Spark, Story};
 use crate::app::Edge;
 
 pub(super) struct StoryScope<V, A, R> {
 	vision: V,
-	watchers: HashMap<i32, SyncSender<V>>,
+	watchers: HashMap<i32, Sender<V>>,
 	link: SenderLink<A>,
 	edge: Option<Edge>,
 	on_report: SenderLink<R>,
@@ -22,7 +22,7 @@ impl<V: Clone, A, R: Send + 'static> StoryScope<V, A, R> {
 		}
 	}
 
-	pub fn add_watcher(&mut self, id: i32, watcher: SyncSender<V>) {
+	pub fn add_watcher(&mut self, id: i32, watcher: Sender<V>) {
 		assert!(!self.watchers.contains_key(&id));
 		self.watchers.insert(id, watcher.clone());
 		watcher.send(self.vision.clone()).unwrap();

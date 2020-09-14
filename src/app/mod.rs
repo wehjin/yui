@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::thread;
 
@@ -50,7 +49,7 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 	stack_story.link().send({
 		let app_edge = Edge::new(stack_story.link(), refresh_link.clone());
 		let app_story: Story<S> = story::spark(spark, Some(app_edge), report_link);
-		pub_stack::Action::Push(Arc::new(app_story))
+		pub_stack::Action::Push(app_story.connect())
 	});
 	{
 		let yard_tx = yard_tx.clone();

@@ -1,12 +1,12 @@
-use std::sync::Arc;
+use std::sync::mpsc::SyncSender;
 
 use crate::{AfterFlow, ArcYard, Create, Fade, Flow, SenderLink, story, yard};
-use crate::yard::YardPublisher;
+use crate::yard::YardControlMsg;
 
 pub(crate) struct PubStack {}
 
 impl story::Spark for PubStack {
-	type State = Vec<Arc<dyn YardPublisher>>;
+	type State = Vec<SyncSender<YardControlMsg>>;
 	type Action = Action;
 	type Report = ();
 
@@ -56,7 +56,7 @@ impl story::Spark for PubStack {
 }
 
 pub(crate) enum Action {
-	Push(Arc<dyn YardPublisher>),
+	Push(SyncSender<YardControlMsg>),
 	Pop,
 	Refresh,
 }

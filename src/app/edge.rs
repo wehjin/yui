@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{Link, SenderLink, Spark, Story};
 use crate::app::pub_stack;
 use crate::prelude::story;
@@ -20,7 +18,7 @@ impl Edge {
 		where S: Spark + Sync + Send + 'static
 	{
 		let story = story::spark(spark, Some(self.clone()), Some(report_link));
-		self.link.send(pub_stack::Action::Push(Arc::new(story.clone())));
+		self.link.send(pub_stack::Action::Push(story.connect()));
 		story
 	}
 

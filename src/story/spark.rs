@@ -1,4 +1,4 @@
-use std::sync::mpsc::{sync_channel, SyncSender};
+use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
 use crate::{ArcYard, SenderLink, Story};
@@ -8,7 +8,7 @@ use crate::story::scope::StoryScope;
 pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<SenderLink<S::Report>>) -> Story<S>
 	where S: Sized + Sync + Send + 'static
 {
-	let (tx, rx) = sync_channel::<Msg<S>>(100);
+	let (tx, rx) = channel::<Msg<S>>();
 	let story = Story { tx };
 	let action_link = story.link().clone();
 	thread::spawn(move || {
@@ -94,6 +94,6 @@ pub enum AfterFlow<State, Report> {
 }
 
 pub(crate) enum Msg<S: Spark> {
-	Subscribe(i32, SyncSender<S::State>),
+	Subscribe(i32, Sender<S::State>),
 	Update(S::Action),
 }
