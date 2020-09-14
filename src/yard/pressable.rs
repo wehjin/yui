@@ -1,24 +1,26 @@
 use std::sync::{Arc, RwLock};
 
+use crate::{Link, SenderLink, SyncLink};
 use crate::palette::FillColor;
 use crate::yard::{ArcTouch, ArcYard, Yard};
 use crate::yui::{Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 
 pub trait Pressable {
-	fn pressable(self, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard;
+	fn pressable(self, on_press: SenderLink<i32>) -> ArcYard;
 }
 
 impl Pressable for ArcYard {
-	fn pressable(self, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
-		pressable(self, on_press)
-	}
+	fn pressable(self, on_press: SenderLink<i32>) -> ArcYard { pressable(self, on_press) }
 }
 
-pub fn pressable(yard: ArcYard, on_press: impl Fn(i32) + Send + Sync + 'static) -> ArcYard {
+pub fn pressable(yard: ArcYard, on_press: SenderLink<i32>) -> ArcYard {
 	let id = rand::random();
 	let is_pressed = Arc::new(RwLock::new(false));
-	let on_press = Arc::new(move || on_press(id));
+	let on_press = Arc::new({
+		let sync_press: SyncLink<i32> = on_press.into();
+		move || sync_press.send(id)
+	});
 	Arc::new(PressYard { id, yard, is_pressed, on_press })
 }
 

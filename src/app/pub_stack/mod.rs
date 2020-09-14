@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{AfterFlow, ArcYard, Create, Fade, Flow, story, SyncLink, yard};
+use crate::{AfterFlow, ArcYard, Create, Fade, Flow, SenderLink, story, yard};
 use crate::yard::YardPublisher;
 
 pub(crate) struct PubStack {}
@@ -36,7 +36,7 @@ impl story::Spark for PubStack {
 		}
 	}
 
-	fn render(vision: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(vision: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let refresh = link.clone().map(|_| Action::Refresh);
 		if let Some(first_publisher) = vision.first() {
 			let publisher = yard::publisher(first_publisher, refresh.clone());

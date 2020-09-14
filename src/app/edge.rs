@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use crate::{Link, SenderLink, Spark, Story, SyncLink};
+use crate::{Link, SenderLink, Spark, Story};
 use crate::app::pub_stack;
 use crate::prelude::story;
 
 pub struct Edge {
-	link: SyncLink<pub_stack::Action>,
+	link: SenderLink<pub_stack::Action>,
 	redraw: SenderLink<()>,
 }
 
@@ -16,7 +16,7 @@ impl Clone for Edge {
 }
 
 impl Edge {
-	pub fn start_dialog<S>(&self, spark: S, report_link: SyncLink<S::Report>) -> Story<S>
+	pub fn start_dialog<S>(&self, spark: S, report_link: SenderLink<S::Report>) -> Story<S>
 		where S: Spark + Sync + Send + 'static
 	{
 		let story = story::spark(spark, Some(self.clone()), Some(report_link));
@@ -33,7 +33,7 @@ impl Edge {
 		self.redraw.send(())
 	}
 
-	pub(crate) fn new(link: SyncLink<pub_stack::Action>, redraw: SenderLink<()>) -> Self {
+	pub(crate) fn new(link: SenderLink<pub_stack::Action>, redraw: SenderLink<()>) -> Self {
 		Edge { link, redraw }
 	}
 }

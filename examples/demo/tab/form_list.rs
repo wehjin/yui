@@ -2,6 +2,7 @@ use std::iter::FromIterator;
 
 use yui::palette::{FillColor, StrokeColor};
 use yui::prelude::*;
+use yui::SenderLink;
 use yui::yard::ButtonState;
 
 use crate::tab_page;
@@ -21,7 +22,7 @@ impl Spark for FormListDemo {
 		}
 	}
 
-	fn render(edit: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(edit: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let mirror = yard::label(
 			&String::from_iter(edit.chars.to_vec()),
 			StrokeColor::BodyOnBackground,
@@ -33,12 +34,12 @@ impl Spark for FormListDemo {
 					1931,
 					"Label".into(),
 					edit.clone(),
-					link.callback(|new_edit| Action::StringEdit(new_edit)),
+					link.clone().map(Action::StringEdit),
 				).confine_height(3, Cling::Center)
 			},
 			{
 				let button = if edit.is_valid() {
-					yard::button("Submit", ButtonState::enabled(link.callback(|_| Action::ShowTab(0))))
+					yard::button("Submit", ButtonState::enabled(link.clone().map(|_| Action::ShowTab(0))))
 				} else {
 					yard::button("Enter N", ButtonState::Disabled)
 				};
@@ -52,7 +53,7 @@ impl Spark for FormListDemo {
 			.confine_width(50, Cling::Center)
 			.pad(1)
 			.before(yard::fill(FillColor::Background));
-		let page = tab_page(body, 1, link.callback(|index| Action::ShowTab(index)));
+		let page = tab_page(body, 1, Some(link.clone().map(Action::ShowTab)));
 		Some(page)
 	}
 }

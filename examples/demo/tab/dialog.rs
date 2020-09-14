@@ -1,11 +1,11 @@
-use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, SyncLink, Padding, Spark, yard, Link};
+use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Padding, SenderLink, Spark, SyncLink, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::ButtonState;
 
 use crate::{Main, tab_page};
 
 impl Spark for DialogDemo {
-	type State = (u32, u32, Option<SyncLink<Self::Report>>);
+	type State = (u32, u32, Option<SenderLink<Self::Report>>);
 	type Action = Action;
 	type Report = Report;
 
@@ -19,9 +19,10 @@ impl Spark for DialogDemo {
 			Action::Open => {
 				let (_, next_dialog, _) = *flow.state();
 				let link = flow.link().clone();
+				let sync_link: SyncLink<Action> = link.into();
 				flow.start_prequel(
 					Main { dialog_id: next_dialog },
-					move |next_dialog| link.send(Action::NextDialog(next_dialog)),
+					move |next_dialog| sync_link.send(Action::NextDialog(next_dialog)),
 				);
 				AfterFlow::Ignore
 			}
@@ -37,19 +38,19 @@ impl Spark for DialogDemo {
 		}
 	}
 
-	fn render(state: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let (this_dialog, next_dialog, ref report_link) = *state;
 		let gap_height = 1;
 		let row_height = 3;
 		let rows = vec![
 			yard::label(&format!("{}", this_dialog), StrokeColor::BodyOnBackground, Cling::Center),
 			{
-				let link = link.clone();
-				yard::button(&format!("Next {}", next_dialog), ButtonState::enabled(link.callback(|_| Action::Open)))
+				let link = link.clone().map(|_| Action::Open);
+				yard::button(&format!("Next {}", next_dialog), ButtonState::enabled(link))
 			},
 			{
-				let link = link.clone();
-				yard::button("Close", ButtonState::enabled(link.callback(|_| Action::Close)))
+				let link = link.clone().map(|_| Action::Close);
+				yard::button("Close", ButtonState::enabled(link))
 			},
 		];
 		let min_trellis_height = rows.len() as i32 * (row_height + gap_height) - gap_height;
@@ -59,8 +60,8 @@ impl Spark for DialogDemo {
 			.before(yard::fill(FillColor::Background));
 
 		let page = {
-			let report_link = report_link.clone();
-			tab_page(content, 0, move |n| if let Some(ref report_link) = report_link { report_link.send(Report::SelectedTab(n)) })
+			let select_tab = report_link.clone().map(|report_link| report_link.map(Report::SelectedTab));
+			tab_page(content, 0, select_tab)
 		};
 		Some(page)
 	}

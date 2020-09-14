@@ -11,7 +11,7 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{Create, Flow, Link, Story, SyncLink};
+use yui::{Create, Flow, Link, SenderLink, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Pack, Padding, story, yard};
 use yui::palette::{FillColor, StrokeColor};
 
@@ -87,7 +87,7 @@ impl story::Spark for Main {
 				story::spark(
 					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
 					ctx.edge().clone(),
-					Some(SyncLink::new(move |report| {
+					Some(SenderLink::new_f(move |report| {
 						match report {
 							Report::SelectedTab(index) => action_link.send(SetTab(MainTab::from(index))),
 							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
@@ -95,10 +95,10 @@ impl story::Spark for Main {
 					})),
 				)
 			},
-			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
-			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
-			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
-			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SyncLink::new(ctx.link().callback(select_tab)))),
+			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
+			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
+			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
+			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
 		}
 	}
 
@@ -116,7 +116,7 @@ impl story::Spark for Main {
 		}
 	}
 
-	fn render(state: &State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let refresh_link = link.clone().map(|_| MainAction::Refresh);
 		let yard = match state.main_tab {
 			MainTab::Dialog => yard::publisher(&state.dialog_story, refresh_link.clone()),
@@ -153,8 +153,17 @@ fn app_bar() -> ArcYard {
 	header_row
 }
 
-fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: impl Fn(usize) + Send + Sync + 'static) -> ArcYard {
+fn tab_page(
+	content: ArcYard,
+	active_tab_index: usize,
+	select_tab: Option<SenderLink<usize>>,
+) -> ArcYard {
+	let select_tab = match select_tab {
+		None => SenderLink::ignore(),
+		Some(link) => link.clone(),
+	};
+	let tabbar = yard::tabbar(TABS, active_tab_index, select_tab);
 	content
-		.pack_top(3, yard::tabbar(TABS, active_tab_index, select_tab))
+		.pack_top(3, tabbar)
 		.pack_top(3, app_bar())
 }

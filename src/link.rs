@@ -32,6 +32,15 @@ impl<A: Send + 'static> SenderLink<A> {
 		});
 		SenderLink { tx }
 	}
+	pub fn new_f(f: impl Fn(A) + Send + 'static) -> Self {
+		let f = Box::new(f);
+		let (tx, rx) = channel();
+		thread::spawn(move || {
+			for a in rx { f(a) }
+		});
+		SenderLink { tx }
+	}
+	pub fn ignore() -> Self { Self::new_f(|_| {}) }
 	pub fn map<B: Send + 'static>(self, f: impl Fn(B) -> A + Send + 'static) -> SenderLink<B> {
 		let f = Box::new(f);
 		let link = self;
@@ -42,6 +51,10 @@ impl<A: Send + 'static> SenderLink<A> {
 			}
 		});
 		SenderLink { tx }
+	}
+	pub fn callback<B>(&self, f: impl Fn(B) -> A + Send) -> impl Fn(B) {
+		let link = self.clone();
+		move |b: B| link.send(f(b))
 	}
 }
 

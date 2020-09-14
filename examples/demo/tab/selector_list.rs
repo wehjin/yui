@@ -1,4 +1,4 @@
-use yui::{AfterFlow, ArcYard, Cling, Confine, Create, Flow, SyncLink, Padding, Spark, yard};
+use yui::{AfterFlow, ArcYard, Cling, Confine, Create, Flow, Padding, SenderLink, Spark, yard};
 use yui::palette::FillColor;
 use yui::yard::Pressable;
 
@@ -9,7 +9,7 @@ impl Spark for SelectorListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn render(state: &Self::State, link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let value = *state;
 		let mut items = Vec::new();
 		for n in 1..11 {
@@ -21,11 +21,15 @@ impl Spark for SelectorListDemo {
 				15,
 				FillColor::Background,
 			);
-			let item = quad_label.pad(1).pressable(link.callback(move |_| Action::SetValue(n)));
+			let item = quad_label.pad(1).pressable(link.clone().map(move |_| Action::SetValue(n)));
 			items.push((4, item));
 		};
 		let body = yard::list(LIST_ID, value as usize - 1, items).confine_width(40, Cling::Center);
-		let page = tab_page(body, 2, link.callback(|index| Action::ShowTab(index)));
+		let page = tab_page(
+			body,
+			2,
+			Some(link.clone().map(Action::ShowTab)),
+		);
 		Some(page)
 	}
 

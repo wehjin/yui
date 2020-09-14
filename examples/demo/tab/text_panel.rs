@@ -1,5 +1,6 @@
 use yui::palette::StrokeColor;
 use yui::prelude::*;
+use yui::SenderLink;
 
 #[derive(Debug)]
 pub struct TextDemo {}
@@ -15,7 +16,7 @@ impl Spark for TextDemo {
 		AfterFlow::Ignore
 	}
 
-	fn render(_state: &Self::State, _link: &SyncLink<Self::Action>) -> Option<ArcYard> {
+	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let light_innards = vec![
 			yard::label("[left]", StrokeColor::BodyOnBackground, Cling::Left),
 			yard::label("[かいさつぐち]", StrokeColor::BodyOnBackground, Cling::Center),

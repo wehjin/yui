@@ -3,18 +3,18 @@ use std::sync::Arc;
 
 use stringedit::StringEdit;
 
-use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, RenderContext};
+use crate::{Before, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, Link, RenderContext, SenderLink, SyncLink};
 use crate::palette::{FillColor, StrokeColor};
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yard;
 use crate::yui::layout::LayoutContext;
 
-pub fn textfield(id: i32, label: &str, edit: StringEdit, update: impl Fn(stringedit::Action) + 'static + Send + Sync) -> ArcYard {
+pub fn textfield(id: i32, label: &str, edit: StringEdit, update: SenderLink<stringedit::Action>) -> ArcYard {
 	let yard = TextfieldYard {
 		id,
 		label_chars: label.chars().collect(),
 		edit: Arc::new(edit),
-		update: Arc::new(update),
+		update: update.into(),
 	};
 	let arc_yard = Arc::new(yard) as ArcYard;
 	arc_yard.before(yard::fill(FillColor::BackgroundWithFocus))
@@ -24,7 +24,7 @@ struct TextfieldYard {
 	id: i32,
 	label_chars: Vec<char>,
 	edit: Arc<StringEdit>,
-	update: Arc<dyn Fn(stringedit::Action) + 'static + Send + Sync>,
+	update: SyncLink<stringedit::Action>,
 }
 
 impl Yard for TextfieldYard {
@@ -46,7 +46,7 @@ impl Yard for TextfieldYard {
 						if cursor_at_left {
 							FocusMotionFuture::Default
 						} else {
-							(focus_update)(stringedit::Action::MoveCursorLeft);
+							focus_update.send(stringedit::Action::MoveCursorLeft);
 							FocusMotionFuture::Skip
 						}
 					}
@@ -55,7 +55,7 @@ impl Yard for TextfieldYard {
 						if cursor_at_right {
 							FocusMotionFuture::Default
 						} else {
-							(focus_update)(stringedit::Action::MoveCursorRight);
+							focus_update.send(stringedit::Action::MoveCursorRight);
 							FocusMotionFuture::Skip
 						}
 					}
@@ -70,13 +70,13 @@ impl Yard for TextfieldYard {
 					FocusAction::Go => {}
 					FocusAction::Change(c) => {
 						if !c.is_control() {
-							(action_update)(stringedit::Action::InsertChar(c));
+							action_update.send(stringedit::Action::InsertChar(c));
 							ctx.refresh.deref()();
 						} else if c == '\x08' {
-							(action_update)(stringedit::Action::DeleteCharBeforeCursor);
+							action_update.send(stringedit::Action::DeleteCharBeforeCursor);
 							ctx.refresh.deref()();
 						} else if c == '\x7f' {
-							(action_update)(stringedit::Action::DeleteCharAtCursor);
+							action_update.send(stringedit::Action::DeleteCharAtCursor);
 							ctx.refresh.deref()();
 						}
 					}

@@ -1,8 +1,8 @@
 use std::sync::{Arc, RwLock};
 
+use crate::{Link, SenderLink, SyncLink, yard};
 use crate::palette::{FillGrade, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard, Yard, YardOption};
-use crate::yard;
 use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
 use crate::yui::layout::LayoutContext;
 
@@ -13,7 +13,7 @@ pub enum Priority {
 }
 
 pub enum ButtonState {
-	Enabled(Priority, Box<dyn Fn(i32) + Send + Sync + 'static>),
+	Enabled(Priority, SenderLink<i32>),
 	Disabled,
 }
 
@@ -24,8 +24,8 @@ impl ButtonState {
 			ButtonState::Disabled => false,
 		}
 	}
-	pub fn enabled(click: impl Fn(i32) + Send + Sync + 'static) -> Self { ButtonState::Enabled(Priority::None, Box::new(click)) }
-	pub fn default(click: impl Fn(i32) + Send + Sync + 'static) -> Self { ButtonState::Enabled(Priority::Default, Box::new(click)) }
+	pub fn enabled(click: SenderLink<i32>) -> Self { ButtonState::Enabled(Priority::None, click) }
+	pub fn default(click: SenderLink<i32>) -> Self { ButtonState::Enabled(Priority::Default, click) }
 	pub fn disabled() -> Self { ButtonState::Disabled }
 }
 
@@ -41,7 +41,8 @@ pub fn button<S: AsRef<str> + std::fmt::Display>(text: S, state: ButtonState) ->
 				Priority::None => 0,
 				Priority::Default => 1000,
 			};
-			(priority, Some(Arc::new(move || click(id)) as ArcTouch))
+			let sync_click: SyncLink<i32> = click.into();
+			(priority, Some(Arc::new(move || sync_click.send(id)) as ArcTouch))
 		}
 		ButtonState::Disabled => (0, None),
 	};

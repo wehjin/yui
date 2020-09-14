@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::sync::Arc;
-use std::sync::mpsc::{channel, sync_channel};
+use std::sync::mpsc::channel;
 use std::thread;
 
-use crate::{Link, Projector, SenderLink, story, Story, SyncLink};
+use crate::{Link, Projector, SenderLink, story, Story};
 use crate::app::pub_stack::PubStack;
 use crate::prelude::*;
 use crate::yard::YardPublisher;
@@ -35,17 +35,17 @@ fn start_refresher() -> SenderLink<RefresherAction> {
 	SenderLink { tx }
 }
 
-pub fn run<S>(spark: S, report_link: Option<SyncLink<S::Report>>) -> Result<(), Box<dyn Error>>
+pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<(), Box<dyn Error>>
 	where S: Spark + Sync + Send + 'static
 {
 	let refresher = start_refresher();
-	let (yard_tx, yard_rx) = sync_channel(64);
-	let on_close: SyncLink<()> = {
+	let (yard_tx, yard_rx) = channel();
+	let on_close: SenderLink<()> = {
 		let yard_tx = yard_tx.clone();
-		SyncLink::new(move |_| yard_tx.send(None).unwrap())
+		SenderLink::new(yard_tx, |_| None)
 	};
 	let refresh_link = refresher.clone().map(|_| RefresherAction::Refresh);
-	let stack_edge = Edge::new(SyncLink::ignore(), refresh_link.clone());
+	let stack_edge = Edge::new(SenderLink::ignore(), refresh_link.clone());
 	let stack_story: Story<PubStack> = story::spark(PubStack {}, Some(stack_edge), Some(on_close));
 	stack_story.link().send({
 		let app_edge = Edge::new(stack_story.link(), refresh_link.clone());
