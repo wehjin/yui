@@ -35,7 +35,7 @@ fn start_refresher() -> SenderLink<RefresherAction> {
 }
 
 pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<(), Box<dyn Error>>
-	where S: Spark + Sync + Send + 'static
+	where S: Spark + Send + 'static
 {
 	let refresher = start_refresher();
 	let (yard_tx, yard_rx) = channel();

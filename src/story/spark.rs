@@ -6,7 +6,7 @@ use crate::app::Edge;
 use crate::story::scope::StoryScope;
 
 pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<SenderLink<S::Report>>) -> Story<S>
-	where S: Sized + Sync + Send + 'static
+	where S: Sized + Send + 'static
 {
 	let (tx, rx) = channel::<Msg<S>>();
 	let story = Story { tx };
