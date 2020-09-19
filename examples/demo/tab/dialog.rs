@@ -1,4 +1,4 @@
-use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Link, Padding, SenderLink, Spark, SyncLink, yard};
+use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Padding, SenderLink, Spark, yard};
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::ButtonState;
 
@@ -19,10 +19,9 @@ impl Spark for DialogDemo {
 			Action::Open => {
 				let (_, next_dialog, _) = *flow.state();
 				let link = flow.link().clone();
-				let sync_link: SyncLink<Action> = link.into();
 				flow.start_prequel(
 					Main { dialog_id: next_dialog },
-					move |next_dialog| sync_link.send(Action::NextDialog(next_dialog)),
+					link.clone().map(|next_dialog| Action::NextDialog(next_dialog)),
 				);
 				AfterFlow::Ignore
 			}

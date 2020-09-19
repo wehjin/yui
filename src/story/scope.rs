@@ -38,13 +38,12 @@ impl<S, A, R: Send + 'static> Flow<S, A, R> for StoryScope<S, A, R> {
 
 	fn link(&self) -> &SenderLink<A> { &self.link }
 
-	fn start_prequel<Sprk>(&self, spark: Sprk, on_report: impl Fn(Sprk::Report) + Sync + Send + 'static) -> Story<Sprk>
+	fn start_prequel<Sprk>(&self, spark: Sprk, on_report: SenderLink<Sprk::Report>) -> Story<Sprk>
 		where Sprk: Spark + Sync + Send + 'static
 	{
-		let report_link = SenderLink::new_f(on_report);
 		match &self.edge {
 			None => panic!("No edge in StoryScope"),
-			Some(ctx) => ctx.start_dialog::<Sprk>(spark, report_link),
+			Some(ctx) => ctx.start_dialog::<Sprk>(spark, on_report),
 		}
 	}
 

@@ -78,7 +78,7 @@ pub trait Flow<State, Action, Report> {
 	//! TODO: Move start_prequel and end_prequel into edge component.
 	fn state(&self) -> &State;
 	fn link(&self) -> &SenderLink<Action>;
-	fn start_prequel<S>(&self, spark: S, on_report: impl Fn(S::Report) + Sync + Send + 'static) -> Story<S> where S: Spark + Sync + Send + 'static;
+	fn start_prequel<S>(&self, spark: S, on_report: SenderLink<S::Report>) -> Story<S> where S: Spark + Sync + Send + 'static;
 	fn end_prequel(&self);
 	fn redraw(&self);
 	fn report(&self, report: Report);
