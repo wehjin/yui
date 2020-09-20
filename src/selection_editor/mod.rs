@@ -18,6 +18,7 @@ pub enum Action {
 	FocusBackward,
 	Press,
 	Select,
+	SelectIndex(usize),
 	Close,
 }
 
@@ -71,19 +72,33 @@ impl<T: Clone> SelectionEditor<T> {
 		if self.is_closed { self } else {
 			match action {
 				Action::FocusForward => SelectionEditor {
-					focused_index: (self.focused_index as i64 + 1).min(self.choices.len() as i64 - 1) as usize,
 					is_pressed: false,
+					focused_index: (self.focused_index as i64 + 1).min(self.choices.len() as i64 - 1) as usize,
 					..self
 				},
 				Action::FocusBackward => SelectionEditor {
-					focused_index: (self.focused_index as i64 - 1).max(0) as usize,
 					is_pressed: false,
+					focused_index: (self.focused_index as i64 - 1).max(0) as usize,
 					..self
 				},
 				Action::Press => SelectionEditor {
 					is_pressed: true,
 					..self
 				},
+				Action::SelectIndex(index) => {
+					let safe_index = (index as i64).min(self.choices.len() as i64 - 1).max(0) as usize;
+					SelectionEditor {
+						is_pressed: false,
+						focused_index: safe_index,
+						selection: if safe_index == self.start_index {
+							None
+						} else {
+							let value = (safe_index, self.choices[safe_index].clone());
+							Some(value)
+						},
+						..self
+					}
+				}
 				Action::Select => SelectionEditor {
 					is_pressed: false,
 					selection: if self.focused_index == self.start_index {

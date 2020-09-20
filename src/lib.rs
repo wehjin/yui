@@ -15,6 +15,7 @@ pub use self::yui::*;
 pub mod app;
 pub mod palette;
 pub mod selection_editor;
+pub mod sparks;
 pub mod story;
 pub mod yard;
 
