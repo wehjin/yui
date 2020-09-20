@@ -14,9 +14,10 @@ pub use self::yui::*;
 
 pub mod app;
 pub mod palette;
+pub mod selection_editor;
 pub mod story;
 pub mod yard;
+
 mod link;
 mod yui;
 mod yui_curses;
-
