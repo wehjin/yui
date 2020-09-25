@@ -15,7 +15,7 @@ impl Clone for Edge {
 
 impl Edge {
 	pub fn start_dialog<S>(&self, spark: S, report_link: SenderLink<S::Report>) -> Story<S>
-		where S: Spark + Sync + Send + 'static
+		where S: Spark + Send + 'static
 	{
 		let story = story::spark(spark, Some(self.clone()), Some(report_link));
 		self.link.send(pub_stack::Action::Push(story.connect()));

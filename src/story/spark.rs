@@ -59,7 +59,7 @@ pub trait Spark {
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report>;
 
 	/// Produce a rendering for a state of the story.
-	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> { None }
+	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard>;
 }
 
 pub struct Create<Action, Report> {
@@ -78,7 +78,7 @@ pub trait Flow<State, Action, Report> {
 	//! TODO: Move start_prequel and end_prequel into edge component.
 	fn state(&self) -> &State;
 	fn link(&self) -> &SenderLink<Action>;
-	fn start_prequel<S>(&self, spark: S, on_report: SenderLink<S::Report>) -> Story<S> where S: Spark + Sync + Send + 'static;
+	fn start_prequel<S>(&self, spark: S, on_report: SenderLink<S::Report>) -> Story<S> where S: Spark + Send + 'static;
 	fn end_prequel(&self);
 	fn redraw(&self);
 	fn report(&self, report: Report);

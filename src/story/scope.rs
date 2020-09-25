@@ -39,7 +39,7 @@ impl<S, A, R: Send + 'static> Flow<S, A, R> for StoryScope<S, A, R> {
 	fn link(&self) -> &SenderLink<A> { &self.link }
 
 	fn start_prequel<Sprk>(&self, spark: Sprk, on_report: SenderLink<Sprk::Report>) -> Story<Sprk>
-		where Sprk: Spark + Sync + Send + 'static
+		where Sprk: Spark + Send + 'static
 	{
 		match &self.edge {
 			None => panic!("No edge in StoryScope"),

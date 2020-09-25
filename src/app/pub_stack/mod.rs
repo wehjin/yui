@@ -44,7 +44,7 @@ impl story::Spark for PubStack {
 				publisher,
 				|rear_yard, publisher| {
 					let fore_yard = yard::publisher(publisher, refresh.clone());
-					rear_yard.fade((10, 10), fore_yard)
+					rear_yard.fade((4, 4), fore_yard)
 				},
 			);
 			info!("New yard for YardStack");
