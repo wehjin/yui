@@ -194,7 +194,7 @@ impl BoundsHold {
 			}
 			Some(index) => {
 				let bounds_index = *index;
-				self.holdings.get(bounds_index).unwrap()
+				self.holdings.get(bounds_index).expect("get holding at bounds_index")
 			}
 		}
 	}

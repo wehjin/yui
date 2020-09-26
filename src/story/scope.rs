@@ -17,7 +17,7 @@ impl<V: Clone, A, R: Send + 'static> StoryScope<V, A, R> {
 		self.vision = vision;
 		if announce {
 			self.watchers.iter().for_each(|(_, it)| {
-				it.send(self.vision.clone()).unwrap()
+				it.send(self.vision.clone()).expect("send vision to watcher")
 			});
 		}
 	}
@@ -25,7 +25,7 @@ impl<V: Clone, A, R: Send + 'static> StoryScope<V, A, R> {
 	pub fn add_watcher(&mut self, id: i32, watcher: Sender<V>) {
 		assert!(!self.watchers.contains_key(&id));
 		self.watchers.insert(id, watcher.clone());
-		watcher.send(self.vision.clone()).unwrap();
+		watcher.send(self.vision.clone()).expect("send vision to watcher");
 	}
 
 	pub fn new(vision: V, link: SenderLink<A>, edge: Option<Edge>, on_report: SenderLink<R>) -> Self {

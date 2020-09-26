@@ -53,7 +53,7 @@ struct TabYard {
 
 impl TabYard {
 	fn is_pressed(&self) -> bool {
-		let is_pressed = self.is_pressed.read().unwrap().deref().to_owned();
+		let is_pressed = self.is_pressed.read().expect("read is_pressed").deref().to_owned();
 		is_pressed
 	}
 }

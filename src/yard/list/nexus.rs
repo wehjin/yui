@@ -11,7 +11,7 @@ mod tests {
 		let item_tops = vec![0, 2];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
 		let top_nexus = Nexus::new(0, &item_heights);
-		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
+		let bottom_nexus = top_nexus.down(&item_heights).expect("top_nexus.down");
 		let top_pivot_row = top_nexus.pivot_row(10, 2, list_height, 2, &item_tops);
 		let bottom_pivot_row = bottom_nexus.pivot_row(10, 2, list_height, 2, &item_tops);
 		assert_eq!(top_pivot_row, 2);
@@ -24,7 +24,7 @@ mod tests {
 		let item_tops = vec![0, 2];
 		let list_height = item_heights.iter().fold(0, |sum, part| (sum + *part));
 		let top_nexus = Nexus::new(0, &item_heights);
-		let bottom_nexus = top_nexus.down(&item_heights).unwrap();
+		let bottom_nexus = top_nexus.down(&item_heights).expect("top_nexus.down");
 		let top_pivot_row = top_nexus.pivot_row(4, 0, list_height, 2, &item_tops);
 		let bottom_pivot_row = bottom_nexus.pivot_row(4, 0, list_height, 2, &item_tops);
 		assert_eq!(top_pivot_row, 0);
@@ -36,9 +36,9 @@ mod tests {
 		let item_heights = vec![2, 3];
 		let nexus = Nexus::new(0, &item_heights);
 		let u = nexus.up(&item_heights);
-		let d = nexus.down(&item_heights).unwrap();
+		let d = nexus.down(&item_heights).expect("nexus down");
 		let dd = d.down(&item_heights);
-		let du = d.up(&item_heights).unwrap();
+		let du = d.up(&item_heights).expect("up on down nexus");
 		assert_eq!(u, None);
 		assert_eq!(d, Nexus::Down { last_pos: 4, item_index: 1, max_index: 2 });
 		assert_eq!(dd, None);
@@ -183,7 +183,7 @@ impl Nexus {
 	pub fn new(index: usize, item_heights: &Vec<i32>) -> Self {
 		let mut nexus = Nexus::Up { first_pos: 0, item_index: 0, max_index: item_heights.len() };
 		for _ in 0..index {
-			nexus = nexus.down(item_heights).unwrap();
+			nexus = nexus.down(item_heights).expect("nexus down");
 		}
 		nexus
 	}

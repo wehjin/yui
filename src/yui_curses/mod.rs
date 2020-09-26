@@ -37,7 +37,7 @@ impl Projector {
 					None => break,
 				}
 			}
-			stop_tx.send(()).unwrap();
+			stop_tx.send(()).expect("send () to stop_tx");
 		});
 		Ok(())
 	}
@@ -60,7 +60,7 @@ impl Projector {
 			let screen_tx = screen_tx.clone();
 			move || {
 				let projector = Projector::new(
-					move |yard| screen_tx.send(ScreenAction::SetYard(yard)).unwrap()
+					move |yard| screen_tx.send(ScreenAction::SetYard(yard)).expect("send SetYard to screen")
 				);
 				block(projector);
 			}

@@ -13,24 +13,24 @@ pub fn publisher(publisher: &impl YardPublisher, refresh: impl Link<()> + Send +
 	let id = rand::random();
 	let yard_lock: Arc<RwLock<(u64, Option<ArcYard>)>> = Arc::new(RwLock::new((0, None)));
 	let thread_yard_lock = yard_lock.clone();
-	let yards = publisher.subscribe().unwrap();
+	let yards = publisher.subscribe().expect("subscribe publisher");
 	let (emit_yard_found, recv_yard_found) = channel();
 	thread::spawn(move || {
 		let mut yard_found = false;
 		for yard in yards {
 			{
-				let mut write = thread_yard_lock.write().unwrap();
+				let mut write = thread_yard_lock.write().expect("write thread_yard_lock");
 				let count = write.deref().0;
 				*write = (count + 1, Some(yard));
 			}
 			if !yard_found {
 				yard_found = true;
-				emit_yard_found.send(()).unwrap();
+				emit_yard_found.send(()).expect("send () to emit_yard_found");
 			}
 			refresh.send(());
 		}
 	});
-	recv_yard_found.recv().unwrap();
+	recv_yard_found.recv().expect("receive yard_found");
 	Arc::new(PublisherYard { id, yard_lock, layout_yard_num_lock: Arc::new(RwLock::new(0)) })
 }
 
@@ -42,8 +42,8 @@ struct PublisherYard {
 
 impl Yard for PublisherYard {
 	fn render(&self, ctx: &dyn RenderContext) {
-		let (yard_num, some_yard) = self.yard_lock.read().unwrap().deref().clone();
-		let layout_yard_num = self.layout_yard_num_lock.read().unwrap().deref().clone();
+		let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();
+		let layout_yard_num = self.layout_yard_num_lock.read().expect("read layout_yard_num_lock").deref().clone();
 		if layout_yard_num == yard_num {
 			match some_yard {
 				None => {}
@@ -53,7 +53,7 @@ impl Yard for PublisherYard {
 	}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (yard_num, bounds_id) = {
-			let (yard_num, some_yard) = self.yard_lock.read().unwrap().deref().clone();
+			let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();
 			(
 				yard_num,
 				match some_yard {
@@ -63,7 +63,7 @@ impl Yard for PublisherYard {
 			)
 		};
 		{
-			let mut layout_yard_num = self.layout_yard_num_lock.write().unwrap();
+			let mut layout_yard_num = self.layout_yard_num_lock.write().expect("write layout_yard_num_lock");
 			*layout_yard_num = yard_num;
 		}
 		bounds_id

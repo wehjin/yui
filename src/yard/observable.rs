@@ -22,7 +22,7 @@ pub enum YardControlMsg {
 impl YardPublisher for SyncSender<YardControlMsg> {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 		let (tx, rx) = sync_channel(100);
-		self.send(YardControlMsg::On(tx)).unwrap();
+		self.send(YardControlMsg::On(tx)).expect("Send On");
 		Ok(rx)
 	}
 }

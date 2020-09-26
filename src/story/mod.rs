@@ -31,7 +31,7 @@ impl Worker {
 
 	fn stop(&mut self) {
 		if let Some(ref stopper) = self.stopper {
-			stopper.send(()).unwrap();
+			stopper.send(()).expect("send () to stopper");
 		} else {}
 		self.stopper = None;
 	}
@@ -46,7 +46,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 {
 	pub fn link(&self) -> SenderLink<Spk::Action> {
 		let sender = self.tx.to_owned();
-		SenderLink::new_f(move |action: Spk::Action| { sender.send(Msg::Update(action)).unwrap(); })
+		SenderLink::new_f(move |action: Spk::Action| { sender.send(Msg::Update(action)).expect("send Msg::Update"); })
 	}
 
 	pub fn visions(&self, id: i32) -> Result<Receiver<Spk::State>, Box<dyn Error>> {
@@ -70,16 +70,16 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 						YardControlMsg::On(sender) => {
 							worker.stop();
 							yards_out = Some(sender);
-							let yards = story.subscribe().unwrap();
+							let yards = story.subscribe().expect("subscribe story");
 							let edge_tx = edge_tx.clone();
 							let (end_tx, end_rx) = channel();
 							worker.start(end_tx);
 							thread::spawn(move || {
 								let mut done = false;
 								while !done {
-									let yard = yards.recv().unwrap();
+									let yard = yards.recv().expect("receive yard");
 									if end_rx.try_recv().is_err() {
-										edge_tx.send(YardControlMsg::Forward(yard)).unwrap();
+										edge_tx.send(YardControlMsg::Forward(yard)).expect("send Forward to edge");
 									} else {
 										done = true
 									}
@@ -92,7 +92,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 						}
 						YardControlMsg::Forward(yard) => {
 							if let Some(ref forward) = yards_out {
-								forward.send(yard).unwrap();
+								forward.send(yard).expect("send yard to sync-sender");
 							}
 						}
 					}
@@ -114,13 +114,13 @@ impl<Sprk> YardPublisher for Story<Sprk> where Sprk: Spark + 'static {
 				let mut done = false;
 				while !done {
 					let vision = {
-						let mut first = visions.recv().unwrap();
+						let mut first = visions.recv().expect("receive vision");
 						loop {
 							let second = visions.try_recv();
 							if second.is_err() {
 								break;
 							} else {
-								first = second.unwrap();
+								first = second.expect("second");
 							}
 						}
 						first

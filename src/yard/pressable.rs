@@ -81,6 +81,6 @@ impl PressYard {
 	}
 
 	fn is_pressed(&self) -> bool {
-		*self.is_pressed.read().unwrap()
+		*self.is_pressed.read().expect("read is_pressed")
 	}
 }

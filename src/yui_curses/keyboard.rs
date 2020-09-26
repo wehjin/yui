@@ -53,7 +53,7 @@ impl Keyboard {
 					ScreenAction::Close => true,
 					_ => false
 				};
-				screen_tx.send(action).unwrap()
+				screen_tx.send(action).expect("send screen action")
 			}
 		}
 		use_default_colors();

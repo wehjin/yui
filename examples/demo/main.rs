@@ -60,7 +60,11 @@ fn select_tab(index: usize) -> MainAction {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-	WriteLogger::init(LevelFilter::Info, Config::default(), File::create("yui.log").unwrap()).unwrap();
+	WriteLogger::init(
+		LevelFilter::Info,
+		Config::default(),
+		File::create("yui.log").expect("create yui.log"),
+	).expect("result");
 	info!("Demo");
 	yui::main(Main { dialog_id: 1 })
 }

@@ -17,7 +17,7 @@ impl<A> Clone for SenderLink<A> {
 
 impl<A: Send> Link<A> for SenderLink<A> {
 	fn send(&self, action: A) {
-		self.tx.send(action).unwrap()
+		self.tx.send(action).expect("Send Action")
 	}
 }
 
@@ -27,7 +27,7 @@ impl<A: Send + 'static> SenderLink<A> {
 		thread::spawn(move || {
 			for a in rx {
 				let b = f(a);
-				sender.send(b).unwrap();
+				sender.send(b).expect("send B");
 			}
 		});
 		SenderLink { tx }
@@ -70,7 +70,7 @@ impl<A> Clone for SyncLink<A> {
 
 impl<A> Link<A> for SyncLink<A> {
 	fn send(&self, action: A) {
-		self.tx.send(action).unwrap()
+		self.tx.send(action).expect("send action")
 	}
 }
 

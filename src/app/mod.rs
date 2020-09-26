@@ -53,10 +53,10 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 	});
 	{
 		let yard_tx = yard_tx.clone();
-		let yards = stack_story.subscribe().unwrap();
+		let yards = stack_story.subscribe().expect("subscribe stack_story");
 		thread::spawn(move || {
 			for yard in yards {
-				yard_tx.send(Some(yard)).unwrap();
+				yard_tx.send(Some(yard)).expect("send some yard");
 			}
 		});
 	}

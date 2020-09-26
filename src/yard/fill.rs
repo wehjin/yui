@@ -23,7 +23,7 @@ impl Yard for FillYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			ctx.set_fill(*self.color.read().unwrap(), bounds.z)
+			ctx.set_fill(*self.color.read().expect("read color"), bounds.z)
 		}
 	}
 
@@ -35,7 +35,7 @@ impl Yard for FillYard {
 
 	fn update(&self, option: YardOption) {
 		let YardOption::FillColor(color) = option;
-		*self.color.write().unwrap() = color;
+		*self.color.write().expect("write color") = color;
 	}
 
 	fn id(&self) -> i32 { self.id }

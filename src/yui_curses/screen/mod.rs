@@ -37,33 +37,33 @@ impl CursesScreen {
 				match action {
 					ScreenAction::SetYard(set_yard) => {
 						yard = set_yard;
-						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
 					}
 					ScreenAction::Space => {
 						let screen = loop_tx.clone();
-						active_focus.insert_space(move || screen.send(ScreenAction::ResizeRefresh).unwrap());
+						active_focus.insert_space(move || screen.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh"));
 					}
 					ScreenAction::AsciiChar(char) => {
 						let screen = loop_tx.clone();
 						active_focus.insert_char(char, move || {
-							screen.send(ScreenAction::ResizeRefresh).unwrap()
+							screen.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in AsciiChar")
 						});
 					}
 					ScreenAction::FocusUp => {
 						active_focus = active_focus.move_up();
-						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusUp");
 					}
 					ScreenAction::FocusDown => {
 						active_focus = active_focus.move_down();
-						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusDown");
 					}
 					ScreenAction::FocusLeft => {
 						active_focus = active_focus.move_left();
-						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusLeft");
 					}
 					ScreenAction::FocusRight => {
 						active_focus = active_focus.move_right();
-						loop_tx.send(ScreenAction::ResizeRefresh).unwrap();
+						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusRight");
 					}
 					ScreenAction::ResizeRefresh => {
 						let (max_x, max_y) = Self::size();
@@ -99,7 +99,7 @@ impl CursesScreen {
 				}
 			}
 		});
-		tx.send(ScreenAction::ResizeRefresh).unwrap();
+		tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
 		tx
 	}
 
@@ -125,7 +125,7 @@ fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) ->
 					_ => {
 						let last = first;
 						first = second;
-						tx.send(last).unwrap();
+						tx.send(last).expect("send last screen action");
 						done_trying_second = true
 					}
 				},

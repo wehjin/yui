@@ -64,7 +64,7 @@ impl Yard for ButtonYard {
 		if bounds.intersects(row, col) {
 			let focus_id = ctx.focus_id();
 			let fill_grade = if focus_id == self.id {
-				let is_pressed = { *self.is_pressed.read().unwrap() };
+				let is_pressed = { *self.is_pressed.read().expect("read is_pressed") };
 				if is_pressed { FillGrade::Press } else { FillGrade::Focus }
 			} else {
 				FillGrade::Plain

@@ -130,7 +130,7 @@ pub enum FocusMotionFuture {
 
 pub(crate) fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext, touch: &ArcTouch) -> () {
 	{
-		*is_pressed.write().unwrap() = true;
+		*is_pressed.write().expect("write is_pressed") = true;
 	}
 	ctx.refresh.deref()();
 	{
@@ -144,7 +144,7 @@ pub(crate) fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionCon
 		thread::sleep(Duration::from_millis(millis));
 	}
 	{
-		*is_pressed.write().unwrap() = false;
+		*is_pressed.write().expect("write is_pressed") = false;
 	}
 	ctx.refresh.deref()();
 	touch.deref()();

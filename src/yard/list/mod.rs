@@ -51,7 +51,7 @@ impl Yard for ListYard {
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		let focus_index = self.nexus.read().unwrap().item_index();
+		let focus_index = self.nexus.read().expect("read nexus").item_index();
 		let (_bounds_id, bounds) = ctx.edge_bounds();
 		let mut focus = None;
 		let final_bounds_id = {
@@ -61,7 +61,7 @@ impl Yard for ListYard {
 				multi_layout.layout(&layout_item.yard, &layout_item.bounds);
 				if layout_item.index == focus_index {
 					let sub_focus = multi_layout.trapped_focus().map(|it| Arc::new((*it).clone()));
-					*self.sub_focus.write().unwrap() = sub_focus.to_owned();
+					*self.sub_focus.write().expect("write sub_focus") = sub_focus.to_owned();
 					focus = Some(self.create_focus(&bounds, sub_focus))
 				}
 			}
@@ -78,19 +78,19 @@ impl Yard for ListYard {
 		let (row, col) = ctx.spot();
 		let bounds = ctx.yard_bounds(self.id);
 		if bounds.intersects(row, col) {
-			let sub_focus_id = if let Some(sub_focus) = self.sub_focus.read().unwrap().deref() {
+			let sub_focus_id = if let Some(sub_focus) = self.sub_focus.read().expect("read sub_focus").deref() {
 				Some(sub_focus.yard_id)
 			} else {
 				None
 			};
 			let sub_focus_index = if ctx.focus_id() == self.id {
-				Some(self.nexus.read().unwrap().item_index())
+				Some(self.nexus.read().expect("read nexus").item_index())
 			} else {
 				None
 			};
 			for layout_item in self.layout_items(&bounds) {
 				if Some(layout_item.index) == sub_focus_index && sub_focus_id.is_some() {
-					let focus_id = sub_focus_id.unwrap();
+					let focus_id = sub_focus_id.expect("sub_focus_id");
 					let item_ctx = FocusIdRenderContext { parent: ctx, focus_id };
 					layout_item.yard.render(&item_ctx);
 				} else {
@@ -109,13 +109,13 @@ impl ListYard {
 		let focus_motion = Arc::new(move |focus_motion| {
 			let new_nexus = match focus_motion {
 				FocusMotion::Left | FocusMotion::Right => None,
-				FocusMotion::Up => nexus.read().unwrap().up(&item_heights),
-				FocusMotion::Down => nexus.read().unwrap().down(&item_heights),
+				FocusMotion::Up => nexus.read().expect("nexus read").up(&item_heights),
+				FocusMotion::Down => nexus.read().expect("nexus read").down(&item_heights),
 			};
 			match new_nexus {
 				None => FocusMotionFuture::Default,
 				Some(new_nexus) => {
-					*nexus.write().unwrap() = new_nexus;
+					*nexus.write().expect("nexus write") = new_nexus;
 					FocusMotionFuture::Skip
 				}
 			}
@@ -145,7 +145,7 @@ impl ListYard {
 	}
 
 	fn layout_items(&self, bounds: &Bounds) -> Vec<LayoutItem> {
-		let nexus = self.nexus.read().unwrap();
+		let nexus = self.nexus.read().expect("nexus read");
 		let pivot_row = nexus.pivot_row(
 			bounds.height(),
 			bounds.top,
@@ -157,7 +157,7 @@ impl ListYard {
 		let mut layout_items = Vec::new();
 		let mut next_index = Some(0);
 		while next_index.is_some() {
-			let index = next_index.unwrap();
+			let index = next_index.expect("next_index");
 			next_index = if index >= self.item_heights.len() {
 				None
 			} else {
