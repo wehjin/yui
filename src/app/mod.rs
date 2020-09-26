@@ -20,7 +20,7 @@ enum RefresherAction {
 
 fn start_refresher() -> SenderLink<RefresherAction> {
 	let (tx, rx) = channel();
-	thread::spawn(move || {
+	thread::Builder::new().name("start_refresher".to_string()).spawn(move || {
 		let mut refresh_link: Option<SenderLink<()>> = None;
 		for msg in rx {
 			match msg {
@@ -30,7 +30,7 @@ fn start_refresher() -> SenderLink<RefresherAction> {
 				},
 			}
 		}
-	});
+	}).expect("spawn");
 	SenderLink { tx }
 }
 
@@ -54,11 +54,11 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 	{
 		let yard_tx = yard_tx.clone();
 		let yards = stack_story.subscribe().expect("subscribe stack_story");
-		thread::spawn(move || {
+		thread::Builder::new().name("yui_curses:run".to_string()).spawn(move || {
 			for yard in yards {
 				yard_tx.send(Some(yard)).expect("send some yard");
 			}
-		});
+		}).expect("spawn");
 	}
 	let enable_refresher = refresher.clone().map(|refresh_link| RefresherAction::Enable(refresh_link));
 	Projector::project_yards(yard_rx, enable_refresher)

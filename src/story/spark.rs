@@ -11,7 +11,7 @@ pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<SenderL
 	let (tx, rx) = channel::<Msg<S>>();
 	let story = Story { tx };
 	let action_link = story.link().clone();
-	thread::spawn(move || {
+	thread::Builder::new().name("story".to_string()).spawn(move || {
 		let state = spark.create(&Create {
 			action_link: action_link.clone(),
 			edge: edge.clone(),
@@ -37,7 +37,7 @@ pub fn spark<S: Spark>(spark: S, edge: Option<Edge>, report_link: Option<SenderL
 				},
 			}
 		}
-	});
+	}).expect("spawn");
 	story
 }
 

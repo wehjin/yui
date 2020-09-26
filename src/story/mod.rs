@@ -59,7 +59,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 
 	pub fn connect(&self) -> SyncSender<YardControlMsg> {
 		let (tx, rx) = sync_channel::<YardControlMsg>(500);
-		thread::spawn({
+		thread::Builder::new().name("connect".to_string()).spawn({
 			let story = self.clone();
 			let edge_tx = tx.clone();
 			move || {
@@ -74,7 +74,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 							let edge_tx = edge_tx.clone();
 							let (end_tx, end_rx) = channel();
 							worker.start(end_tx);
-							thread::spawn(move || {
+							thread::Builder::new().name("YardControlMsg::On".to_string()).spawn(move || {
 								let mut done = false;
 								while !done {
 									let yard = yards.recv().expect("receive yard");
@@ -84,7 +84,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 										done = true
 									}
 								}
-							});
+							}).expect("spawn");
 						}
 						YardControlMsg::Off => {
 							worker.stop();
@@ -99,7 +99,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 				}
 				worker.stop();
 			}
-		});
+		}).expect("spawn");
 		tx
 	}
 }
@@ -108,7 +108,7 @@ impl<Sprk> YardPublisher for Story<Sprk> where Sprk: Spark + 'static {
 	fn subscribe(&self) -> Result<Receiver<ArcYard>, Box<dyn Error>> {
 		let visions = self.visions(rand::random())?;
 		let (tx_yard, rx_yard) = sync_channel::<ArcYard>(64);
-		thread::spawn({
+		thread::Builder::new().name("YardPublisher subscribe".to_string()).spawn({
 			let link = self.link();
 			move || {
 				let mut done = false;
@@ -132,7 +132,7 @@ impl<Sprk> YardPublisher for Story<Sprk> where Sprk: Spark + 'static {
 					};
 				}
 			}
-		});
+		}).expect("spawn");
 		Ok(rx_yard)
 	}
 }

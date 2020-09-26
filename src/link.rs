@@ -24,20 +24,20 @@ impl<A: Send> Link<A> for SenderLink<A> {
 impl<A: Send + 'static> SenderLink<A> {
 	pub fn new<B: Send + 'static>(sender: Sender<B>, f: impl Fn(A) -> B + Send + 'static) -> Self {
 		let (tx, rx) = channel();
-		thread::spawn(move || {
+		thread::Builder::new().name("SenderLink::new".to_string()).spawn(move || {
 			for a in rx {
 				let b = f(a);
 				sender.send(b).expect("send B");
 			}
-		});
+		}).expect("spawn");
 		SenderLink { tx }
 	}
 	pub fn new_f(f: impl Fn(A) + Send + 'static) -> Self {
 		let f = Box::new(f);
 		let (tx, rx) = channel();
-		thread::spawn(move || {
+		thread::Builder::new().name("SenderLink::new_f".to_string()).spawn(move || {
 			for a in rx { f(a) }
-		});
+		}).expect("spawn");
 		SenderLink { tx }
 	}
 	pub fn ignore() -> Self { Self::new_f(|_| {}) }
@@ -45,11 +45,11 @@ impl<A: Send + 'static> SenderLink<A> {
 		let f = Box::new(f);
 		let link = self.clone();
 		let (tx, rx) = channel();
-		thread::spawn(move || {
+		thread::Builder::new().name("SenderLink::map".to_string()).spawn(move || {
 			for b in rx {
 				link.send(f(b))
 			}
-		});
+		}).expect("spawn");
 		SenderLink { tx }
 	}
 	pub fn callback<B>(&self, f: impl Fn(B) -> A + Send) -> impl Fn(B) {
@@ -77,11 +77,11 @@ impl<A> Link<A> for SyncLink<A> {
 impl<A: Send + 'static> From<SenderLink<A>> for SyncLink<A> {
 	fn from(sender_link: SenderLink<A>) -> Self {
 		let (tx, rx) = sync_channel(100);
-		thread::spawn(move || {
+		thread::Builder::new().name("SenderLink from SenderLink".to_string()).spawn(move || {
 			for a in rx {
 				sender_link.send(a)
 			}
-		});
+		}).expect("spawn");
 		SyncLink { tx }
 	}
 }
@@ -90,9 +90,9 @@ impl<A: Send + 'static> SyncLink<A> {
 	pub fn new(f: impl Fn(A) + Sync + Send + 'static) -> Self {
 		let f = Box::new(f);
 		let (tx, rx) = sync_channel(100);
-		thread::spawn(move || {
+		thread::Builder::new().name("SyncLink new".to_string()).spawn(move || {
 			for a in rx { f(a) }
-		});
+		}).expect("spawn");
 		SyncLink { tx }
 	}
 	pub fn ignore() -> Self {
@@ -102,11 +102,11 @@ impl<A: Send + 'static> SyncLink<A> {
 		let f = Box::new(f);
 		let link = self;
 		let (tx, rx) = sync_channel(100);
-		thread::spawn(move || {
+		thread::Builder::new().name("SyncLink map".to_string()).spawn(move || {
 			for b in rx {
 				link.send(f(b))
 			}
-		});
+		}).expect("spawn");
 		SyncLink { tx }
 	}
 	pub fn callback<B>(&self, f: impl Fn(B) -> A + Send) -> impl Fn(B) {

@@ -54,13 +54,13 @@ impl Focus {
 			FocusType::Submit | FocusType::CompositeSubmit(_) => {}
 			FocusType::Edit(_) => {
 				let action_block = self.action_block.clone();
-				thread::spawn(move || {
+				thread::Builder::new().name("Focus::insert_char".to_string()).spawn(move || {
 					let ctx = FocusActionContext {
 						action: FocusAction::Change(char),
 						refresh: Box::new(refresh),
 					};
 					action_block(&ctx);
-				});
+				}).expect("spawn");
 			}
 		};
 	}
@@ -69,23 +69,23 @@ impl Focus {
 		match self.focus_type {
 			FocusType::Edit(_) => {
 				let action_block = self.action_block.clone();
-				thread::spawn(move || {
+				thread::Builder::new().name("insert_space Edit".to_string()).spawn(move || {
 					let ctx = FocusActionContext {
 						action: FocusAction::Change(' '),
 						refresh: Box::new(refresh),
 					};
 					action_block(&ctx);
-				});
+				}).expect("spawn");
 			}
 			FocusType::Submit | FocusType::CompositeSubmit(_) => {
 				let action_block = self.action_block.clone();
-				thread::spawn(move || {
+				thread::Builder::new().name("insert_space Submit".to_string()).spawn(move || {
 					let ctx = FocusActionContext {
 						action: FocusAction::Go,
 						refresh: Box::new(refresh),
 					};
 					action_block(&ctx);
-				});
+				}).expect("spawn");
 			}
 		};
 	}

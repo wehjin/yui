@@ -15,7 +15,7 @@ pub fn publisher(publisher: &impl YardPublisher, refresh: impl Link<()> + Send +
 	let thread_yard_lock = yard_lock.clone();
 	let yards = publisher.subscribe().expect("subscribe publisher");
 	let (emit_yard_found, recv_yard_found) = channel();
-	thread::spawn(move || {
+	thread::Builder::new().name("publisher".to_string()).spawn(move || {
 		let mut yard_found = false;
 		for yard in yards {
 			{
@@ -29,7 +29,7 @@ pub fn publisher(publisher: &impl YardPublisher, refresh: impl Link<()> + Send +
 			}
 			refresh.send(());
 		}
-	});
+	}).expect("spawn");
 	recv_yard_found.recv().expect("receive yard_found");
 	Arc::new(PublisherYard { id, yard_lock, layout_yard_num_lock: Arc::new(RwLock::new(0)) })
 }

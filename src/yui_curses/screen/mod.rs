@@ -26,7 +26,7 @@ impl CursesScreen {
 		curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 		clear();
 		let loop_tx = tx.clone();
-		thread::spawn(move || {
+		thread::Builder::new().name("CursesScreen::start".to_string()).spawn(move || {
 			let mut active_focus: ActiveFocus = Default::default();
 			let mut yard = yard::empty();
 			loop {
@@ -98,7 +98,7 @@ impl CursesScreen {
 					ScreenAction::Close => break
 				}
 			}
-		});
+		}).expect("spawn");
 		tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
 		tx
 	}

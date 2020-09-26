@@ -56,7 +56,7 @@ impl Projector {
 		}
 		let screen_tx = CursesScreen::start();
 		enable_refresher.send(SenderLink::new(screen_tx.clone(), |_| ScreenAction::ResizeRefresh));
-		thread::spawn({
+		thread::Builder::new().name("run_blocking".to_string()).spawn({
 			let screen_tx = screen_tx.clone();
 			move || {
 				let projector = Projector::new(
@@ -64,7 +64,7 @@ impl Projector {
 				);
 				block(projector);
 			}
-		});
+		}).expect("spawn");
 		Keyboard::read_blocking(screen_tx.clone(), stop_rx);
 	}
 }
