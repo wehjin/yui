@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::Sender;
 
 use crate::{Flow, Link, SenderLink, Spark, Story};
@@ -16,15 +16,19 @@ impl<V: Clone, A, R: Send + 'static> StoryScope<V, A, R> {
 	pub fn set_vision(&mut self, vision: V, announce: bool) {
 		self.vision = vision;
 		if announce {
-			self.watchers.iter().for_each(|(_, it)| {
+			let mut remove = HashSet::new();
+			self.watchers.iter().for_each(|(key, it)| {
 				let result = it.send(self.vision.clone());
 				if let Err(e) = result {
+					remove.insert(*key);
 					eprintln!("send vision to watcher: {}", e)
 				}
 			});
+			for key in remove {
+				self.watchers.remove(&key);
+			}
 		}
 	}
-
 	pub fn add_watcher(&mut self, id: i32, watcher: Sender<V>) {
 		assert!(!self.watchers.contains_key(&id));
 		self.watchers.insert(id, watcher.clone());
