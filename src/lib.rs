@@ -22,3 +22,21 @@ pub mod yard;
 mod link;
 mod yui;
 mod yui_curses;
+
+
+mod surface {
+	/**
+	* The surface type
+	*/
+	pub enum Type {
+		Body,
+		Header,
+		Navigation,
+	}
+
+	pub enum Texture {
+		Plain,
+		Focused,
+		Pressed,
+	}
+}
