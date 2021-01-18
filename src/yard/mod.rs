@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::palette::FillColor;
+use crate::palette::{FillColor, FillGrade};
 use crate::yui::layout::LayoutContext;
 use crate::yui::RenderContext;
 
@@ -46,7 +46,7 @@ pub trait Yard {
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;
 
 pub enum YardOption {
-	FillColor(FillColor)
+	FillColor(FillColor, FillGrade)
 }
 
 pub type ArcEvent<T> = Arc<dyn Fn(T) + Send + Sync + 'static>;
