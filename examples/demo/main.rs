@@ -21,6 +21,7 @@ use crate::tab::dialog::{DialogDemo, Report};
 use crate::tab::form_list::FormListDemo;
 use crate::tab::selector_list::SelectorListDemo;
 use crate::tab::text_panel::TextDemo;
+use yui::palette::FillGrade::Plain;
 
 mod tab;
 
@@ -153,7 +154,7 @@ pub struct State {
 
 fn app_bar() -> ArcYard {
 	let tool_bar = yard::title("Components", StrokeColor::BodyOnPrimary, Cling::Custom { x: 0.0, y: 0.0 });
-	let header_row = tool_bar.pad(1).before(yard::fill(FillColor::Primary));
+	let header_row = tool_bar.pad(1).before(yard::fill(FillColor::Primary, Plain));
 	header_row
 }
 
