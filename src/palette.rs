@@ -5,8 +5,9 @@ use ncurses::{init_color, init_pair, start_color, use_default_colors};
 
 pub fn body_and_comment_for_fill(color: FillColor) -> (StrokeColor, StrokeColor) {
     match color {
-        FillColor::Background => (StrokeColor::BodyOnBackground, StrokeColor::CommentOnBackground),
         FillColor::Primary => (StrokeColor::BodyOnPrimary, StrokeColor::CommentOnPrimary),
+        FillColor::Side => (StrokeColor::BodyOnSide, StrokeColor::CommentOnSide),
+        FillColor::Background => (StrokeColor::BodyOnBackground, StrokeColor::CommentOnBackground),
     }
 }
 
@@ -14,6 +15,7 @@ pub fn body_and_comment_for_fill(color: FillColor) -> (StrokeColor, StrokeColor)
 pub enum FillColor {
     Background,
     Primary,
+    Side,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -25,8 +27,9 @@ pub enum FillGrade {
 
 fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
     let flat = match color {
-        FillColor::Background => COLOR_BASE3,
         FillColor::Primary => COLOR_BASE02,
+        FillColor::Side => COLOR_BASE2,
+        FillColor::Background => COLOR_BASE3,
     };
     let graded = match grade {
         FillGrade::Plain => flat,
@@ -39,7 +42,9 @@ fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum StrokeColor {
     CommentOnBackground,
+    CommentOnSide,
     BodyOnBackground,
+    BodyOnSide,
     EnabledOnBackground,
     EnabledOnPrimary,
     BodyOnPrimary,
@@ -49,7 +54,9 @@ pub enum StrokeColor {
 fn stroke_i16((color, dimmed): (StrokeColor, bool)) -> i16 {
     let color = match color {
         StrokeColor::CommentOnBackground => COLOR_BASE1,
+        StrokeColor::CommentOnSide => COLOR_BASE00,
         StrokeColor::BodyOnBackground => COLOR_BASE00,
+        StrokeColor::BodyOnSide => COLOR_BASE02,
         StrokeColor::EnabledOnBackground => COLOR_MAGENTA,
         StrokeColor::EnabledOnPrimary => COLOR_MAGENTA,
         StrokeColor::BodyOnPrimary => COLOR_BASE1,
