@@ -35,9 +35,9 @@ fn fill_i16(color: FillColor, grade: FillGrade, dimmed: bool) -> i16 {
 	let graded = match color {
 		FillColor::Background | FillColor::Primary => match grade {
 			FillGrade::Plain => flat,
-			FillGrade::Focus => center(1, flat),
-			FillGrade::Select => center(2, flat),
-			FillGrade::Press => center(3, flat),
+			FillGrade::Select => center(1, flat),
+			FillGrade::Focus => center(2, flat),
+			FillGrade::Press => center(4, flat),
 		}
 		FillColor::Side => match grade {
 			FillGrade::Select => center(-1, flat),

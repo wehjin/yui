@@ -167,7 +167,6 @@ impl ListYard {
 					(Some(index + 1), false)
 				} else if item_bounds.top < bounds.top {
 					// Partial underflow and possibly overflow
-					info!("PARTIAL UNDERFLOW, MAYBE OVERFLOW");
 					if item_bounds.bottom > bounds.bottom {
 						// Full overlap
 						(None, true)
