@@ -5,7 +5,7 @@ use std::thread;
 use ncurses::*;
 
 use keyboard::Keyboard;
-pub(crate) use screen::{CursesScreen, ScreenAction};
+pub(crate) use screen::ScreenAction;
 
 use crate::{Link, SenderLink};
 use crate::yard::ArcYard;
@@ -14,7 +14,7 @@ mod screen;
 mod keyboard;
 
 pub struct Projector {
-	set_yard_fn: Box<dyn Fn(ArcYard)>
+	set_yard_fn: Box<dyn Fn(ArcYard)>,
 }
 
 impl Projector {
@@ -54,10 +54,10 @@ impl Projector {
 			println!("Your terminal does not support color");
 			std::process::exit(1);
 		}
-		let screen_tx = CursesScreen::start();
-		enable_refresher.send(SenderLink::new(screen_tx.clone(), |_| ScreenAction::ResizeRefresh));
+		let screen_link = screen::connect();
+		enable_refresher.send(SenderLink::new(screen_link.clone(), |_| ScreenAction::ResizeRefresh));
 		thread::Builder::new().name("run_blocking".to_string()).spawn({
-			let screen_tx = screen_tx.clone();
+			let screen_tx = screen_link.clone();
 			move || {
 				let projector = Projector::new(
 					move |yard| screen_tx.send(ScreenAction::SetYard(yard)).expect("send SetYard to screen")
@@ -65,7 +65,7 @@ impl Projector {
 				block(projector);
 			}
 		}).expect("spawn");
-		Keyboard::read_blocking(screen_tx.clone(), stop_rx);
+		Keyboard::read_blocking(screen_link.clone(), stop_rx);
 	}
 }
 

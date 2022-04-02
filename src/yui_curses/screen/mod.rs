@@ -17,98 +17,133 @@ use crate::yui::RenderContext;
 
 mod spot_stack;
 
-#[derive(Clone)]
-pub(crate) struct CursesScreen {}
+fn init() {
+	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+	clear();
+}
 
-impl CursesScreen {
-	pub(crate) fn start() -> Sender<ScreenAction> {
-		let (tx, rx) = mpsc::channel();
-		curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+fn width_height() -> (i32, i32) {
+	let mut max_x = 0;
+	let mut max_y = 0;
+	getmaxyx(stdscr(), &mut max_y, &mut max_x);
+	(max_x, max_y)
+}
+
+struct System {
+	screen: Sender<ScreenAction>,
+	yard: ArcYard,
+	active_focus: ActiveFocus,
+	max_x: i32,
+	max_y: i32,
+	bounds: Rc<RefCell<BoundsHold>>,
+}
+
+impl System {
+	fn new(screen: Sender<ScreenAction>) -> Self {
+		let (max_x, max_y) = (0, 0);
+		let (_, bounds) = BoundsHold::init(max_x, max_y);
+		let yard = yard::empty();
+		let active_focus = ActiveFocus::default();
+		System { screen, yard, active_focus, max_x, max_y, bounds }
+	}
+	fn set_yard(&mut self, yard: ArcYard) {
+		self.yard = yard;
+		self.screen.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
+	}
+	fn insert_space(&self) {
+		let screen = self.screen.clone();
+		self.active_focus.insert_space(move || {
+			screen.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh")
+		});
+	}
+	fn insert_char(&self, char: char) {
+		let screen = self.screen.clone();
+		self.active_focus.insert_char(char, move || {
+			screen.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in AsciiChar")
+		});
+	}
+	fn focus_up(&mut self) {
+		self.set_focus(self.active_focus.move_up());
+	}
+	fn set_focus(&mut self, new_focus: ActiveFocus) {
+		self.active_focus = new_focus;
+		self.screen.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in SetFocus");
+	}
+	fn focus_down(&mut self) {
+		self.set_focus(self.active_focus.move_down());
+	}
+	fn focus_left(&mut self) {
+		self.set_focus(self.active_focus.move_left());
+	}
+	fn focus_right(&mut self) {
+		self.set_focus(self.active_focus.move_right());
+	}
+	fn update_bounds(&mut self) {
+		let (max_x, max_y) = width_height();
+		let (start_index, bounds) = BoundsHold::init(max_x, max_y);
+
+		let mut layout_ctx = LayoutContext::new(
+			start_index,
+			bounds.clone(),
+			SenderLink::new(self.screen.clone(), |_| ScreenAction::ResizeRefresh),
+		);
+		self.yard.layout(&mut layout_ctx);
+		self.active_focus = layout_ctx.pop_active_focus(&self.active_focus);
+		self.max_x = max_x;
+		self.max_y = max_y;
+		self.bounds = bounds;
+	}
+	fn resize_refresh(&mut self) {
+		self.update_bounds();
+
+		let palette = Palette::new();
+		let mut ctx = CursesRenderContext::new(
+			self.max_y, self.max_x,
+			&palette,
+			self.bounds.clone(),
+			self.active_focus.focus_id(),
+		);
 		clear();
-		let loop_tx = tx.clone();
-		thread::Builder::new().name("CursesScreen::start".to_string()).spawn(move || {
-			let mut active_focus: ActiveFocus = Default::default();
-			let mut yard = yard::empty();
-			loop {
-				let action = match next_screen_action(&rx, &loop_tx) {
-					Ok(action) => action,
-					Err(_) => break
-				};
-				match action {
-					ScreenAction::SetYard(set_yard) => {
-						yard = set_yard;
-						loop_tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
-					}
-					ScreenAction::Space => {
-						let screen = loop_tx.clone();
-						active_focus.insert_space(move || screen.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh"));
-					}
-					ScreenAction::AsciiChar(char) => {
-						let screen = loop_tx.clone();
-						active_focus.insert_char(char, move || {
-							screen.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in AsciiChar")
-						});
-					}
-					ScreenAction::FocusUp => {
-						active_focus = active_focus.move_up();
-						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusUp");
-					}
-					ScreenAction::FocusDown => {
-						active_focus = active_focus.move_down();
-						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusDown");
-					}
-					ScreenAction::FocusLeft => {
-						active_focus = active_focus.move_left();
-						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusLeft");
-					}
-					ScreenAction::FocusRight => {
-						active_focus = active_focus.move_right();
-						loop_tx.send(ScreenAction::ResizeRefresh).expect("send ResizeRefresh in FocusRight");
-					}
-					ScreenAction::ResizeRefresh => {
-						let (max_x, max_y) = Self::size();
-						let (init_index, init_hold) = BoundsHold::init(max_x, max_y);
-
-						let mut layout_ctx = LayoutContext::new(
-							init_index,
-							init_hold.clone(),
-							SenderLink::new(loop_tx.clone(), |_| ScreenAction::ResizeRefresh),
-						);
-						yard.layout(&mut layout_ctx);
-						active_focus = layout_ctx.pop_active_focus(&active_focus);
-						let palette = Palette::new();
-						let mut ctx = CursesRenderContext::new(
-							max_y,
-							max_x,
-							init_hold.clone(),
-							&palette,
-							active_focus.focus_id(),
-						);
-						clear();
-						for row in 0..max_y {
-							ctx.row = row;
-							for col in 0..max_x {
-								ctx.col = col;
-								yard.render(&ctx);
-								ctx.publish();
-							}
-						}
-						refresh();
-					}
-					ScreenAction::Close => break
-				}
+		for row in 0..self.max_y {
+			ctx.row = row;
+			for col in 0..self.max_x {
+				ctx.col = col;
+				self.yard.render(&ctx);
+				ctx.publish();
 			}
-		}).expect("spawn");
-		tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
-		tx
+		}
+		refresh();
 	}
+}
 
-	fn size() -> (i32, i32) {
-		let mut max_x = 0;
-		let mut max_y = 0;
-		getmaxyx(stdscr(), &mut max_y, &mut max_x);
-		(max_x, max_y)
+fn run(rx: Receiver<ScreenAction>, screen: Sender<ScreenAction>) {
+	let mut system = System::new(screen);
+	loop {
+		let action = match next_screen_action(&rx, &system.screen) {
+			Ok(action) => action,
+			Err(_) => break
+		};
+		match action {
+			ScreenAction::SetYard(yard) => system.set_yard(yard),
+			ScreenAction::Space => system.insert_space(),
+			ScreenAction::AsciiChar(char) => system.insert_char(char),
+			ScreenAction::FocusUp => system.focus_up(),
+			ScreenAction::FocusDown => system.focus_down(),
+			ScreenAction::FocusLeft => system.focus_left(),
+			ScreenAction::FocusRight => system.focus_right(),
+			ScreenAction::ResizeRefresh => system.resize_refresh(),
+			ScreenAction::Close => break
+		}
 	}
+}
+
+pub fn connect() -> Sender<ScreenAction> {
+	init();
+	let (tx, rx) = mpsc::channel();
+	let loop_tx = tx.clone();
+	thread::Builder::new().name("CursesScreen::start".to_string()).spawn(move || run(rx, loop_tx)).expect("spawn");
+	tx.send(ScreenAction::ResizeRefresh).expect("Send ResizeRefresh");
+	tx
 }
 
 fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) -> Result<ScreenAction, RecvError> {
@@ -149,11 +184,11 @@ impl<'a> CursesRenderContext<'a> {
 	fn new(
 		rows: i32,
 		cols: i32,
-		bounds_hold: Rc<RefCell<BoundsHold>>,
 		palette: &'a Palette,
+		bounds_hold: Rc<RefCell<BoundsHold>>,
 		focus_id: i32,
 	) -> Self {
-		let origin_stack = SpotStack::new(palette);
+		let origin_stack = SpotStack::new(&palette);
 		CursesRenderContext {
 			row: 0,
 			col: 0,
@@ -211,7 +246,7 @@ impl<'a> RenderContext for CursesRenderContext<'a> {
 }
 
 #[derive(Clone)]
-pub(crate) enum ScreenAction {
+pub enum ScreenAction {
 	Close,
 	ResizeRefresh,
 	FocusUp,

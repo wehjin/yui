@@ -58,7 +58,7 @@ impl story::Spark for Main {
 
 	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		State {
-			main_tab: AppTab::Dialog,
+			main_tab: AppTab::from_index(0),
 			dialog_story: {
 				let report_link = ctx.report_link().clone();
 				let action_link = ctx.link().clone();
