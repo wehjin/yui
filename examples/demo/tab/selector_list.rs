@@ -2,7 +2,7 @@ use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Padding, SenderLink, Spark, y
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::{MuxButton, Pressable};
 
-use crate::tab_page;
+use crate::AppTab;
 
 impl Spark for SelectorListDemo {
 	type State = i32;
@@ -40,9 +40,8 @@ impl Spark for SelectorListDemo {
 			value as usize - 1,
 			MuxButton("Add".into(), SenderLink::ignore()),
 		);
-		let page = tab_page(
+		let page = AppTab::SelectorList.page(
 			body,
-			2,
 			Some(link.clone().map(Action::ShowTab)),
 		);
 		Some(page)
