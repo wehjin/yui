@@ -7,18 +7,49 @@ use crate::yui::Cling;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Bounds {
-	pub right: i32,
-	pub bottom: i32,
 	pub left: i32,
+	pub right: i32,
 	pub top: i32,
+	pub bottom: i32,
 	pub z: i32,
 	pub far_z: i32,
+}
+
+pub struct BoundsIterator {
+	bounds: Bounds,
+	y: i32,
+	x: i32,
+}
+
+impl BoundsIterator {
+	fn new(bounds: Bounds) -> Self {
+		BoundsIterator { bounds, y: bounds.top, x: bounds.left }
+	}
+}
+
+impl Iterator for BoundsIterator {
+	type Item = (i32, i32, i32);
+
+	fn next(&mut self) -> Option<Self::Item> {
+		if self.x < self.bounds.left || self.y < self.bounds.top || self.x >= self.bounds.right || self.y >= self.bounds.bottom {
+			None
+		} else {
+			let item = (self.x, self.y, self.bounds.z);
+			self.x += 1;
+			if self.x >= self.bounds.right {
+				self.y += 1;
+				self.x = self.bounds.left;
+			}
+			Some(item)
+		}
+	}
 }
 
 impl Bounds {
 	pub fn new(width: i32, height: i32) -> Self {
 		Bounds { right: width, bottom: height, left: 0, top: 0, z: 0, far_z: 0 }
 	}
+	pub fn iter(&self) -> BoundsIterator { BoundsIterator::new(self.clone()) }
 	pub fn width(&self) -> i32 { self.right - self.left }
 	pub fn height(&self) -> i32 { self.bottom - self.top }
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
@@ -186,17 +217,11 @@ impl BoundsHold {
 		self.holdings.len() - 1
 	}
 
-	pub fn yard_bounds(&self, id: i32) -> &Bounds {
-		let option = self.map.get(&id);
-		match option {
-			None => {
-				panic!("No bounds index found for id {}", id);
-			}
-			Some(index) => {
-				let bounds_index = *index;
-				self.holdings.get(bounds_index).expect("get holding at bounds_index")
-			}
-		}
+	pub fn yard_bounds(&self, id: i32) -> Option<&Bounds> {
+		let bounds = self.map.get(&id)
+			.map(|index| self.holdings.get(*index))
+			.flatten();
+		bounds
 	}
 
 	pub fn insert_yard_bounds(&mut self, id: i32, bounds_index: usize) {

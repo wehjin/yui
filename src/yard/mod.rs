@@ -1,16 +1,18 @@
 use std::sync::Arc;
 
+pub use basic::label::*;
+
+use crate::bounds::Bounds;
+use crate::DrawPad;
+use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};
-use crate::yui::layout::LayoutContext;
-use crate::yui::RenderContext;
 
 pub use self::button::*;
 pub use self::empty::*;
-pub use self::fade::*;
+pub use basic::fade::*;
 pub use self::fill::*;
-pub use self::glyph::*;
+pub use basic::glyph::*;
 pub use self::grade::*;
-pub use self::label::*;
 pub use self::list::*;
 pub use self::mux::*;
 pub use self::observable::*;
@@ -25,11 +27,8 @@ pub use self::trellis::*;
 
 mod button;
 mod empty;
-mod fade;
 mod fill;
-mod glyph;
 mod grade;
-mod label;
 mod mux;
 mod observable;
 mod pressable;
@@ -42,12 +41,17 @@ mod textfield;
 mod title;
 mod trellis;
 
+pub mod basic;
+
 pub trait Yard {
-	fn render(&self, ctx: &dyn RenderContext);
-	fn layout(&self, ctx: &mut LayoutContext) -> usize;
-	fn update(&self, _option: YardOption) {}
 	fn id(&self) -> i32;
+	fn type_desc(&self) -> &'static str { "" }
+	fn desc(&self) -> String { format!("{}Yard {{ id:{} }}", self.type_desc(), self.id()) }
+	fn update(&self, _option: YardOption) {}
+	fn layout(&self, ctx: &mut LayoutContext) -> usize;
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>>;
 }
+
 
 pub type ArcYard = Arc<dyn Yard + Sync + Send>;
 

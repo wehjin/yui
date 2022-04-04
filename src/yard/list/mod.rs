@@ -1,12 +1,11 @@
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
-use crate::{ArcYard, Focus, FocusIdRenderContext, FocusMotion, FocusMotionFuture, FocusType, MultiLayout, RenderContext};
+use crate::{ArcYard, DrawPad, Focus, FocusMotion, FocusMotionFuture, FocusType, MultiLayout};
 use crate::yard::{Yard, YardOption};
 use crate::yard::list::nexus::Nexus;
 use crate::yui::bounds::Bounds;
-use crate::yui::layout::LayoutContext;
-
+use crate::layout::LayoutContext;
 mod nexus;
 
 pub fn list(id: i32, selected: usize, items: Vec<(u8, ArcYard)>) -> ArcYard {
@@ -74,29 +73,31 @@ impl Yard for ListYard {
 		final_bounds_id
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		let (row, col) = ctx.spot();
-		let bounds = ctx.yard_bounds(self.id);
-		if bounds.intersects(row, col) {
-			let sub_focus_id = if let Some(sub_focus) = self.sub_focus.read().expect("read sub_focus").deref() {
-				Some(sub_focus.yard_id)
+	fn render(&self, bounds: &Bounds, focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		let sub_focus_id = if let Some(sub_focus) = self.sub_focus.read().expect("read sub_focus").deref() {
+			Some(sub_focus.yard_id)
+		} else {
+			None
+		};
+		let sub_focus_index = if focus_id == self.id {
+			Some(self.nexus.read().expect("read nexus").item_index())
+		} else {
+			None
+		};
+		let more = self.layout_items(&bounds).iter().map(|layout_item| {
+			let yard = layout_item.yard.clone();
+			let focus_id = if Some(layout_item.index) == sub_focus_index && sub_focus_id.is_some() {
+				let focus_id = sub_focus_id.expect("sub_focus_id");
+				Some(focus_id)
 			} else {
 				None
 			};
-			let sub_focus_index = if ctx.focus_id() == self.id {
-				Some(self.nexus.read().expect("read nexus").item_index())
-			} else {
-				None
-			};
-			for layout_item in self.layout_items(&bounds) {
-				if Some(layout_item.index) == sub_focus_index && sub_focus_id.is_some() {
-					let focus_id = sub_focus_id.expect("sub_focus_id");
-					let item_ctx = FocusIdRenderContext { parent: ctx, focus_id };
-					layout_item.yard.render(&item_ctx);
-				} else {
-					layout_item.yard.render(ctx);
-				}
-			}
+			(yard, focus_id)
+		}).collect::<Vec<_>>();
+		if more.is_empty() {
+			None
+		} else {
+			Some(more)
 		}
 	}
 }

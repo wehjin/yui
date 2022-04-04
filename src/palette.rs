@@ -1,7 +1,9 @@
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
-use ncurses::{init_color, init_pair, start_color, use_default_colors};
+use ncurses::{A_DIM, attr_t, COLOR_PAIR, init_color, init_pair, start_color, use_default_colors};
+
+use crate::spot::SpotFront;
 
 pub fn body_and_comment_for_fill(color: FillColor) -> (StrokeColor, StrokeColor) {
 	match color {
@@ -129,6 +131,26 @@ impl Palette {
 		let index = self.next_index.get();
 		self.next_index.set(index + 1);
 		index
+	}
+
+	fn to_cpi_glyph_dim<'a>(&self, front: &'a SpotFront) -> (i16, &'a str, bool) {
+		let (glyph, stroke_color) = match front.stroke {
+			None => (" ", StrokeColor::BodyOnBackground),
+			Some((ref glyph, color)) => (glyph.as_str(), color),
+		};
+		let color_pair = self.color_pair_index((stroke_color, front.fill_color, front.fill_grade, front.dark));
+		(color_pair, glyph, front.dark)
+	}
+
+	pub fn to_glyph_attr<'a>(&self, front: &'a SpotFront) -> Option<(&'a str, attr_t)> {
+		let (color_pair_index, glyph, darken) = self.to_cpi_glyph_dim(front);
+		if !glyph.is_empty() {
+			let color_attr = COLOR_PAIR(color_pair_index);
+			let attr = if darken { color_attr | A_DIM() } else { color_attr };
+			Some((glyph, attr))
+		} else {
+			None
+		}
 	}
 }
 

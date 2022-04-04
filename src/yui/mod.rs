@@ -10,7 +10,6 @@ pub use stringedit::{Action as StringEditAction, StringEdit, Validity as ValidIf
 pub use multi_layout::*;
 
 use crate::{app, Spark};
-use crate::palette::{FillColor, FillGrade, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard};
 
 use self::bounds::Bounds;
@@ -18,8 +17,6 @@ use self::bounds::Bounds;
 pub mod bounds;
 pub mod layout;
 pub mod pad;
-pub mod before;
-pub mod pack;
 pub mod place;
 pub mod confine;
 mod multi_layout;
@@ -151,16 +148,6 @@ pub(crate) fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionCon
 	ctx.refresh.deref()();
 }
 
-pub trait RenderContext {
-	fn focus_id(&self) -> i32;
-	fn spot(&self) -> (i32, i32);
-	fn yard_bounds(&self, yard_id: i32) -> Bounds;
-	fn set_fill(&self, color: FillColor, z: i32);
-	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32);
-	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32);
-	fn set_dark(&self, z: i32);
-}
-
 pub trait Padding {
 	fn pad(self, size: i32) -> ArcYard;
 	fn pad_cols(self, cols: i32) -> ArcYard;
@@ -228,19 +215,4 @@ impl From<Cling> for (f32, f32) {
 	fn from(cling: Cling) -> Self {
 		(cling.x(), cling.y())
 	}
-}
-
-pub struct FocusIdRenderContext<'a> {
-	pub parent: &'a dyn RenderContext,
-	pub focus_id: i32,
-}
-
-impl<'a> RenderContext for FocusIdRenderContext<'a> {
-	fn focus_id(&self) -> i32 { self.focus_id }
-	fn spot(&self) -> (i32, i32) { self.parent.spot() }
-	fn yard_bounds(&self, yard_id: i32) -> Bounds { self.parent.yard_bounds(yard_id) }
-	fn set_fill(&self, color: FillColor, z: i32) { self.parent.set_fill(color, z) }
-	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32) { self.parent.set_fill_grade(fill_grade, z) }
-	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32) { self.parent.set_glyph(glyph, color, z) }
-	fn set_dark(&self, z: i32) { self.parent.set_dark(z) }
 }

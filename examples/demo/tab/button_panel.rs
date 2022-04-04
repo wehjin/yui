@@ -34,10 +34,12 @@ impl Spark for ButtonDemo {
 					State::Hall => 1,
 				};
 				let spark = SelectionEditorSpark { selected, choices };
-				ctx.start_prequel(spark, ctx.link().map(|it: Option<(usize, &'static str)>| {
-					let choice = it.map(|(i, _)| i);
-					Action::Choose(choice)
-				}));
+				let choice_link = ctx.link()
+					.map(|it: Option<(usize, &'static str)>| {
+						let choice = it.map(|(i, _)| i);
+						Action::Choose(choice)
+					});
+				ctx.start_prequel(spark, choice_link);
 				AfterFlow::Ignore
 			}
 			Action::Choose(choice) => {

@@ -1,10 +1,10 @@
 use std::cmp::min;
 use std::sync::Arc;
 
-use crate::{Pack, RenderContext};
+use crate::{DrawPad, Pack};
+use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::bounds::Bounds;
-use crate::yui::layout::LayoutContext;
 
 impl Pack for ArcYard {
 	fn pack_top(self, top_rows: i32, top_yard: ArcYard) -> ArcYard {
@@ -64,11 +64,36 @@ impl Yard for PackYard {
 		let (first_layout_bounds, second_layout_bounds) = (ctx.bounds(first_layout_index), ctx.bounds(second_layout_index));
 		let min_z = min(first_layout_bounds.z, second_layout_bounds.z);
 		let final_index = if edge_bounds.z == min_z { edge_index } else { ctx.push_bounds(&edge_bounds.with_z(min_z)) };
+		ctx.set_yard_bounds(self.id, final_index);
 		final_index
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		self.first_yard.render(ctx);
-		self.second_yard.render(ctx);
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		Some(vec![
+			(self.first_yard.clone(), None),
+			(self.second_yard.clone(), None),
+		])
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use crate::{FillColor, FillGrade, layout, Pack, render, SenderLink, yard};
+	use crate::yui::layout::ActiveFocus;
+
+	#[test]
+	fn layout_render() {
+		let white = yard::fill(FillColor::Background, FillGrade::Plain);
+		let black = yard::fill(FillColor::Primary, FillGrade::Plain);
+		let yard = white.pack_right(1, black);
+		println!("START_ID: {}", yard.id());
+
+		let (max_x, max_y) = (2, 1);
+		let layout = layout::run(max_y, max_x, &yard, SenderLink::ignore(), &ActiveFocus::default());
+		let draw_pad = render::run(yard.clone(), layout.max_x, layout.max_y, layout.bounds.clone(), 0);
+		let fronts = draw_pad.to_fronts();
+		let fills = fronts.iter().flatten().map(|front| front.fill_color).collect::<Vec<_>>();
+		assert_eq!(fills, vec![FillColor::Background, FillColor::Primary]);
 	}
 }

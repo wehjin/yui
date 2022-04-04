@@ -2,7 +2,7 @@ use std::fmt;
 
 use selection_editor::Action;
 
-use crate::{AfterFlow, ArcYard, Cling, Confine, Create, Flow, Pack, Padding, selection_editor, SenderLink, Spark};
+use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Pack, Padding, selection_editor, SenderLink, Spark};
 use crate::palette::StrokeColor;
 use crate::selection_editor::SelectionEditor;
 use crate::yard::{ButtonState, Pressable};
@@ -48,7 +48,8 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 			yard::list(rand::random(), state.selected_index(), items)
 		};
 		let close = yard::button("Close", ButtonState::enabled(link.map(|_| Action::Close))).confine_width(9, Cling::Center);
-		let yard = content.pack_bottom(1, close).pad(1);
+		let yard = content.pack_bottom(1, close).pad(1)
+			.before(yard::fill(FillColor::Background, FillGrade::Plain));
 		Some(yard)
 	}
 }

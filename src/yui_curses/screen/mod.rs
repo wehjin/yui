@@ -6,16 +6,11 @@ use std::thread;
 
 use ncurses::*;
 
-pub(crate) use spot_stack::*;
-
-use crate::{SenderLink, yard};
-use crate::palette::{FillColor, FillGrade, Palette, StrokeColor};
+use crate::{layout, render, SenderLink, yard};
+use crate::palette::Palette;
 use crate::yard::ArcYard;
-use crate::yui::bounds::{Bounds, BoundsHold};
-use crate::yui::layout::{ActiveFocus, LayoutContext};
-use crate::yui::RenderContext;
-
-mod spot_stack;
+use crate::yui::bounds::BoundsHold;
+use crate::yui::layout::ActiveFocus;
 
 fn init() {
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
@@ -35,7 +30,7 @@ struct System {
 	active_focus: ActiveFocus,
 	max_x: i32,
 	max_y: i32,
-	bounds: Rc<RefCell<BoundsHold>>,
+	bounds_hold: Rc<RefCell<BoundsHold>>,
 }
 
 impl System {
@@ -44,7 +39,7 @@ impl System {
 		let (_, bounds) = BoundsHold::init(max_x, max_y);
 		let yard = yard::empty();
 		let active_focus = ActiveFocus::default();
-		System { screen, yard, active_focus, max_x, max_y, bounds }
+		System { screen, yard, active_focus, max_x, max_y, bounds_hold: bounds }
 	}
 	fn set_yard(&mut self, yard: ArcYard) {
 		self.yard = yard;
@@ -80,38 +75,40 @@ impl System {
 	}
 	fn update_bounds(&mut self) {
 		let (max_x, max_y) = width_height();
-		let (start_index, bounds) = BoundsHold::init(max_x, max_y);
-
-		let mut layout_ctx = LayoutContext::new(
-			start_index,
-			bounds.clone(),
-			SenderLink::new(self.screen.clone(), |_| ScreenAction::ResizeRefresh),
-		);
-		self.yard.layout(&mut layout_ctx);
-		self.active_focus = layout_ctx.pop_active_focus(&self.active_focus);
-		self.max_x = max_x;
-		self.max_y = max_y;
-		self.bounds = bounds;
+		info!("Curses width:{}, height:{}", max_x, max_y);
+		let refresh_link = SenderLink::new(self.screen.clone(), |_| ScreenAction::ResizeRefresh);
+		let result = layout::run(max_y, max_x, &self.yard, refresh_link, &self.active_focus);
+		self.active_focus = result.active_focus;
+		self.max_x = result.max_x;
+		self.max_y = result.max_y;
+		self.bounds_hold = result.bounds;
 	}
 	fn resize_refresh(&mut self) {
 		self.update_bounds();
 
+		let focus_id = self.active_focus.focus_id();
+		let bounds_hold = self.bounds_hold.clone();
+		let draw_pad = render::run(self.yard.clone(), self.max_x, self.max_y, bounds_hold, focus_id);
+
+		info!("Screen width: {}, height: {}", self.max_x, self.max_y);
 		let palette = Palette::new();
-		let mut ctx = CursesRenderContext::new(
-			self.max_y, self.max_x,
-			&palette,
-			self.bounds.clone(),
-			self.active_focus.focus_id(),
-		);
-		clear();
-		for row in 0..self.max_y {
-			ctx.row = row;
-			for col in 0..self.max_x {
-				ctx.col = col;
-				self.yard.render(&ctx);
-				ctx.publish();
+		draw_pad.each(|y, x, front| {
+			if let Some((glyph, attr)) = palette.to_glyph_attr(front) {
+				if y == 0 && x == 0 {
+					info!("Top left: {}, attr: {}", glyph, attr);
+				} else if y == 0 && x == (self.max_x - 1) {
+					info!("Top right: {}, attr: {}", glyph, attr);
+				} else if y == (self.max_y - 1) && x == (self.max_x - 1) {
+					info!("Bottom right: {}, attr: {}", glyph, attr);
+				} else if y == (self.max_y - 1) && x == 0 {
+					info!("Bottom left: {}, attr:{}", glyph, attr);
+				} else if (y - self.max_y / 2).abs() < 2 && (x - self.max_x / 2).abs() < 2 {
+					info!("Center ({},{}): {}, attr:{}", x, y, glyph, attr);
+				}
+				attrset(attr);
+				mvaddstr(y as i32, x as i32, glyph);
 			}
-		}
+		});
 		refresh();
 	}
 }
@@ -168,81 +165,6 @@ fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) ->
 		}
 	}
 	Ok(first)
-}
-
-
-struct CursesRenderContext<'a> {
-	row: i32,
-	col: i32,
-	bounds_hold: Rc<RefCell<BoundsHold>>,
-	cols: i32,
-	spots: Vec<RefCell<SpotStack<'a>>>,
-	focus_id: i32,
-}
-
-impl<'a> CursesRenderContext<'a> {
-	fn new(
-		rows: i32,
-		cols: i32,
-		palette: &'a Palette,
-		bounds_hold: Rc<RefCell<BoundsHold>>,
-		focus_id: i32,
-	) -> Self {
-		let origin_stack = SpotStack::new(&palette);
-		CursesRenderContext {
-			row: 0,
-			col: 0,
-			bounds_hold,
-			cols,
-			spots: vec![origin_stack; (rows * cols) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
-			focus_id,
-		}
-	}
-
-	fn spot_stack(&self) -> &RefCell<SpotStack<'a>> {
-		let index = self.row * self.cols + self.col;
-		&self.spots[index as usize]
-	}
-
-	fn publish(&self) {
-		mv(self.row as i32, self.col as i32);
-		let stack = self.spot_stack().borrow();
-		let (color_pair_index, glyph, darken) = stack.spot_details();
-		let color_attr = COLOR_PAIR(color_pair_index);
-		let attr = if darken {
-			color_attr | A_DIM()
-		} else {
-			color_attr
-		};
-		attrset(attr);
-		if !glyph.is_empty() {
-			addstr(glyph);
-		}
-	}
-}
-
-impl<'a> RenderContext for CursesRenderContext<'a> {
-	fn focus_id(&self) -> i32 {
-		self.focus_id
-	}
-	fn spot(&self) -> (i32, i32) {
-		(self.row as i32, self.col as i32)
-	}
-	fn yard_bounds(&self, yard_id: i32) -> Bounds {
-		self.bounds_hold.borrow().yard_bounds(yard_id).to_owned()
-	}
-	fn set_fill(&self, color: FillColor, z: i32) {
-		self.spot_stack().borrow_mut().set_fill(color, z);
-	}
-	fn set_fill_grade(&self, fill_grade: FillGrade, z: i32) {
-		self.spot_stack().borrow_mut().set_fill_grade(fill_grade, z);
-	}
-	fn set_glyph(&self, glyph: String, color: StrokeColor, z: i32) {
-		self.spot_stack().borrow_mut().set_stroke(glyph, color, z);
-	}
-	fn set_dark(&self, z: i32) {
-		self.spot_stack().borrow_mut().set_dark(z);
-	}
 }
 
 #[derive(Clone)]

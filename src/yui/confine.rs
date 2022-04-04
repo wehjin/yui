@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
+use crate::{Bounds, DrawPad};
+use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::{Cling, Confine, RenderContext};
-use crate::yui::layout::LayoutContext;
+use crate::yui::{Cling, Confine};
 
 impl Confine for ArcYard {
 	fn confine_height(self, height: i32, cling: Cling) -> ArcYard {
@@ -40,6 +41,7 @@ impl ConfineYard {
 
 impl Yard for ConfineYard {
 	fn id(&self) -> i32 { self.id }
+	fn type_desc(&self) -> &'static str { "Confine" }
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -61,7 +63,7 @@ impl Yard for ConfineYard {
 		}
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		self.yard.render(ctx)
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		Some(vec![(self.yard.clone(), None)])
 	}
 }

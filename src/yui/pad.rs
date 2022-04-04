@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use crate::{Padding, RenderContext};
+use crate::{Bounds, DrawPad, Padding};
+use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::layout::LayoutContext;
 
 impl Padding for ArcYard {
 	fn pad(self, size: i32) -> ArcYard {
@@ -50,6 +50,7 @@ impl PadYard {
 
 impl Yard for PadYard {
 	fn id(&self) -> i32 { self.id }
+	fn type_desc(&self) -> &'static str { "Pad" }
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -68,7 +69,7 @@ impl Yard for PadYard {
 		}
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		self.yard.render(ctx)
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		Some(vec![(self.yard.clone(), None)])
 	}
 }

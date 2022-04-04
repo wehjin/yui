@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
+use crate::{Bounds, DrawPad};
+use crate::layout::LayoutContext;
 use crate::palette::FillGrade;
-use crate::RenderContext;
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::layout::LayoutContext;
 
 pub fn grade(grade: FillGrade) -> ArcYard {
 	//! Produce a yard that changes the color grade.
@@ -19,13 +19,9 @@ struct GradeYard {
 }
 
 impl Yard for GradeYard {
-	fn render(&self, ctx: &dyn RenderContext) {
-		let (row, col) = ctx.spot();
-		let bounds = ctx.yard_bounds(self.id);
-		if bounds.intersects(row, col) {
-			ctx.set_fill_grade(self.grade, bounds.z);
-		}
-	}
+	fn id(&self) -> i32 { self.id }
+
+	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();
@@ -33,7 +29,8 @@ impl Yard for GradeYard {
 		bounds_id
 	}
 
-	fn update(&self, _option: YardOption) {}
-
-	fn id(&self) -> i32 { self.id }
+	fn render(&self, bounds: &Bounds, _focus_id: i32, pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		pad.grade(bounds, self.grade);
+		None
+	}
 }

@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
+use crate::DrawPad;
+use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::{Cling, Place, RenderContext};
+use crate::yui::{Cling, Place};
 use crate::yui::bounds::Bounds;
-use crate::yui::layout::LayoutContext;
 
 impl Place for ArcYard {
 	fn place_center(self, width: i32) -> ArcYard {
@@ -25,6 +26,7 @@ struct PlaceYard {
 
 impl Yard for PlaceYard {
 	fn id(&self) -> i32 { self.id }
+	fn type_desc(&self) -> &'static str { "Place" }
 	fn update(&self, option: YardOption) { self.core_yard.update(option) }
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -39,7 +41,9 @@ impl Yard for PlaceYard {
 		final_index
 	}
 
-	fn render(&self, ctx: &dyn RenderContext) {
-		self.core_yard.render(ctx)
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		Some(vec![
+			(self.core_yard.clone(), None)
+		])
 	}
 }

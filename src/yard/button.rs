@@ -1,10 +1,11 @@
 use std::sync::{Arc, RwLock};
 
-use crate::{Link, SenderLink, SyncLink, yard};
+use crate::{DrawPad, Link, SenderLink, SyncLink, yard};
+use crate::bounds::Bounds;
+use crate::layout::LayoutContext;
 use crate::palette::{FillGrade, StrokeColor};
 use crate::yard::{ArcTouch, ArcYard, Yard, YardOption};
-use crate::yui::{Cling, Focus, FocusType, render_submit, RenderContext};
-use crate::yui::layout::LayoutContext;
+use crate::yui::{Cling, Focus, FocusType, render_submit};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Priority {
@@ -58,21 +59,9 @@ struct ButtonYard {
 }
 
 impl Yard for ButtonYard {
-	fn render(&self, ctx: &dyn RenderContext) {
-		let (row, col) = ctx.spot();
-		let bounds = ctx.yard_bounds(self.id);
-		if bounds.intersects(row, col) {
-			let focus_id = ctx.focus_id();
-			let fill_grade = if focus_id == self.id {
-				let is_pressed = { *self.is_pressed.read().expect("read is_pressed") };
-				if is_pressed { FillGrade::Press } else { FillGrade::Focus }
-			} else {
-				FillGrade::Plain
-			};
-			ctx.set_fill_grade(fill_grade, bounds.z)
-		}
-		self.label_yard.render(ctx);
-	}
+	fn id(&self) -> i32 { self.id }
+
+	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();
@@ -95,8 +84,15 @@ impl Yard for ButtonYard {
 		edge_index
 	}
 
-	fn update(&self, _option: YardOption) {}
-
-	fn id(&self) -> i32 { self.id }
+	fn render(&self, bounds: &Bounds, focus_id: i32, pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		let fill_grade = if focus_id == self.id {
+			let is_pressed = { *self.is_pressed.read().expect("read is_pressed") };
+			if is_pressed { FillGrade::Press } else { FillGrade::Focus }
+		} else {
+			FillGrade::Plain
+		};
+		pad.grade(bounds, fill_grade);
+		Some(vec![(self.label_yard.clone(), None)])
+	}
 }
 

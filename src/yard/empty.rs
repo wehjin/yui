@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
+use crate::{Bounds, DrawPad};
+use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard, YardOption};
-use crate::yui::layout::LayoutContext;
-use crate::yui::RenderContext;
 
 pub fn empty() -> ArcYard {
 	Arc::new(EmptyYard { id: rand::random() })
@@ -23,5 +23,7 @@ impl Yard for EmptyYard {
 		bounds_id
 	}
 
-	fn render(&self, _ctx: &dyn RenderContext) {}
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		Option::None
+	}
 }

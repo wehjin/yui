@@ -12,6 +12,7 @@ use crate::yard::ArcYard;
 
 mod screen;
 mod keyboard;
+pub mod spot;
 
 pub struct Projector {
 	set_yard_fn: Box<dyn Fn(ArcYard)>,

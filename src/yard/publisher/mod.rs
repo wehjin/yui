@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use std::sync::mpsc::channel;
 use std::thread;
 
-use crate::{ArcYard, Link, RenderContext};
+use crate::{ArcYard, Bounds, DrawPad, Link};
 use crate::layout::LayoutContext;
 use crate::yard::{Yard, YardOption, YardPublisher};
 
@@ -41,33 +41,35 @@ struct PublisherYard {
 }
 
 impl Yard for PublisherYard {
-	fn render(&self, ctx: &dyn RenderContext) {
-		let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();
-		let layout_yard_num = self.layout_yard_num_lock.read().expect("read layout_yard_num_lock").deref().clone();
-		if layout_yard_num == yard_num {
-			match some_yard {
-				None => {}
-				Some(yard) => yard.render(ctx),
-			}
-		}
-	}
+	fn id(&self) -> i32 { self.id }
+	fn type_desc(&self) -> &'static str { "Publisher" }
+	fn update(&self, _option: YardOption) {}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		let (yard_num, bounds_id) = {
+		let (yard_num, bounds_index) = {
 			let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();
-			(
-				yard_num,
-				match some_yard {
-					None => ctx.edge_bounds().0,
-					Some(yard) => yard.layout(ctx),
-				}
-			)
+			let yard_bounds_index = match some_yard {
+				None => ctx.edge_bounds().0,
+				Some(yard) => yard.layout(ctx),
+			};
+			(yard_num, yard_bounds_index)
 		};
 		{
 			let mut layout_yard_num = self.layout_yard_num_lock.write().expect("write layout_yard_num_lock");
 			*layout_yard_num = yard_num;
 		}
-		bounds_id
+		ctx.set_yard_bounds(self.id, bounds_index);
+		bounds_index
 	}
-	fn update(&self, _option: YardOption) {}
-	fn id(&self) -> i32 { self.id }
+	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
+		let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();
+		let layout_yard_num = self.layout_yard_num_lock.read().expect("read layout_yard_num_lock").deref().clone();
+		if layout_yard_num == yard_num {
+			match some_yard {
+				None => None,
+				Some(yard) => Some(vec![(yard.clone(), None)]),
+			}
+		} else {
+			None
+		}
+	}
 }
