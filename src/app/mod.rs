@@ -2,7 +2,7 @@ use std::error::Error;
 use std::sync::mpsc::channel;
 use std::thread;
 
-use crate::{Link, Projector, SenderLink, story, Story};
+use crate::{Link, Projector, ProjectorReport, SenderLink, story, Story};
 use crate::app::pub_stack::PubStack;
 use crate::prelude::*;
 use crate::yard::YardPublisher;
@@ -60,6 +60,9 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 			}
 		}).expect("spawn");
 	}
-	let enable_refresher = refresher.clone().map(|refresh_link| RefresherAction::Enable(refresh_link));
-	Projector::project_yards(yard_rx, enable_refresher)
+	let reports_link = refresher.clone().map(|report| {
+		let ProjectorReport::Running { refresh_trigger: refresh_link } = report;
+		RefresherAction::Enable(refresh_link)
+	});
+	Projector::project_yards(yard_rx, reports_link)
 }

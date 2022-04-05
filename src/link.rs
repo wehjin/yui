@@ -5,8 +5,14 @@ pub trait Link<A> {
 	fn send(&self, action: A);
 }
 
+#[derive(Debug)]
 pub struct SenderLink<A> {
-	pub tx: Sender<A>
+	pub tx: Sender<A>,
+}
+
+pub trait Sendable: Clone + Send {
+	fn send(self, sender_link: &SenderLink<Self>) { sender_link.send(self); }
+	fn send2(self, sender: &Sender<Self>, msg: &str) { sender.send(self).expect(msg); }
 }
 
 impl<A> Clone for SenderLink<A> {
@@ -58,8 +64,14 @@ impl<A: Send + 'static> SenderLink<A> {
 	}
 }
 
+pub type Trigger = SenderLink<()>;
+
+pub fn trigger<F: Clone + Send + 'static>(value: F, sender: &Sender<F>) -> Trigger {
+	SenderLink::new(sender.clone(), move |_| value.clone())
+}
+
 pub struct SyncLink<A> {
-	tx: SyncSender<A>
+	tx: SyncSender<A>,
 }
 
 impl<A> Clone for SyncLink<A> {

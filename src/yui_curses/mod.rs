@@ -7,7 +7,7 @@ use ncurses::*;
 use keyboard::Keyboard;
 pub(crate) use screen::ScreenAction;
 
-use crate::{Link, SenderLink};
+use crate::{Sendable, SenderLink, trigger, Trigger};
 use crate::yard::ArcYard;
 
 mod screen;
@@ -18,9 +18,16 @@ pub struct Projector {
 	set_yard_fn: Box<dyn Fn(ArcYard)>,
 }
 
+#[derive(Debug, Clone)]
+pub enum ProjectorReport {
+	Running { refresh_trigger: Trigger }
+}
+
+impl Sendable for ProjectorReport {}
+
 impl Projector {
-	fn new(f: impl Fn(ArcYard) + 'static) -> Self {
-		Projector { set_yard_fn: Box::new(f) }
+	fn new(on_yard: impl Fn(ArcYard) + 'static) -> Self {
+		Projector { set_yard_fn: Box::new(on_yard) }
 	}
 }
 
@@ -29,25 +36,8 @@ impl Projector {
 		(*self.set_yard_fn)(yard)
 	}
 
-	pub fn project_yards(yards: Receiver<Option<ArcYard>>, enable_refresher: SenderLink<SenderLink<()>>) -> Result<(), Box<dyn Error>> {
+	pub fn project_yards(yards: Receiver<Option<ArcYard>>, report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
 		let (stop_tx, stop_rx) = channel();
-		Self::run_blocking(stop_rx, enable_refresher, move |ctx| {
-			for yard in &yards {
-				match yard {
-					Some(yard) => ctx.set_yard(yard),
-					None => break,
-				}
-			}
-			stop_tx.send(()).expect("send () to stop_tx");
-		});
-		Ok(())
-	}
-
-	pub fn run_blocking(
-		stop_rx: Receiver<()>,
-		enable_refresher: SenderLink<SenderLink<()>>,
-		block: impl Fn(Projector) + Send + 'static,
-	) {
 		setlocale(LcCategory::all, "en_US.UTF-8");
 		initscr();
 		if !has_colors() {
@@ -56,17 +46,25 @@ impl Projector {
 			std::process::exit(1);
 		}
 		let screen_link = screen::connect();
-		enable_refresher.send(SenderLink::new(screen_link.clone(), |_| ScreenAction::ResizeRefresh));
-		thread::Builder::new().name("run_blocking".to_string()).spawn({
-			let screen_tx = screen_link.clone();
-			move || {
-				let projector = Projector::new(
-					move |yard| screen_tx.send(ScreenAction::SetYard(yard)).expect("send SetYard to screen")
-				);
-				block(projector);
-			}
-		}).expect("spawn");
+		ProjectorReport::Running { refresh_trigger: trigger(ScreenAction::ResizeRefresh, &screen_link) }
+			.send(&report_link);
+		{
+			let screen_link = screen_link.clone();
+			thread::Builder::new().name("run_blocking".into()).spawn(move || {
+				let projector = Projector::new(move |yard| {
+					ScreenAction::SetYard(yard).send2(&screen_link, "send SetYard to screen");
+				});
+				for yard in &yards {
+					match yard {
+						Some(yard) => projector.set_yard(yard),
+						None => break,
+					}
+				}
+				stop_tx.send(()).expect("send () to stop_tx");
+			}).expect("spawn");
+		}
 		Keyboard::read_blocking(screen_link.clone(), stop_rx);
+		Ok(())
 	}
 }
 

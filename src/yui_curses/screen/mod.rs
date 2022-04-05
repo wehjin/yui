@@ -6,7 +6,7 @@ use std::thread;
 
 use ncurses::*;
 
-use crate::{layout, render, SenderLink, yard};
+use crate::{layout, render, Sendable, SenderLink, yard};
 use crate::palette::Palette;
 use crate::yard::ArcYard;
 use crate::yui::bounds::BoundsHold;
@@ -179,4 +179,6 @@ pub enum ScreenAction {
 	SetYard(ArcYard),
 	AsciiChar(char),
 }
+
+impl Sendable for ScreenAction {}
 
