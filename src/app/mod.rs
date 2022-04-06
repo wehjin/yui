@@ -2,7 +2,7 @@ use std::error::Error;
 use std::sync::mpsc::channel;
 use std::thread;
 
-use crate::{Link, ProjectorReport, SenderLink, start_projector, story, Story};
+use crate::{Link, ProjectorReport, run_console, SenderLink, story, Story};
 use crate::app::pub_stack::PubStack;
 use crate::prelude::*;
 use crate::yard::YardPublisher;
@@ -12,27 +12,6 @@ pub use self::edge::*;
 pub(crate) mod pub_stack;
 
 mod edge;
-
-enum RefresherAction {
-	Enable(SenderLink<()>),
-	Refresh,
-}
-
-fn start_refresher() -> SenderLink<RefresherAction> {
-	let (tx, rx) = channel();
-	thread::Builder::new().name("start_refresher".to_string()).spawn(move || {
-		let mut refresh_link: Option<SenderLink<()>> = None;
-		for msg in rx {
-			match msg {
-				RefresherAction::Enable(link) => refresh_link = Some(link),
-				RefresherAction::Refresh => if let Some(ref link) = refresh_link {
-					link.send(())
-				},
-			}
-		}
-	}).expect("spawn");
-	SenderLink { tx }
-}
 
 pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<(), Box<dyn Error>>
 	where S: Spark + Send + 'static
@@ -64,5 +43,26 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 		let ProjectorReport::Ready { refresh_trigger: refresh_link } = report;
 		RefresherAction::Enable(refresh_link)
 	});
-	start_projector(yard_rx, reports_link)
+	run_console(yard_rx, reports_link)
+}
+
+enum RefresherAction {
+	Enable(SenderLink<()>),
+	Refresh,
+}
+
+fn start_refresher() -> SenderLink<RefresherAction> {
+	let (tx, rx) = channel();
+	thread::Builder::new().name("start_refresher".to_string()).spawn(move || {
+		let mut refresh_link: Option<SenderLink<()>> = None;
+		for msg in rx {
+			match msg {
+				RefresherAction::Enable(link) => refresh_link = Some(link),
+				RefresherAction::Refresh => if let Some(ref link) = refresh_link {
+					link.send(())
+				},
+			}
+		}
+	}).expect("spawn");
+	SenderLink { tx }
 }

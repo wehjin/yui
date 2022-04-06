@@ -25,6 +25,7 @@ pub mod yard;
 pub(crate) mod core;
 pub(crate) mod layout;
 pub(crate) mod render;
+pub mod pod;
 
 mod link;
 mod yui;

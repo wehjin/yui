@@ -5,8 +5,9 @@ use std::thread;
 use ncurses::*;
 
 use crate::{Sendable, Trigger};
-use crate::core::pod::YardPod;
 use crate::palette::Palette;
+use crate::pod::Pod;
+use crate::pod::yard::YardPod;
 use crate::spot::spot_table::SpotTable;
 use crate::yard::ArcYard;
 

@@ -21,7 +21,7 @@ pub enum ProjectorReport {
 
 impl Sendable for ProjectorReport {}
 
-pub fn start_projector(yard_source: Receiver<Option<ArcYard>>, report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
+pub fn run_console(yard_source: Receiver<Option<ArcYard>>, report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
 	let (done_tx, done_rx) = channel();
 	setlocale(LcCategory::all, "en_US.UTF-8");
 	initscr();
