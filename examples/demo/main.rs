@@ -14,6 +14,7 @@ use simplelog::{Config, WriteLogger};
 pub use app_tab::*;
 use yui::{Create, Flow, Link, SenderLink, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Padding, story, yard};
+use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 
@@ -56,15 +57,17 @@ impl story::Spark for Main {
 	type Action = MainAction;
 	type Report = u32;
 
-	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
+	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State where E: Clone
+	{
 		State {
 			main_tab: AppTab::from_index(0),
 			dialog_story: {
 				let report_link = ctx.report_link().clone();
 				let action_link = ctx.link().clone();
+				let edge = ctx.edge().clone();
 				story::spark(
 					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
-					ctx.edge().clone(),
+					edge,
 					Some(SenderLink::new_f(move |report| {
 						match report {
 							Report::SelectedTab(index) => action_link.send(SetTab(AppTab::from_index(index))),

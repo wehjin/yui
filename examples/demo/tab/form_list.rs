@@ -1,5 +1,6 @@
 use std::iter::FromIterator;
 
+use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
@@ -13,7 +14,7 @@ impl Spark for FormListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { StringEdit::empty(ValidIf::UnsignedInt) }
+	fn create<E: Edge>(&self, _create: &Create<Self::Action, Self::Report, E>) -> Self::State { StringEdit::empty(ValidIf::UnsignedInt) }
 
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
@@ -30,7 +31,7 @@ impl Spark for FormListDemo {
 			Cling::Left,
 		);
 		let fields = vec![
-            {
+			{
 				yard::textfield(
 					1931,
 					"Label".into(),
@@ -38,7 +39,7 @@ impl Spark for FormListDemo {
 					link.clone().map(Action::StringEdit),
 				).confine_height(3, Cling::Center)
 			},
-            {
+			{
 				let button = if edit.is_valid() {
 					yard::button("Submit", ButtonState::enabled(link.clone().map(|_| Action::ShowTab(0))))
 				} else {
@@ -46,7 +47,7 @@ impl Spark for FormListDemo {
 				};
 				button.confine_height(3, Cling::Center)
 			},
-        ];
+		];
 		let items = fields.into_iter().map(|it| (5u8, it)).collect();
 		let list = yard::list(1930, 0, items);
 		let body = list

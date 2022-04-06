@@ -8,7 +8,8 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{AfterFlow, ArcYard, Before, Create, Flow, Pack, Padding, SenderLink, Spark, yard};
+use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Pack, Padding, SenderLink, Spark, yard};
+use yui::app::Edge;
 use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
 use yui::yard::{ButtonState, Priority};
@@ -20,7 +21,7 @@ impl Spark for Main {
 	type Action = ();
 	type Report = ();
 
-	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State {
+	fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
 		()
 	}
 
@@ -34,7 +35,7 @@ impl Spark for Main {
 			format!("{}", it),
 			format!("SYM{}", it),
 			format!("{}", 2 * it),
-			format!("${:0.2}", 1.26 * it as f32)
+			format!("${:0.2}", 1.26 * it as f32),
 		]).collect();
 		let focus = 0;
 		let close_button = yard::button(
@@ -58,5 +59,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 		File::create("table.log").expect("log file"),
 	).expect("result");
 	log::info!("Table");
-	yui::main(Main())
+	console::run(Main())?;
+	Ok(())
 }

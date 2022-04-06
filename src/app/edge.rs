@@ -1,37 +1,69 @@
-use crate::{Link, SenderLink, Spark, Story};
+use crate::{Link, SenderLink, Spark, Story, Trigger};
 use crate::app::pub_stack;
 use crate::prelude::story;
 
-pub struct Edge {
+pub trait Edge {
+	fn start_dialog<S: Spark + Send + 'static>(&self, spark: S, report_link: SenderLink<S::Report>) -> Story<S>;
+	fn end_dialog(&self);
+	fn redraw(&self);
+}
+
+pub struct SimpleEdge {
+	redraw_trigger: Trigger,
+}
+
+impl SimpleEdge {
+	pub fn new(redraw_trigger: Trigger) -> Self { SimpleEdge { redraw_trigger } }
+}
+
+impl Clone for SimpleEdge {
+	fn clone(&self) -> Self { SimpleEdge { redraw_trigger: self.redraw_trigger.clone() } }
+}
+
+impl Edge for SimpleEdge {
+	fn start_dialog<S>(&self, _spark: S, _report_link: SenderLink<S::Report>) -> Story<S> where S: Spark + Send + 'static {
+		todo!()
+	}
+
+	fn end_dialog(&self) {
+		todo!()
+	}
+
+	fn redraw(&self) {
+		self.redraw_trigger.send(());
+	}
+}
+
+pub struct AppEdge {
 	link: SenderLink<pub_stack::Action>,
 	redraw: SenderLink<()>,
 }
 
-impl Clone for Edge {
+impl Clone for AppEdge {
 	fn clone(&self) -> Self {
-		Edge { link: self.link.clone(), redraw: self.redraw.clone() }
+		AppEdge { link: self.link.clone(), redraw: self.redraw.clone() }
 	}
 }
 
-impl Edge {
-	pub fn start_dialog<S>(&self, spark: S, report_link: SenderLink<S::Report>) -> Story<S>
-		where S: Spark + Send + 'static
-	{
+impl AppEdge {
+	pub(crate) fn new(link: SenderLink<pub_stack::Action>, redraw: SenderLink<()>) -> Self {
+		AppEdge { link, redraw }
+	}
+}
+
+impl Edge for AppEdge {
+	fn start_dialog<S>(&self, spark: S, report_link: SenderLink<S::Report>) -> Story<S> where S: Spark + Send + 'static {
 		let story = story::spark(spark, Some(self.clone()), Some(report_link));
 		self.link.send(pub_stack::Action::Push(story.connect()));
 		story
 	}
 
-	pub fn end_dialog(&self) {
+	fn end_dialog(&self) {
 		self.link.send(pub_stack::Action::Pop);
 	}
 
 
-	pub fn redraw(&self) {
+	fn redraw(&self) {
 		self.redraw.send(())
-	}
-
-	pub(crate) fn new(link: SenderLink<pub_stack::Action>, redraw: SenderLink<()>) -> Self {
-		Edge { link, redraw }
 	}
 }

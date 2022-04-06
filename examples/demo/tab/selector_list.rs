@@ -1,4 +1,5 @@
 use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Padding, SenderLink, Spark, yard};
+use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::{MuxButton, Pressable};
 
@@ -9,7 +10,7 @@ impl Spark for SelectorListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { 1 }
+	fn create<E: Edge>(&self, _create: &Create<Self::Action, Self::Report, E>) -> Self::State { 1 }
 
 	fn flow(&self, action: Self::Action, _flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {

@@ -1,6 +1,7 @@
 use std::sync::mpsc::SyncSender;
 
 use crate::{AfterFlow, ArcYard, Create, Fade, Flow, SenderLink, story, yard};
+use crate::app::Edge;
 use crate::yard::YardControlMsg;
 
 pub(crate) struct PubStack {}
@@ -10,7 +11,7 @@ impl story::Spark for PubStack {
 	type Action = Action;
 	type Report = ();
 
-	fn create(&self, _create: &Create<Self::Action, Self::Report>) -> Self::State { Vec::new() }
+	fn create<E: Edge>(&self, _create: &Create<Self::Action, Self::Report, E>) -> Self::State { Vec::new() }
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {

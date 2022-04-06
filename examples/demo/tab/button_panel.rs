@@ -1,3 +1,4 @@
+use yui::app::Edge;
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
 use yui::prelude::yard::ButtonState;
@@ -23,7 +24,7 @@ impl Spark for ButtonDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State { State::Beavis }
+	fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State { State::Beavis }
 
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		match action {

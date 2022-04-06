@@ -11,6 +11,21 @@ use crate::pod::yard::YardPod;
 use crate::spot::spot_table::SpotTable;
 use crate::yard::ArcYard;
 
+#[derive(Clone)]
+pub enum ScreenAction {
+	Close,
+	ResizeRefresh,
+	FocusUp,
+	FocusDown,
+	FocusLeft,
+	FocusRight,
+	Space,
+	SetYard(ArcYard),
+	AsciiChar(char),
+}
+
+impl Sendable for ScreenAction {}
+
 pub fn connect() -> Sender<ScreenAction> {
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 	clear();
@@ -28,6 +43,7 @@ fn launch_state_update_thread(actions_source: Receiver<ScreenAction>, screen_lin
 		}
 	}).expect("spawn");
 }
+
 
 struct ScreenState {
 	pod: YardPod,
@@ -58,7 +74,6 @@ impl ScreenState {
 		if stop { None } else { Some(ScreenState { pod: self.pod }) }
 	}
 }
-
 
 fn width_height() -> (i32, i32) {
 	let mut max_x = 0;
@@ -113,19 +128,4 @@ fn next_screen_action(rx: &Receiver<ScreenAction>, tx: &Sender<ScreenAction>) ->
 	}
 	Ok(first)
 }
-
-#[derive(Clone)]
-pub enum ScreenAction {
-	Close,
-	ResizeRefresh,
-	FocusUp,
-	FocusDown,
-	FocusLeft,
-	FocusRight,
-	Space,
-	SetYard(ArcYard),
-	AsciiChar(char),
-}
-
-impl Sendable for ScreenAction {}
 

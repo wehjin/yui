@@ -14,7 +14,9 @@ mod spark;
 /// maintain state, respond to actions, and emit reports.
 /// Every story begins with a Spark.
 #[derive(Debug)]
-pub struct Story<Spk: Spark> { tx: Sender<Msg<Spk>> }
+pub struct Story<Spk: Spark> {
+	tx: Sender<Msg<Spk>>,
+}
 
 impl<Spk: Spark> Clone for Story<Spk> {
 	fn clone(&self) -> Self {

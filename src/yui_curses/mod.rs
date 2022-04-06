@@ -1,14 +1,12 @@
 use std::error::Error;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 
-use ncurses::*;
-
-use keyboard::Keyboard;
 pub(crate) use screen::ScreenAction;
 
-use crate::{Sendable, SenderLink, trigger, Trigger};
+use crate::{Sendable, SenderLink, Trigger};
 use crate::yard::ArcYard;
+use crate::yui_curses::console::Console;
 
 mod screen;
 mod keyboard;
@@ -21,19 +19,12 @@ pub enum ProjectorReport {
 
 impl Sendable for ProjectorReport {}
 
+pub mod console;
+
 pub fn run_console(yard_source: Receiver<Option<ArcYard>>, report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
-	let (done_tx, done_rx) = channel();
-	setlocale(LcCategory::all, "en_US.UTF-8");
-	initscr();
-	if !has_colors() {
-		endwin();
-		println!("Your terminal does not support color");
-		std::process::exit(1);
-	}
-	let screen_link = screen::connect();
-	ProjectorReport::Ready { refresh_trigger: trigger(ScreenAction::ResizeRefresh, &screen_link) }.send(&report_link);
-	spawn_screen_feeder(yard_source, done_tx, &screen_link);
-	Keyboard::read_blocking(screen_link.clone(), done_rx);
+	let console = Console::connect();
+	ProjectorReport::Ready { refresh_trigger: console.refresh_trigger().clone() }.send(&report_link);
+	console.run(yard_source);
 	Ok(())
 }
 

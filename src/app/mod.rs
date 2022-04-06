@@ -23,10 +23,10 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 		SenderLink::new(yard_tx, |_| None)
 	};
 	let refresh_link = refresher.clone().map(|_| RefresherAction::Refresh);
-	let stack_edge = Edge::new(SenderLink::ignore(), refresh_link.clone());
+	let stack_edge = AppEdge::new(SenderLink::ignore(), refresh_link.clone());
 	let stack_story: Story<PubStack> = story::spark(PubStack {}, Some(stack_edge), Some(on_close));
 	stack_story.link().send({
-		let app_edge = Edge::new(stack_story.link(), refresh_link.clone());
+		let app_edge = AppEdge::new(stack_story.link(), refresh_link.clone());
 		let app_story: Story<S> = story::spark(spark, Some(app_edge), report_link);
 		pub_stack::Action::Push(app_story.connect())
 	});

@@ -8,13 +8,14 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{AfterFlow, ArcYard, Before, Cling, Create, Flow, SenderLink, Spark, yard};
+use yui::{AfterFlow, ArcYard, Before, Cling, console, Create, Flow, SenderLink, Spark, yard};
+use yui::app::Edge;
 use yui::palette::{FillColor, FillGrade, StrokeColor};
 
 fn main() -> Result<(), Box<dyn Error>> {
-	let log_file = File::create("label_example.log")?;
+	let log_file = File::create("hello.log")?;
 	WriteLogger::init(LevelFilter::Info, Config::default(), log_file)?;
-	log::info!("Label");
+	log::info!("Hello!");
 
 	pub struct Main();
 	impl Spark for Main {
@@ -22,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		type Action = ();
 		type Report = ();
 
-		fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State {
+		fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
 			()
 		}
 
@@ -37,5 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			Some(page)
 		}
 	}
-	yui::main(Main())
+	console::run(Main())?;
+	Ok(())
 }
+

@@ -1,4 +1,5 @@
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Padding, SenderLink, Spark, yard};
+use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::yard::ButtonState;
@@ -10,7 +11,7 @@ impl Spark for DialogDemo {
 	type Action = Action;
 	type Report = Report;
 
-	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
+	fn create<E: Edge>(&self, create: &Create<Self::Action, Self::Report, E>) -> Self::State {
 		(self.dialog, self.next_dialog, create.report_link().clone())
 	}
 

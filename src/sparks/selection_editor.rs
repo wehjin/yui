@@ -3,6 +3,7 @@ use std::fmt;
 use selection_editor::Action;
 
 use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Pack, Padding, selection_editor, SenderLink, Spark};
+use crate::app::Edge;
 use crate::palette::StrokeColor;
 use crate::selection_editor::SelectionEditor;
 use crate::yard::{ButtonState, Pressable};
@@ -18,7 +19,7 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 	type Action = Action;
 	type Report = Option<(usize, T)>;
 
-	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State {
+	fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
 		SelectionEditor::new(self.selected, &self.choices)
 	}
 
