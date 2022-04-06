@@ -72,8 +72,8 @@ mod tests {
 		let fore = yard::fill(FillColor::Primary, FillGrade::Plain);
 		let yard = yard::fade((1, 1), back, fore);
 		let (max_x, max_y) = (3, 3);
-		let layout = layout::run(max_y, max_x, &yard, SenderLink::ignore(), &ActiveFocus::default());
-		let spot_table = render::run(yard.clone(), layout.max_x, layout.max_y, layout.bounds.clone(), 0);
+		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), 0);
 		let fronts = spot_table.to_fronts();
 		let computed = fronts.iter().flatten()
 			.map(|front| (front.fill_color, front.dark))

@@ -12,14 +12,15 @@ pub struct SpotTable {
 
 
 impl SpotTable {
-	pub fn new(rows: i32, cols: i32) -> Self {
+	pub fn new(height: i32, width: i32) -> Self {
 		let origin_stack = SpotStack::new();
 		SpotTable {
-			rows,
-			cols,
-			spots: vec![origin_stack; (cols * rows) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
+			rows: height,
+			cols: width,
+			spots: vec![origin_stack; (width * height) as usize].into_iter().map(|it| RefCell::new(it)).collect(),
 		}
 	}
+	pub fn width_height(&self) -> (i32, i32) { (self.cols, self.rows) }
 
 	pub fn spot_stack(&self, y: i32, x: i32) -> &RefCell<SpotStack> {
 		let index = y * self.cols + x;

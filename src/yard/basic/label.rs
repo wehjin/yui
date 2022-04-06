@@ -57,8 +57,8 @@ mod tests {
 	fn layout_render() {
 		let yard = yard::label("Hi", StrokeColor::BodyOnBackground, Cling::Left);
 		let (max_x, max_y) = (2, 1);
-		let layout = layout::run(max_y, max_x, &yard, SenderLink::ignore(), &ActiveFocus::default());
-		let spot_table = render::run(yard.clone(), layout.max_x, layout.max_y, layout.bounds.clone(), layout.active_focus.focus_id());
+		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), layout.active_focus.focus_id());
 		let fronts = spot_table.to_fronts();
 		let computed = fronts.iter().flatten()
 			.map(|front| front.stroke.clone().unwrap_or((" ".to_string(), StrokeColor::BodyOnBackground)))

@@ -139,7 +139,7 @@ impl TextfieldYard {
 				let pre_chars: Vec<char> = edit.chars[0..edit.cursor_index].iter().cloned().collect();
 				if !pre_chars.is_empty() {
 					let pre_start = (pre_chars.len() as i32 - cursor_from_left).max(0) as usize;
-					let pre_visible_chars: String = pre_chars[pre_start..].iter().cloned().map(|c| if c.is_alphanumeric() { c } else { ' ' }).collect();
+					let pre_visible_chars: String = pre_chars[pre_start..].iter().cloned().map(|c| if !c.is_control() { c } else { ' ' }).collect();
 					pad.glyph(&bounds, &pre_visible_chars, StrokeColor::BodyOnBackground);
 				}
 			}
@@ -151,7 +151,7 @@ impl TextfieldYard {
 				}
 				if edit.cursor_index < edit.chars.len() {
 					let char = edit.chars[edit.cursor_index];
-					if char.is_alphanumeric() {
+					if !char.is_control() {
 						pad.glyph(&cursor_bounds, &char.to_string(), StrokeColor::BodyOnBackground);
 					}
 				};
@@ -159,7 +159,7 @@ impl TextfieldYard {
 			{
 				let post_start = edit.cursor_index + 1;
 				if post_start < edit.chars.len() {
-					let post_chars: String = edit.chars[post_start..].iter().cloned().map(|c| if c.is_alphanumeric() { c } else { ' ' }).collect();
+					let post_chars: String = edit.chars[post_start..].iter().cloned().map(|c| if !c.is_control() { c } else { ' ' }).collect();
 					let post_bounds = bounds.pad(cursor_from_left + 1, 0, 0, 0);
 					pad.glyph(&post_bounds, &post_chars, StrokeColor::BodyOnBackground);
 				}
@@ -192,8 +192,8 @@ mod tests {
 		let edit = StringEdit::new("words", 5, Validity::NotEmpty);
 		let yard = yard::textfield(300, "Label", edit, SenderLink::ignore());
 		let (max_x, max_y) = (4, 3);
-		let layout = layout::run(max_y, max_x, &yard, SenderLink::ignore(), &ActiveFocus::default());
-		let spot_table = render::run(yard.clone(), layout.max_x, layout.max_y, layout.bounds.clone(), layout.active_focus.focus_id());
+		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), layout.active_focus.focus_id());
 		let fronts = spot_table.to_fronts();
 
 

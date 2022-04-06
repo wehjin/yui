@@ -109,8 +109,8 @@ mod tests {
 	fn layout_render() {
 		let yard = tab_yard(500, "a", 0, 0, SenderLink::ignore());
 		let (max_x, max_y) = (3, 2);
-		let layout = layout::run(max_y, max_x, &yard, SenderLink::ignore(), &ActiveFocus::default());
-		let draw_pad = render::run(yard.clone(), layout.max_x, layout.max_y, layout.bounds.clone(), 0);
+		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let draw_pad = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), 0);
 		let fronts = draw_pad.to_fronts();
 		let fills = fronts.iter().flatten()
 			.map(|front| front.stroke.clone().unwrap_or((" ".to_string(), StrokeColor::BodyOnBackground)))

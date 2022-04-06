@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::{ArcYard, Bounds, Focus, SenderLink};
+use crate::{ArcYard, Bounds, Focus, SenderLink, Trigger};
 use crate::bounds::BoundsHold;
 use crate::yui::layout::ActiveFocus;
 
@@ -9,24 +9,24 @@ pub struct LayoutState {
 	pub max_x: i32,
 	pub max_y: i32,
 	pub start_index: usize,
-	pub bounds: Rc<RefCell<BoundsHold>>,
+	pub bounds_hold: Rc<RefCell<BoundsHold>>,
 	pub active_focus: ActiveFocus,
 }
 
 
-pub fn run(rows: i32, cols: i32, yard: &ArcYard, refresh_link: SenderLink<()>, prev_focus: &ActiveFocus) -> LayoutState {
-	info!("Layout width: {}, height: {}", cols, rows);
-	let (start_index, bounds) = BoundsHold::init(cols, rows);
+pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, prev_focus: &ActiveFocus) -> LayoutState {
+	info!("Layout width: {}, height: {}", width, height);
+	let (start_index, bounds) = BoundsHold::init(width, height);
 	{
 		info!("Starting BoundsHold: {:?}", bounds.borrow());
 	}
-	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone(), refresh_link);
+	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone(), refresh_trigger.clone());
 	yard.layout(&mut layout_ctx);
 	let active_focus = layout_ctx.pop_active_focus(prev_focus);
 	{
 		info!("Ending BoundsHold: {:?}", bounds.borrow());
 	}
-	LayoutState { max_x: cols, max_y: rows, start_index, bounds, active_focus }
+	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus }
 }
 
 

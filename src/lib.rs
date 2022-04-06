@@ -22,8 +22,8 @@ pub mod selection_editor;
 pub mod sparks;
 pub mod story;
 pub mod yard;
+pub(crate) mod core;
 pub(crate) mod layout;
-
 pub(crate) mod render;
 
 mod link;
@@ -36,3 +36,4 @@ pub trait DrawPad {
 	fn glyph(&mut self, bounds: &Bounds, glyph: &str, color: StrokeColor);
 	fn dark(&mut self, bounds: &Bounds, exclude: &Bounds);
 }
+

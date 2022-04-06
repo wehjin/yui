@@ -5,7 +5,7 @@ use crate::{ArcYard, Bounds};
 use crate::bounds::BoundsHold;
 use crate::spot::spot_table::SpotTable;
 
-pub fn run(yard: ArcYard, max_x: i32, max_y: i32, bounds_hold: Rc<RefCell<BoundsHold>>, focus_id: i32) -> SpotTable {
+pub fn run(yard: &ArcYard, max_x: i32, max_y: i32, bounds_hold: Rc<RefCell<BoundsHold>>, focus_id: i32) -> SpotTable {
 	let bounds_hold = bounds_hold.borrow();
 	info!("({},{}) Bounds hold: {:?}", max_x, max_y, bounds_hold);
 	let mut draw_pad = SpotTable::new(max_y, max_x);

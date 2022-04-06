@@ -10,9 +10,10 @@ pub struct SenderLink<A> {
 	pub tx: Sender<A>,
 }
 
-pub trait Sendable: Clone + Send {
+pub trait Sendable: Clone + Send + 'static {
 	fn send(self, sender_link: &SenderLink<Self>) { sender_link.send(self); }
 	fn send2(self, sender: &Sender<Self>, msg: &str) { sender.send(self).expect(msg); }
+	fn into_trigger(self, sender: &Sender<Self>) -> Trigger { trigger(self.clone(), sender) }
 }
 
 impl<A> Clone for SenderLink<A> {
