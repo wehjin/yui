@@ -14,6 +14,19 @@ use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
 use yui::yard::{ButtonState, Priority};
 
+fn main() -> Result<(), Box<dyn Error>> {
+	WriteLogger::init(
+		LevelFilter::Info,
+		Config::default(),
+		File::create("table.log").expect("log file"),
+	).expect("result");
+	log::info!("Table");
+
+	let spark = Main();
+	console::run_spark(spark);
+	Ok(())
+}
+
 pub struct Main();
 
 impl Spark for Main {
@@ -50,15 +63,4 @@ impl Spark for Main {
 			;
 		Some(page)
 	}
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-	WriteLogger::init(
-		LevelFilter::Info,
-		Config::default(),
-		File::create("table.log").expect("log file"),
-	).expect("result");
-	log::info!("Table");
-	console::run(Main())?;
-	Ok(())
 }

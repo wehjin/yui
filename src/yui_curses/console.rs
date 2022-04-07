@@ -4,18 +4,16 @@ use std::thread;
 
 use ncurses::{endwin, has_colors, initscr, LcCategory, setlocale};
 
-use crate::{ArcYard, Link, ScreenAction, Sendable, Spark, Story, story, Trigger};
-use crate::app::SimpleEdge;
+use crate::{ArcYard, Link, ScreenAction, Sendable, Spark, Story, StoryVerse, Trigger};
 use crate::pod_verse::PodVerse;
 use crate::yard::YardPublisher;
 use crate::yui_curses::{screen, spawn_screen_feeder};
 use crate::yui_curses::keyboard::Keyboard;
 
-pub fn run(spark: impl Spark + Send + 'static) -> Result<(), Box<dyn Error>> {
-	let console = Console::connect();
-	let story = story::spark(spark, Some(SimpleEdge::new(console.refresh_trigger().clone())), None);
-	console.run_story(story)?;
-	Ok(())
+pub fn run_spark(spark: impl Spark + Send + 'static) {
+	let story_verse = StoryVerse::build(spark);
+	let pod_verse = PodVerse::build(&story_verse);
+	run_pod_verse(&pod_verse);
 }
 
 pub fn run_pod_verse(pod_verse: &PodVerse) {

@@ -3,7 +3,7 @@ use std::ops::Index;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use crate::{ArcYard, Link, pod_verse, Sendable, StoryVerse, Trigger, yard};
+use crate::{ArcYard, Link, pod_verse, Sendable, StoryVerse, Trigger};
 use crate::pod::link_pod::LinkPod;
 use crate::pod::Pod;
 use crate::pod::yard::YardPod;
@@ -59,24 +59,29 @@ impl Sendable for PodVerseAction {}
 fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
 	let (pod_verse_link, action_source) = channel::<PodVerseAction>();
 	let pod_verse_id = rand::random::<usize>();
-	let self_link = pod_verse_link.clone();
+	let own_actions = pod_verse_link.clone();
 	let main_story_id = story_verse.main_story_id();
 	thread::spawn(move || {
 		let mut state = State {
 			main_story_id,
 			pods: HashMap::new(),
-			refresh_trigger: PodVerseAction::Refresh.into_trigger(&self_link),
+			refresh_trigger: PodVerseAction::Refresh.into_trigger(&own_actions),
 			done_trigger: None,
 			screen_refresh_trigger: None,
 		};
 		for action in action_source {
 			match action {
 				PodVerseAction::UpdatePod { story_id, yard } => {
-					let mut pod = state.pods.remove(&story_id).unwrap_or_else(|| YardPod::new(state.refresh_trigger.clone()));
-					let yard = yard.unwrap_or_else(|| yard::empty());
-					pod.set_yard(yard);
-					state.pods.insert(story_id, pod);
-					state.refresh_pod_verse();
+					if let Some(yard) = yard {
+						let mut pod = state.pods.remove(&story_id).unwrap_or_else(|| YardPod::new(state.refresh_trigger.clone()));
+						pod.set_yard(yard);
+						state.pods.insert(story_id, pod);
+						state.refresh_pod_verse();
+					} else {
+						if let Some(done_trigger) = &state.done_trigger {
+							done_trigger.send(()).expect("send done signal");
+						}
+					}
 				}
 				PodVerseAction::Refresh => {
 					if let Some(trigger) = &state.screen_refresh_trigger {

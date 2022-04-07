@@ -18,13 +18,13 @@ pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, p
 	info!("Layout width: {}, height: {}", width, height);
 	let (start_index, bounds) = BoundsHold::init(width, height);
 	{
-		info!("Starting BoundsHold: {:?}", bounds.borrow());
+		trace!("Starting BoundsHold: {:?}", bounds.borrow());
 	}
 	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone(), refresh_trigger.clone());
 	yard.layout(&mut layout_ctx);
 	let active_focus = layout_ctx.pop_active_focus(prev_focus);
 	{
-		info!("Ending BoundsHold: {:?}", bounds.borrow());
+		trace!("Ending BoundsHold: {:?}", bounds.borrow());
 	}
 	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus }
 }

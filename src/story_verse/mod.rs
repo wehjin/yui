@@ -33,18 +33,11 @@ pub enum StoryVerseAction {
 	EndWatchMain { watcher_id: usize },
 }
 
+const MAIN_BOX_ID: usize = 0;
+
 fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, usize) {
-	const MAIN_BOX_ID: usize = 0;
 	let (verse_link, action_source) = channel::<StoryVerseAction>();
 	thread::spawn(move || {
-		struct State {
-			box_links: HashMap<usize, Sender<story_box::StoryBoxAction>>,
-			main_watchers: HashMap<usize, Sender<Option<ArcYard>>>,
-		}
-		impl State {
-			pub fn main_box_link(&self) -> &Sender<story_box::StoryBoxAction> { self.box_links.get(&MAIN_BOX_ID).expect("main box") }
-		}
-
 		let mut state = State { box_links: HashMap::new(), main_watchers: HashMap::new() };
 		state.box_links.insert(MAIN_BOX_ID, story_box::connect(spark));
 		for action in action_source {
@@ -61,6 +54,15 @@ fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, usi
 		}
 	});
 	(verse_link, MAIN_BOX_ID)
+}
+
+struct State {
+	box_links: HashMap<usize, Sender<story_box::StoryBoxAction>>,
+	main_watchers: HashMap<usize, Sender<Option<ArcYard>>>,
+}
+
+impl State {
+	pub fn main_box_link(&self) -> &Sender<story_box::StoryBoxAction> { self.box_links.get(&MAIN_BOX_ID).expect("main box") }
 }
 
 mod story_box;

@@ -41,7 +41,7 @@ impl Yard for LabelYard {
 		let (extra_left, extra_top) = ((extra_width as f32 * cling_x) as i32, (extra_height as f32 * cling_y) as i32);
 		let extra_bottom = bounds.height() - extra_top - 1;
 		let text_bounds = bounds.pad(extra_left, 0, extra_top, extra_bottom);
-		info!("RENDERING LABEL to bounds: {:?}, text-bounds: {:?}", bounds,  text_bounds);
+		trace!("RENDERING LABEL to bounds: {:?}, text-bounds: {:?}", bounds,  text_bounds);
 		pad.glyph(&text_bounds, &self.string, self.color);
 		None
 	}

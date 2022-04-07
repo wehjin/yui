@@ -9,17 +9,23 @@ pub trait Edge {
 }
 
 #[derive(Debug, Clone)]
-pub struct MinEdge {}
+pub struct MinEdge {
+	end_dialog_trigger: Trigger,
+}
 
 impl MinEdge {
-	pub fn new() -> Self { MinEdge {} }
+	pub fn new(end_dialog_trigger: Trigger) -> Self {
+		MinEdge { end_dialog_trigger }
+	}
 }
 
 impl Edge for MinEdge {
 	fn start_dialog<S: Spark + Send + 'static>(&self, _spark: S, _report_link: SenderLink<S::Report>) -> Story<S> {
 		unimplemented!()
 	}
-	fn end_dialog(&self) {}
+	fn end_dialog(&self) {
+		self.end_dialog_trigger.send(());
+	}
 	fn redraw(&self) {}
 }
 
