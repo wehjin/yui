@@ -4,6 +4,7 @@ use crate::{Bounds, DrawPad, FillColor, FillGrade, StrokeColor};
 use crate::spot::SpotFront;
 use crate::yui_curses::spot::spot_stack::SpotStack;
 
+#[derive(Clone)]
 pub struct SpotTable {
 	rows: i32,
 	cols: i32,

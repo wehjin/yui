@@ -4,10 +4,11 @@ use std::thread;
 
 use ncurses::*;
 
-use crate::{Sendable, Trigger};
 use crate::palette::Palette;
 use crate::pod::Pod;
 use crate::pod::yard::YardPod;
+use crate::pod_verse::PodVerse;
+use crate::Sendable;
 use crate::spot::spot_table::SpotTable;
 use crate::yard::ArcYard;
 
@@ -26,32 +27,49 @@ pub enum ScreenAction {
 
 impl Sendable for ScreenAction {}
 
+pub fn connect_pod_verse(pod_verse: PodVerse) -> Sender<ScreenAction> {
+	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+	clear();
+	let (screen_link, actions_source) = mpsc::channel();
+	{
+		let screen_link = screen_link.clone();
+		thread::spawn(move || {
+			let pod = pod_verse.to_link_pod(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
+			let mut next = ScreenState::init(Box::new(pod));
+			while let Some(state) = next {
+				let action = next_screen_action(&actions_source, &screen_link).ok();
+				next = action.map(|action| state.update(action)).flatten();
+			}
+		});
+	}
+	screen_link
+}
+
 pub fn connect() -> Sender<ScreenAction> {
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 	clear();
 	let (screen_link, actions_source) = mpsc::channel();
-	launch_state_update_thread(actions_source, screen_link.clone());
+	{
+		let screen_link = screen_link.clone();
+		thread::Builder::new().name("CursesScreen::start".into()).spawn(move || {
+			let pod = YardPod::new(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
+			let mut next = ScreenState::init(Box::new(pod));
+			while let Some(state) = next {
+				let action = next_screen_action(&actions_source, &screen_link).ok();
+				next = action.map(|action| state.update(action)).flatten();
+			}
+		}).expect("spawn");
+	}
 	screen_link
-}
-
-fn launch_state_update_thread(actions_source: Receiver<ScreenAction>, screen_link: Sender<ScreenAction>) {
-	thread::Builder::new().name("CursesScreen::start".into()).spawn(move || {
-		let mut next = ScreenState::init(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
-		while let Some(state) = next {
-			let action = next_screen_action(&actions_source, &screen_link).ok();
-			next = action.map(|action| state.update(action)).flatten();
-		}
-	}).expect("spawn");
 }
 
 
 struct ScreenState {
-	pod: YardPod,
+	pod: Box<dyn Pod>,
 }
 
 impl ScreenState {
-	fn init(refresh_trigger: Trigger) -> Option<Self> {
-		let pod = YardPod::new(refresh_trigger);
+	fn init(pod: Box<dyn Pod>) -> Option<Self> {
 		Some(ScreenState { pod })
 	}
 	fn update(mut self, action: ScreenAction) -> Option<Self> {
@@ -59,7 +77,7 @@ impl ScreenState {
 		match action {
 			ScreenAction::Close => { stop = true; }
 			ScreenAction::ResizeRefresh => {
-				self.pod.set_size(width_height());
+				self.pod.set_width_height(width_height());
 				let rendering = self.pod.layout_and_render();
 				update_screen(rendering);
 			}

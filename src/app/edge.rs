@@ -8,6 +8,21 @@ pub trait Edge {
 	fn redraw(&self);
 }
 
+#[derive(Debug, Clone)]
+pub struct MinEdge {}
+
+impl MinEdge {
+	pub fn new() -> Self { MinEdge {} }
+}
+
+impl Edge for MinEdge {
+	fn start_dialog<S: Spark + Send + 'static>(&self, _spark: S, _report_link: SenderLink<S::Report>) -> Story<S> {
+		unimplemented!()
+	}
+	fn end_dialog(&self) {}
+	fn redraw(&self) {}
+}
+
 pub struct SimpleEdge {
 	redraw_trigger: Trigger,
 }

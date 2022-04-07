@@ -8,9 +8,10 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
-use yui::{AfterFlow, ArcYard, Before, Cling, console, Create, Flow, SenderLink, Spark, yard};
+use yui::{AfterFlow, ArcYard, Before, Cling, console, Create, Flow, SenderLink, Spark, StoryVerse, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, FillGrade, StrokeColor};
+use yui::pod_verse::PodVerse;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let log_file = File::create("hello.log")?;
@@ -38,7 +39,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 			Some(page)
 		}
 	}
-	console::run(Main())?;
+	let main_spark = Main();
+	let story_verse = StoryVerse::build(main_spark);
+	let pod_verse = PodVerse::build(&story_verse);
+	console::run_pod_verse(&pod_verse);
 	Ok(())
 }
 

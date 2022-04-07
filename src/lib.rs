@@ -8,6 +8,7 @@ extern crate unicode_width;
 pub use link::*;
 pub use render::*;
 pub use story::*;
+pub use story_verse::*;
 pub use yard::ArcYard;
 pub use yui_curses::*;
 
@@ -21,11 +22,13 @@ pub mod palette;
 pub mod selection_editor;
 pub mod sparks;
 pub mod story;
+pub mod story_verse;
 pub mod yard;
 pub(crate) mod core;
 pub(crate) mod layout;
 pub(crate) mod render;
 pub mod pod;
+pub mod pod_verse;
 
 mod link;
 mod yui;

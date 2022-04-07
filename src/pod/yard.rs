@@ -32,7 +32,7 @@ impl Pod for YardPod {
 		self.yard = yard;
 		self.refresh_trigger.send(());
 	}
-	fn set_size(&mut self, width_height: (i32, i32)) { self.width_height = width_height; }
+	fn set_width_height(&mut self, width_height: (i32, i32)) { self.width_height = width_height; }
 	fn focus_up(&mut self) { self.set_focus(self.active_focus().move_up()); }
 	fn focus_down(&mut self) { self.set_focus(self.active_focus().move_down()); }
 	fn focus_left(&mut self) { self.set_focus(self.active_focus().move_left()); }

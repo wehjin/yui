@@ -3,6 +3,7 @@ use std::sync::mpsc::{channel, Receiver, Sender, sync_channel, SyncSender};
 use std::thread;
 
 pub use spark::*;
+pub use crate::story_verse::*;
 
 use crate::{ArcYard, SenderLink};
 use crate::yard::{YardControlMsg, YardPublisher};
