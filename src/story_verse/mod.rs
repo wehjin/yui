@@ -3,10 +3,14 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
 use crate::{ArcYard, Spark, story_verse};
+use crate::story_id::StoryId;
 use crate::story_verse::story_box::StoryBoxAction;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct StoryId(usize);
+pub mod story_id;
+
+pub mod sub_story;
+pub mod super_story;
+pub(crate) mod story_box;
 
 #[derive(Clone)]
 pub struct StoryVerse {
@@ -21,51 +25,58 @@ impl StoryVerse {
 	}
 	pub fn main_story_id(&self) -> StoryId { self.main_story_id }
 	pub fn link(&self) -> &Sender<StoryVerseAction> { &self.link }
-	pub fn add_watcher(&self, watcher_id: usize, yards_link: Sender<Option<ArcYard>>) {
+	pub fn add_watcher(&self, watcher_id: StoryId, yards_link: Sender<Option<ArcYard>>) {
 		let action = StoryVerseAction::WatchMain { watcher_id, yards_link };
 		self.link.send(action).expect("add watcher to story-verse");
 	}
-	pub fn end_watcher(&self, watcher_id: usize) {
+	pub fn end_watcher(&self, watcher_id: StoryId) {
 		let action = StoryVerseAction::EndWatchMain { watcher_id };
 		self.link.send(action).expect("end watcher in story-verse");
 	}
 }
 
 pub enum StoryVerseAction {
-	WatchMain { watcher_id: usize, yards_link: Sender<Option<ArcYard>> },
-	EndWatchMain { watcher_id: usize },
+	WatchMain { watcher_id: StoryId, yards_link: Sender<Option<ArcYard>> },
+	EndWatchMain { watcher_id: StoryId },
+	AddStoryBox(Sender<StoryBoxAction>, StoryId),
 }
 
 const MAIN_BOX_ID: usize = 0;
 
 fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, StoryId) {
-	let (verse_link, action_source) = channel::<StoryVerseAction>();
+	let (story_verse_link, action_source) = channel::<StoryVerseAction>();
+	let main_story_id = StoryId::new(MAIN_BOX_ID);
 	thread::spawn(move || {
-		let mut state = State { box_links: HashMap::new(), main_watchers: HashMap::new() };
-		state.box_links.insert(MAIN_BOX_ID, story_box::connect(spark));
+		let mut state = State { story_box_links: HashMap::new(), main_watchers: HashMap::new() };
 		for action in action_source {
 			match action {
 				StoryVerseAction::WatchMain { watcher_id, yards_link } => {
 					state.main_watchers.insert(watcher_id, yards_link.clone());
-					state.main_box_link().send(StoryBoxAction::AddWatcher { watcher_id, yard_link: yards_link.clone() }).ok();
+					state.story_box_link(&main_story_id).send(StoryBoxAction::AddWatcher { watcher_id, yard_link: yards_link.clone() }).ok();
 				}
 				StoryVerseAction::EndWatchMain { watcher_id } => {
 					state.main_watchers.remove(&watcher_id);
-					state.main_box_link().send(StoryBoxAction::EndWatcher { watcher_id }).ok();
+					state.story_box_link(&main_story_id).send(StoryBoxAction::EndWatcher { watcher_id }).ok();
+				}
+				StoryVerseAction::AddStoryBox(story_box, story_id) => {
+					state.story_box_links.insert(story_id, story_box);
 				}
 			}
 		}
 	});
-	(verse_link, StoryId(MAIN_BOX_ID))
+	let main_story_box = story_box::connect(spark, None, main_story_id, story_verse_link.clone());
+	story_verse_link.send(StoryVerseAction::AddStoryBox(main_story_box, main_story_id)).expect("Add main story box");
+	(story_verse_link, main_story_id)
 }
 
 struct State {
-	box_links: HashMap<usize, Sender<story_box::StoryBoxAction>>,
-	main_watchers: HashMap<usize, Sender<Option<ArcYard>>>,
+	story_box_links: HashMap<StoryId, Sender<story_box::StoryBoxAction>>,
+	main_watchers: HashMap<StoryId, Sender<Option<ArcYard>>>,
 }
 
 impl State {
-	pub fn main_box_link(&self) -> &Sender<story_box::StoryBoxAction> { self.box_links.get(&MAIN_BOX_ID).expect("main box") }
+	pub fn story_box_link(&self, story_id: &StoryId) -> &Sender<story_box::StoryBoxAction> {
+		self.story_box_links.get(story_id).expect("main box")
+	}
 }
 
-mod story_box;

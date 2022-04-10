@@ -3,11 +3,12 @@ use std::ops::Index;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use crate::{ArcYard, Link, pod_verse, Sendable, StoryId, StoryVerse, Trigger};
+use crate::{ArcYard, Link, pod_verse, Sendable, StoryVerse, Trigger};
 use crate::pod::link_pod::LinkPod;
 use crate::pod::Pod;
 use crate::pod::yard::YardPod;
 use crate::spot::spot_table::SpotTable;
+use crate::story_id::StoryId;
 
 #[derive(Clone)]
 pub struct PodVerse {
@@ -58,7 +59,7 @@ impl Sendable for PodVerseAction {}
 
 fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
 	let (pod_verse_link, action_source) = channel::<PodVerseAction>();
-	let pod_verse_id = rand::random::<usize>();
+	let pod_verse_id = StoryId::random();
 	let own_actions = pod_verse_link.clone();
 	let main_story_id = story_verse.main_story_id();
 	thread::spawn(move || {
@@ -139,7 +140,7 @@ impl State {
 	}
 }
 
-fn connect_story_verse(story_verse: &StoryVerse, pod_verse_id: usize, pod_verse_link: Sender<PodVerseAction>) {
+fn connect_story_verse(story_verse: &StoryVerse, pod_verse_id: StoryId, pod_verse_link: Sender<PodVerseAction>) {
 	let (yards_link, yards_source) = channel::<Option<ArcYard>>();
 	story_verse.add_watcher(pod_verse_id, yards_link);
 	let story_verse = story_verse.clone();
