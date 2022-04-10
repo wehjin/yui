@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use crate::{ArcYard, Sendable, SenderLink, Spark, story, StoryVerseAction, yard};
+use crate::{ArcYard, Sendable, SenderLink, Spark, story, Story, StoryVerseAction, yard};
 use crate::app::MinEdge;
 use crate::story_id::StoryId;
 use crate::yard::YardPublisher;
@@ -18,12 +18,12 @@ pub enum StoryBoxAction {
 
 impl Sendable for StoryBoxAction {}
 
-pub fn connect<S>(
+pub fn connect<S: Spark>(
 	spark: S,
 	reports_link: Option<SenderLink<S::Report>>,
 	story_id: StoryId,
 	story_verse_link: Sender<StoryVerseAction>,
-) -> Sender<StoryBoxAction> where S: Spark + Send + 'static {
+) -> (Sender<StoryBoxAction>, SenderLink<S::Action>) where S: Send + 'static {
 	let (story_box_link, actions) = channel::<StoryBoxAction>();
 	let own_actions = story_box_link.clone();
 	thread::spawn(move || {
@@ -51,8 +51,8 @@ pub fn connect<S>(
 			}
 		}
 	});
-	connect_story(spark, reports_link, story_id, story_box_link.clone(), story_verse_link);
-	story_box_link
+	let story = connect_story(spark, reports_link, story_id, story_box_link.clone(), story_verse_link);
+	(story_box_link, story.link())
 }
 
 struct State {
@@ -75,13 +75,13 @@ impl State {
 	}
 }
 
-pub fn connect_story<S>(
+pub fn connect_story<S: Spark>(
 	spark: S,
 	reports_link: Option<SenderLink<S::Report>>,
 	story_id: StoryId,
 	story_box_link: Sender<StoryBoxAction>,
 	story_verse_link: Sender<StoryVerseAction>,
-) where S: Spark + Send + 'static {
+) -> Story<S> where S: Send + 'static {
 	let edge = MinEdge::new(
 		story_id,
 		StoryBoxAction::EndDialog.into_trigger(&story_box_link),
@@ -107,4 +107,5 @@ pub fn connect_story<S>(
 			story_box_link.send(StoryBoxAction::SetStopped).ok();
 		}
 	}
+	story
 }

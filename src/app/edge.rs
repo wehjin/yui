@@ -29,10 +29,10 @@ impl MinEdge {
 
 impl SuperStory for MinEdge {
 	fn sub_story<S: Spark + Send + 'static>(&self, spark: S, reports_link: Option<SenderLink<S::Report>>) -> SubStory {
-		let sub_story_id = self.story_id.sub_id();
-		let sub_story_story_box_link = story_box::connect(spark, reports_link, sub_story_id, self.story_verse_link.clone());
-		self.story_verse_link.send(StoryVerseAction::AddStoryBox(sub_story_story_box_link, sub_story_id)).expect("Add sub-story box");
-		SubStory { story_id: sub_story_id }
+		let story_id = self.story_id.sub_id();
+		let (story_box_link, _sub_story_link) = story_box::connect(spark, reports_link, story_id, self.story_verse_link.clone());
+		self.story_verse_link.send(StoryVerseAction::AddStoryBox(story_box_link, story_id)).expect("Add sub-story box");
+		SubStory { story_id }
 	}
 }
 

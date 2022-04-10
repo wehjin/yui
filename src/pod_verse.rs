@@ -16,8 +16,8 @@ pub struct PodVerse {
 }
 
 impl PodVerse {
-	pub fn build(story_verse: &StoryVerse) -> Self {
-		let link = pod_verse::connect(story_verse);
+	pub fn build(story_verse: &StoryVerse, main_story_id: StoryId) -> Self {
+		let link = pod_verse::connect(story_verse, main_story_id);
 		PodVerse { link }
 	}
 	pub fn link(&self) -> &Sender<PodVerseAction> { &self.link }
@@ -57,11 +57,10 @@ pub enum MoveDirection {
 
 impl Sendable for PodVerseAction {}
 
-fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
+fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseAction> {
 	let (pod_verse_link, action_source) = channel::<PodVerseAction>();
 	let pod_verse_id = StoryId::random();
 	let own_actions = pod_verse_link.clone();
-	let main_story_id = story_verse.main_story_id();
 	thread::spawn(move || {
 		let mut state = State {
 			main_story_id,
@@ -118,7 +117,7 @@ fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
 			}
 		}
 	});
-	connect_story_verse(story_verse, pod_verse_id, pod_verse_link.clone());
+	connect_story_verse(story_verse, main_story_id, pod_verse_id, pod_verse_link.clone());
 	pod_verse_link
 }
 
@@ -140,13 +139,13 @@ impl State {
 	}
 }
 
-fn connect_story_verse(story_verse: &StoryVerse, pod_verse_id: StoryId, pod_verse_link: Sender<PodVerseAction>) {
+fn connect_story_verse(story_verse: &StoryVerse, main_story_id: StoryId, pod_verse_id: StoryId, pod_verse_link: Sender<PodVerseAction>) {
 	let (yards_link, yards_source) = channel::<Option<ArcYard>>();
 	story_verse.add_watcher(pod_verse_id, yards_link);
 	let story_verse = story_verse.clone();
 	thread::spawn(move || {
 		for yard in yards_source {
-			let action = PodVerseAction::UpdatePod { story_id: story_verse.main_story_id(), yard };
+			let action = PodVerseAction::UpdatePod { story_id: main_story_id, yard };
 			pod_verse_link.send(action).expect("Send UpdatePod to pod-verse");
 		}
 		story_verse.end_watcher(pod_verse_id);

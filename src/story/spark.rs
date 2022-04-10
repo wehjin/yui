@@ -62,6 +62,7 @@ pub trait Spark {
 	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard>;
 }
 
+// TODO Have Create implement Edge. Make Edge non-optional.
 pub struct Create<Action, Report, E: Edge> {
 	action_link: SenderLink<Action>,
 	report_link: Option<SenderLink<Report>>,

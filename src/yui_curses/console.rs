@@ -6,13 +6,15 @@ use ncurses::{endwin, has_colors, initscr, LcCategory, setlocale};
 
 use crate::{ArcYard, Link, ScreenAction, Sendable, Spark, Story, StoryVerse, Trigger};
 use crate::pod_verse::PodVerse;
+use crate::story_id::StoryId;
 use crate::yard::YardPublisher;
 use crate::yui_curses::{screen, spawn_screen_feeder};
 use crate::yui_curses::keyboard::Keyboard;
 
-pub fn run_spark(spark: impl Spark + Send + 'static) {
-	let story_verse = StoryVerse::build(spark);
-	let pod_verse = PodVerse::build(&story_verse);
+pub fn run_spark<S: Spark>(spark: S) where S: Send + 'static {
+	let main_story_id = StoryId::new(0);
+	let (story_verse, _) = StoryVerse::build(spark, main_story_id);
+	let pod_verse = PodVerse::build(&story_verse, main_story_id);
 	run_pod_verse(&pod_verse);
 }
 
