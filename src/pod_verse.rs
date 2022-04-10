@@ -3,7 +3,7 @@ use std::ops::Index;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use crate::{ArcYard, Link, pod_verse, Sendable, StoryVerse, Trigger};
+use crate::{ArcYard, Link, pod_verse, Sendable, StoryId, StoryVerse, Trigger};
 use crate::pod::link_pod::LinkPod;
 use crate::pod::Pod;
 use crate::pod::yard::YardPod;
@@ -30,7 +30,7 @@ impl PodVerse {
 
 #[derive(Clone)]
 pub enum PodVerseAction {
-	UpdatePod { story_id: usize, yard: Option<ArcYard> },
+	UpdatePod { story_id: StoryId, yard: Option<ArcYard> },
 	Refresh,
 	SetWidthHeight { width: i32, height: i32 },
 	Edit(EditAction),
@@ -122,8 +122,8 @@ fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
 }
 
 struct State {
-	main_story_id: usize,
-	pods: HashMap<usize, YardPod>,
+	main_story_id: StoryId,
+	pods: HashMap<StoryId, YardPod>,
 	refresh_trigger: Trigger,
 	done_trigger: Option<Sender<()>>,
 	screen_refresh_trigger: Option<Trigger>,

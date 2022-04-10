@@ -5,10 +5,13 @@ use std::thread;
 use crate::{ArcYard, Spark, story_verse};
 use crate::story_verse::story_box::StoryBoxAction;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct StoryId(usize);
+
 #[derive(Clone)]
 pub struct StoryVerse {
 	link: Sender<StoryVerseAction>,
-	main_story_id: usize,
+	main_story_id: StoryId,
 }
 
 impl StoryVerse {
@@ -16,7 +19,7 @@ impl StoryVerse {
 		let (link, main_story_id) = story_verse::connect(spark);
 		StoryVerse { link, main_story_id }
 	}
-	pub fn main_story_id(&self) -> usize { self.main_story_id }
+	pub fn main_story_id(&self) -> StoryId { self.main_story_id }
 	pub fn link(&self) -> &Sender<StoryVerseAction> { &self.link }
 	pub fn add_watcher(&self, watcher_id: usize, yards_link: Sender<Option<ArcYard>>) {
 		let action = StoryVerseAction::WatchMain { watcher_id, yards_link };
@@ -35,7 +38,7 @@ pub enum StoryVerseAction {
 
 const MAIN_BOX_ID: usize = 0;
 
-fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, usize) {
+fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, StoryId) {
 	let (verse_link, action_source) = channel::<StoryVerseAction>();
 	thread::spawn(move || {
 		let mut state = State { box_links: HashMap::new(), main_watchers: HashMap::new() };
@@ -53,7 +56,7 @@ fn connect(spark: impl Spark + Send + 'static) -> (Sender<StoryVerseAction>, usi
 			}
 		}
 	});
-	(verse_link, MAIN_BOX_ID)
+	(verse_link, StoryId(MAIN_BOX_ID))
 }
 
 struct State {
