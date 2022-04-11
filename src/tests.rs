@@ -3,15 +3,18 @@ use std::time::Duration;
 
 use crate::{AfterFlow, ArcYard, Cling, Create, Flow, SenderLink, Spark, StoryVerse, StrokeColor, yard};
 use crate::app::Edge;
+use crate::pod_verse::PodVerse;
 use crate::story_id::StoryId;
 
 #[test]
-fn sub_story_adds_story_to_story_verse() {
+fn simple_sub_story() {
 	let main_id = StoryId::new(0);
 	let (story_verse, _main_link) = StoryVerse::build(TwoWords { left: "Hello".into(), right: "World".into() }, main_id);
 	thread::sleep(Duration::from_millis(1));
-	let stats = story_verse.read_stats();
-	assert_eq!(stats.story_count, 3);
+	assert_eq!(story_verse.read_stats().story_count, 3);
+	let pod_verse = PodVerse::build(&story_verse, main_id);
+	thread::sleep(Duration::from_millis(1));
+	assert_eq!(pod_verse.read_pod_count(), 3);
 }
 
 struct Word {

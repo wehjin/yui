@@ -2,6 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
+use rand::random;
+
 use crate::{ArcYard, Sendable, SenderLink, Spark, story, Story, StoryVerseAction, yard};
 use crate::app::MinEdge;
 use crate::story_id::StoryId;
@@ -11,8 +13,7 @@ use crate::yard::YardPublisher;
 pub enum StoryBoxAction {
 	SetYard(ArcYard),
 	SetStopped,
-	AddWatcher { watcher_id: StoryId, yard_link: Sender<Option<ArcYard>> },
-	EndWatcher { watcher_id: StoryId },
+	StartFeed(Sender<(StoryId, Option<ArcYard>)>),
 	EndDialog,
 }
 
@@ -27,23 +28,26 @@ pub fn connect<S: Spark>(
 	let (story_box_link, actions) = channel::<StoryBoxAction>();
 	let own_actions = story_box_link.clone();
 	thread::spawn(move || {
-		let mut state = State { yard: yard::empty(), watchers: HashMap::new(), stopped: false };
+		let mut latest_yard: Option<ArcYard> = Some(yard::empty());
+		let mut active_feed_links: HashMap<usize, Sender<(StoryId, Option<ArcYard>)>> = HashMap::new();
 		for action in actions {
-			let option = if state.stopped { None } else { Some(state.yard.clone()) };
 			match action {
-				StoryBoxAction::SetYard(yard) => if !state.stopped {
-					state.yard = yard.clone();
-					state.inform_watchers(Some(yard))
-				},
-				StoryBoxAction::SetStopped => if !state.stopped {
-					state.stopped = true;
-					state.inform_watchers(None);
-				},
-				StoryBoxAction::AddWatcher { watcher_id, yard_link } => if yard_link.send(option).is_ok() {
-					state.watchers.insert(watcher_id, yard_link);
-				},
-				StoryBoxAction::EndWatcher { watcher_id } => {
-					state.watchers.remove(&watcher_id);
+				StoryBoxAction::SetYard(yard) => {
+					if latest_yard.is_some() {
+						latest_yard = Some(yard.clone());
+						push_yard(story_id, &latest_yard, &mut active_feed_links);
+					}
+				}
+				StoryBoxAction::SetStopped => {
+					if latest_yard.is_some() {
+						latest_yard = None;
+						push_yard(story_id, &latest_yard, &mut active_feed_links);
+					}
+				}
+				StoryBoxAction::StartFeed(feed_link) => {
+					if feed_link.send((story_id, latest_yard.clone())).is_ok() {
+						active_feed_links.insert(random(), feed_link);
+					}
 				}
 				StoryBoxAction::EndDialog => {
 					own_actions.send(StoryBoxAction::SetStopped).expect("set stopped");
@@ -55,25 +59,18 @@ pub fn connect<S: Spark>(
 	(story_box_link, story.link())
 }
 
-struct State {
-	yard: ArcYard,
-	watchers: HashMap<StoryId, Sender<Option<ArcYard>>>,
-	stopped: bool,
-}
-
-impl State {
-	fn inform_watchers(&mut self, option: Option<ArcYard>) {
-		let mut dead_ids: HashSet<StoryId> = HashSet::new();
-		for (id, yard_link) in &self.watchers {
-			if yard_link.send(option.clone()).is_err() {
-				dead_ids.insert(*id);
-			}
+fn push_yard(story_id: StoryId, story_yard: &Option<ArcYard>, feeds: &mut HashMap<usize, Sender<(StoryId, Option<ArcYard>)>>) {
+	let mut dead_ids: HashSet<usize> = HashSet::new();
+	feeds.iter().for_each(|(feed_id, feed_link)| {
+		if feed_link.send((story_id, story_yard.clone())).is_err() {
+			dead_ids.insert(*feed_id);
 		}
-		for id in dead_ids {
-			self.watchers.remove(&id);
-		}
+	});
+	for id in dead_ids {
+		feeds.remove(&id);
 	}
 }
+
 
 pub fn connect_story<S: Spark>(
 	spark: S,

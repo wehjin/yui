@@ -12,32 +12,37 @@ use crate::story_id::StoryId;
 
 #[derive(Clone)]
 pub struct PodVerse {
-	link: Sender<PodVerseAction>,
+	pod_verse_link: Sender<PodVerseAction>,
 }
 
 impl PodVerse {
 	pub fn build(story_verse: &StoryVerse, main_story_id: StoryId) -> Self {
 		let link = pod_verse::connect(story_verse, main_story_id);
-		PodVerse { link }
+		PodVerse { pod_verse_link: link }
 	}
-	pub fn link(&self) -> &Sender<PodVerseAction> { &self.link }
 	pub fn to_link_pod(&self, screen_refresh_trigger: Trigger) -> LinkPod {
-		LinkPod::new(self.link.clone(), screen_refresh_trigger)
+		LinkPod::new(self.pod_verse_link.clone(), screen_refresh_trigger)
 	}
 	pub fn set_done_trigger(&self, trigger: Sender<()>) {
-		self.link.send(PodVerseAction::SetDoneTrigger(trigger)).expect("set-done-trigger");
+		self.pod_verse_link.send(PodVerseAction::SetDoneTrigger(trigger)).expect("set-done-trigger");
+	}
+	pub fn read_pod_count(&self) -> usize {
+		let (response_link, response_source) = channel();
+		self.pod_verse_link.send(PodVerseAction::GetPodCount(response_link)).expect("send pod-count request");
+		response_source.recv().expect("receive pod-count response")
 	}
 }
 
 #[derive(Clone)]
 pub enum PodVerseAction {
-	UpdatePod { story_id: StoryId, yard: Option<ArcYard> },
+	YardUpdate { story_id: StoryId, story_yard: Option<ArcYard> },
 	Refresh,
 	SetWidthHeight { width: i32, height: i32 },
 	Edit(EditAction),
 	LayoutAndRender(Sender<SpotTable>),
 	SetDoneTrigger(Sender<()>),
 	SetScreenRefreshTrigger(Trigger),
+	GetPodCount(Sender<usize>),
 }
 
 #[derive(Debug, Clone)]
@@ -59,7 +64,6 @@ impl Sendable for PodVerseAction {}
 
 fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseAction> {
 	let (pod_verse_link, action_source) = channel::<PodVerseAction>();
-	let pod_verse_id = StoryId::random();
 	let own_actions = pod_verse_link.clone();
 	thread::spawn(move || {
 		let mut state = State {
@@ -71,7 +75,11 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 		};
 		for action in action_source {
 			match action {
-				PodVerseAction::UpdatePod { story_id, yard } => {
+				PodVerseAction::GetPodCount(response_link) => {
+					let response = state.pods.len();
+					response_link.send(response).expect("Send pod count");
+				}
+				PodVerseAction::YardUpdate { story_id, story_yard: yard } => {
 					if let Some(yard) = yard {
 						let mut pod = state.pods.remove(&story_id).unwrap_or_else(|| YardPod::new(state.refresh_trigger.clone()));
 						pod.set_yard(yard);
@@ -117,7 +125,7 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 			}
 		}
 	});
-	connect_story_verse(story_verse, main_story_id, pod_verse_id, pod_verse_link.clone());
+	connect_story_verse(story_verse, pod_verse_link.clone());
 	pod_verse_link
 }
 
@@ -139,15 +147,12 @@ impl State {
 	}
 }
 
-fn connect_story_verse(story_verse: &StoryVerse, main_story_id: StoryId, pod_verse_id: StoryId, pod_verse_link: Sender<PodVerseAction>) {
-	let (yards_link, yards_source) = channel::<Option<ArcYard>>();
-	story_verse.add_watcher(pod_verse_id, yards_link);
-	let story_verse = story_verse.clone();
+fn connect_story_verse(story_verse: &StoryVerse, pod_verse_link: Sender<PodVerseAction>) {
+	let yards_source = story_verse.start_yards();
 	thread::spawn(move || {
-		for yard in yards_source {
-			let action = PodVerseAction::UpdatePod { story_id: main_story_id, yard };
-			pod_verse_link.send(action).expect("Send UpdatePod to pod-verse");
+		for (story_id, story_yard) in yards_source {
+			let action = PodVerseAction::YardUpdate { story_id, story_yard };
+			pod_verse_link.send(action).expect("send update-pod to pod-verse");
 		}
-		story_verse.end_watcher(pod_verse_id);
 	});
 }

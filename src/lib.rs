@@ -33,6 +33,8 @@ pub mod pod_verse;
 mod link;
 mod yui;
 mod yui_curses;
+#[cfg(test)]
+mod tests;
 
 pub trait DrawPad {
 	fn fill(&mut self, bounds: &Bounds, color: FillColor);
