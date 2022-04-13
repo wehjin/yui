@@ -57,7 +57,7 @@ impl YardPod {
 		tables_map.insert((self.story_id, self.width_height), linked_table);
 		self.pod_verse_link.send(PodVerseAction::SpotTableChanged(self.story_id, self.width_height)).expect("send spot-table-changed");
 	}
-	fn layout_and_render(&mut self) {
+	pub fn layout_and_render(&mut self) {
 		self.layout = layout::run(self.width_height.1, self.width_height.0, &self.yard, &self.refresh_trigger, &self.layout.active_focus);
 		self.pod_verse_link.send(PodVerseAction::SetDependencies(self.story_id, self.layout.to_sub_pods())).expect("send set-dependencies");
 		self.unlinked_spot_table = render::run(&self.yard, self.layout.max_x, self.layout.max_y, self.layout.bounds_hold.clone(), self.layout.active_focus.focus_id());

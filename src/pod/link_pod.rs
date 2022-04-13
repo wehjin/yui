@@ -58,13 +58,13 @@ impl Pod for MainPod {
 		self.send_edit(action, "insert-space");
 	}
 
+	fn set_refresh_trigger(&mut self, trigger: Trigger) {
+		self.pod_verse_link.send(PodVerseAction::SetScreenRefreshTrigger(trigger)).expect("send set-screen-refresh-trigger");
+	}
+
 	fn spot_table(&self) -> Option<SpotTable> {
 		let (sender, receiver) = channel();
 		self.pod_verse_link.send(PodVerseAction::SpotTable(sender)).expect("read spot-table");
 		receiver.recv().expect("receive spot-table")
-	}
-
-	fn set_refresh_trigger(&mut self, trigger: Trigger) {
-		self.pod_verse_link.send(PodVerseAction::SetScreenRefreshTrigger(trigger)).expect("send set-screen-refresh-trigger");
 	}
 }

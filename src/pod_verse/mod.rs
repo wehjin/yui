@@ -37,12 +37,13 @@ impl PodVerse {
 #[derive(Clone)]
 pub enum PodVerseAction {
 	YardUpdate { story_id: StoryId, story_yard: Option<ArcYard> },
-	Refresh,
 	SetWidthHeight { width: i32, height: i32 },
 	Edit(EditAction),
 	SpotTable(Sender<Option<SpotTable>>),
 	SetDoneTrigger(Sender<()>),
 	SetScreenRefreshTrigger(Trigger),
+	Refresh,
+	FullRefresh,
 	GetPodCount(Sender<usize>),
 	SetDependencies(StoryId, HashSet<(StoryId, (i32, i32))>),
 	SpotTableChanged(StoryId, (i32, i32)),
@@ -170,6 +171,9 @@ impl PodBank {
 			self.pods.remove(&Some(story_id));
 		}
 	}
+	pub fn recompute(&mut self) {
+		self.main_pod_mut().layout_and_render();
+	}
 	pub fn main_pod_mut(&mut self) -> &mut YardPod {
 		let sub_pod_params = (self.main_story_id, self.main_size);
 		self.pods.get_mut(&None).map(|subs| subs.get_mut(&sub_pod_params)).flatten().unwrap()
@@ -183,7 +187,7 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 	thread::spawn(move || {
 		let mut pod_bank = PodBank::new(
 			own_actions.clone(),
-			PodVerseAction::Refresh.into_trigger(&own_actions),
+			PodVerseAction::FullRefresh.into_trigger(&own_actions),
 			main_story_id,
 		);
 		let mut screen_refresh_trigger: Option<Trigger> = None;
@@ -201,13 +205,16 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 				PodVerseAction::YardUpdate { story_id, story_yard: yard } => {
 					pod_bank.refill(story_id, yard);
 				}
+				PodVerseAction::SetScreenRefreshTrigger(trigger) => {
+					screen_refresh_trigger = Some(trigger);
+				}
 				PodVerseAction::Refresh => {
 					if let Some(trigger) = &screen_refresh_trigger {
 						trigger.send(());
 					}
 				}
-				PodVerseAction::SetScreenRefreshTrigger(trigger) => {
-					screen_refresh_trigger = Some(trigger);
+				PodVerseAction::FullRefresh => {
+					pod_bank.recompute();
 				}
 				PodVerseAction::Edit(edit) => {
 					match edit {
@@ -220,7 +227,7 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 							MoveDirection::Right => pod_bank.main_pod_mut().focus_right(),
 						}
 					}
-					own_actions.send(PodVerseAction::Refresh).expect("send refresh");
+					own_actions.send(PodVerseAction::FullRefresh).expect("send refresh");
 				}
 				PodVerseAction::SpotTable(result) => {
 					let spot_table = pod_bank.to_spot_table();
