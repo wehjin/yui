@@ -19,7 +19,28 @@ impl SpotStack {
 			dark: SpotField::new(false),
 		}
 	}
-
+	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
+		SpotStack {
+			fill_color: self.fill_color.expand_seam(z, depth),
+			fill_grade: self.fill_grade.expand_seam(z, depth),
+			stroke: self.stroke.expand_seam(z, depth),
+			dark: self.dark.expand_seam(z, depth),
+		}
+	}
+	pub fn insert_seam(&mut self, z: i32, stack: &SpotStack) {
+		self.fill_color.insert_seam(z, &stack.fill_color);
+		self.fill_grade.insert_seam(z, &stack.fill_grade);
+		self.stroke.insert_seam(z, &stack.stroke);
+		self.dark.insert_seam(z, &stack.dark);
+	}
+	pub fn nearest_z(&self, z: i32) -> i32 {
+		let nearest = z;
+		let nearest = self.fill_color.nearest_z(nearest);
+		let nearest = self.fill_grade.nearest_z(nearest);
+		let nearest = self.stroke.nearest_z(nearest);
+		let nearest = self.dark.nearest_z(nearest);
+		nearest
+	}
 	pub fn set_fill(&mut self, color: FillColor, z: i32) {
 		self.fill_color.set_near_equal(color, z);
 	}

@@ -14,6 +14,7 @@ pub use yui_curses::*;
 
 use crate::bounds::Bounds;
 use crate::palette::{FillColor, FillGrade, StrokeColor};
+use crate::story_id::StoryId;
 
 pub use self::yui::*;
 
@@ -41,5 +42,6 @@ pub trait DrawPad {
 	fn grade(&mut self, bounds: &Bounds, grade: FillGrade);
 	fn glyph(&mut self, bounds: &Bounds, glyph: &str, color: StrokeColor);
 	fn dark(&mut self, bounds: &Bounds, exclude: &Bounds);
+	fn story(&mut self, bounds: &Bounds, story_id: StoryId);
 }
 

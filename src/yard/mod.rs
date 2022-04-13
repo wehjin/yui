@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
+pub use basic::fade::*;
+pub use basic::glyph::*;
 pub use basic::label::*;
+pub use basic::story::*;
 
 use crate::bounds::Bounds;
 use crate::DrawPad;
@@ -9,9 +12,7 @@ use crate::palette::{FillColor, FillGrade};
 
 pub use self::button::*;
 pub use self::empty::*;
-pub use basic::fade::*;
 pub use self::fill::*;
-pub use basic::glyph::*;
 pub use self::grade::*;
 pub use self::list::*;
 pub use self::mux::*;
@@ -40,8 +41,7 @@ mod table;
 mod textfield;
 mod title;
 mod trellis;
-
-pub mod basic;
+mod basic;
 
 pub trait Yard {
 	fn id(&self) -> i32;

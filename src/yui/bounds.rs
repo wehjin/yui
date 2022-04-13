@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::yui::Cling;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Bounds {
 	pub left: i32,
 	pub right: i32,
@@ -54,6 +54,26 @@ impl Bounds {
 	pub fn height(&self) -> i32 { self.bottom - self.top }
 	pub fn intersects(&self, row: i32, col: i32) -> bool {
 		row >= self.top && row < self.bottom && col >= self.left && col < self.right
+	}
+	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
+		Bounds {
+			left: 0,
+			right: self.right,
+			top: self.top,
+			bottom: self.bottom,
+			z: if self.z < z { self.z - depth } else { self.z },
+			far_z: if self.far_z < z { self.far_z - depth } else { self.far_z },
+		}
+	}
+	pub fn shift_seam(&self, z: i32, left: i32, top: i32) -> Self {
+		Bounds {
+			left: self.left + left,
+			right: self.right + left,
+			top: self.top + top,
+			bottom: self.bottom + top,
+			z: self.z - z,
+			far_z: self.far_z - z,
+		}
 	}
 	pub fn pad(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Self {
 		Bounds {

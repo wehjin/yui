@@ -59,7 +59,7 @@ pub trait Spark {
 	fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report>;
 
 	/// Produce a rendering for a state of the story.
-	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard>;
+	fn render(_state: &Self::State, _action_link: &SenderLink<Self::Action>) -> Option<ArcYard>;
 }
 
 // TODO Have Create implement Edge. Make Edge non-optional.

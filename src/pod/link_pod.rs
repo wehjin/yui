@@ -5,28 +5,27 @@ use crate::pod::Pod;
 use crate::pod_verse::{EditAction, MoveDirection, PodVerseAction};
 use crate::spot::spot_table::SpotTable;
 
-pub struct LinkPod {
-	link: Sender<PodVerseAction>,
-	spot_table: SpotTable,
+pub struct MainPod {
+	pod_verse_link: Sender<PodVerseAction>,
 }
 
-impl LinkPod {
+impl MainPod {
 	pub fn new(pod_verse_link: Sender<PodVerseAction>, screen_refresh_trigger: Trigger) -> Self {
 		pod_verse_link.send(PodVerseAction::SetScreenRefreshTrigger(screen_refresh_trigger)).expect("set screen-refresh-trigger");
-		LinkPod { link: pod_verse_link.clone(), spot_table: SpotTable::new(0, 0) }
+		MainPod { pod_verse_link: pod_verse_link.clone() }
 	}
 	fn send_edit(&self, edit_action: EditAction, msg: &str) {
-		self.link.send(PodVerseAction::Edit(edit_action)).expect(msg);
+		self.pod_verse_link.send(PodVerseAction::Edit(edit_action)).expect(msg);
 	}
 }
 
-impl Pod for LinkPod {
+impl Pod for MainPod {
 	fn set_yard(&mut self, _yard: ArcYard) {
 		unimplemented!()
 	}
 
 	fn set_width_height(&mut self, width_height: (i32, i32)) {
-		self.link.send(PodVerseAction::SetWidthHeight { width: width_height.0, height: width_height.1 }).expect("set-width-height");
+		self.pod_verse_link.send(PodVerseAction::SetWidthHeight { width: width_height.0, height: width_height.1 }).expect("set-width-height");
 	}
 
 	fn focus_up(&mut self) {
@@ -59,10 +58,13 @@ impl Pod for LinkPod {
 		self.send_edit(action, "insert-space");
 	}
 
-	fn layout_and_render(&mut self) -> &SpotTable {
-		let (sender, receiver) = channel::<SpotTable>();
-		self.link.send(PodVerseAction::LayoutAndRender(sender)).expect("read spot-table");
-		self.spot_table = receiver.recv().expect("receive spot-table");
-		&self.spot_table
+	fn spot_table(&self) -> Option<SpotTable> {
+		let (sender, receiver) = channel();
+		self.pod_verse_link.send(PodVerseAction::SpotTable(sender)).expect("read spot-table");
+		receiver.recv().expect("receive spot-table")
+	}
+
+	fn set_refresh_trigger(&mut self, trigger: Trigger) {
+		self.pod_verse_link.send(PodVerseAction::SetScreenRefreshTrigger(trigger)).expect("send set-screen-refresh-trigger");
 	}
 }

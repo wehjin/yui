@@ -5,6 +5,7 @@ use std::thread;
 use ncurses::{endwin, has_colors, initscr, LcCategory, setlocale};
 
 use crate::{ArcYard, Link, ScreenAction, Sendable, Spark, Story, StoryVerse, Trigger};
+use crate::pod::Pod;
 use crate::pod_verse::PodVerse;
 use crate::story_id::StoryId;
 use crate::yard::YardPublisher;
@@ -31,9 +32,9 @@ pub struct Console {
 }
 
 impl Console {
-	pub fn connect() -> Self {
+	pub fn connect(pod: impl Pod + Send + 'static) -> Self {
 		Self::init_connect();
-		let screen_link = screen::connect();
+		let screen_link = screen::connect(pod);
 		Self::finish_connect(screen_link)
 	}
 	fn init_connect() {

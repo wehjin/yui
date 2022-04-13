@@ -6,7 +6,6 @@ pub(crate) use screen::ScreenAction;
 
 use crate::{Sendable, SenderLink, Trigger};
 use crate::yard::ArcYard;
-use crate::yui_curses::console::Console;
 
 mod screen;
 mod keyboard;
@@ -21,10 +20,10 @@ impl Sendable for ProjectorReport {}
 
 pub mod console;
 
-pub fn run_console(yard_source: Receiver<Option<ArcYard>>, report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
-	let console = Console::connect();
-	ProjectorReport::Ready { refresh_trigger: console.refresh_trigger().clone() }.send(&report_link);
-	console.run(yard_source);
+pub fn run_console(_yard_source: Receiver<Option<ArcYard>>, _report_link: SenderLink<ProjectorReport>) -> Result<(), Box<dyn Error>> {
+	// let console = Console::connect();
+	// ProjectorReport::Ready { refresh_trigger: console.refresh_trigger().clone() }.send(&report_link);
+	// console.run(yard_source);
 	Ok(())
 }
 

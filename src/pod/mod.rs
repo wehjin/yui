@@ -1,4 +1,4 @@
-use crate::ArcYard;
+use crate::{ArcYard, Trigger};
 use crate::spot::spot_table::SpotTable;
 
 pub mod yard;
@@ -13,7 +13,8 @@ pub trait Pod {
 	fn focus_right(&mut self);
 	fn insert_char(&self, char: char);
 	fn insert_space(&self);
-	fn layout_and_render(&mut self) -> &SpotTable;
+	fn set_refresh_trigger(&mut self, trigger: Trigger);
+	fn spot_table(&self) -> Option<SpotTable>;
 }
 
 

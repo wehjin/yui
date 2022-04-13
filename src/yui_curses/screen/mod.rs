@@ -6,7 +6,6 @@ use ncurses::*;
 
 use crate::palette::Palette;
 use crate::pod::Pod;
-use crate::pod::yard::YardPod;
 use crate::pod_verse::PodVerse;
 use crate::Sendable;
 use crate::spot::spot_table::SpotTable;
@@ -34,7 +33,7 @@ pub fn connect_pod_verse(pod_verse: PodVerse) -> Sender<ScreenAction> {
 	{
 		let screen_link = screen_link.clone();
 		thread::spawn(move || {
-			let pod = pod_verse.to_link_pod(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
+			let pod = pod_verse.to_main_pod(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
 			let mut next = ScreenState::init(Box::new(pod));
 			while let Some(state) = next {
 				let action = next_screen_action(&actions_source, &screen_link).ok();
@@ -45,15 +44,16 @@ pub fn connect_pod_verse(pod_verse: PodVerse) -> Sender<ScreenAction> {
 	screen_link
 }
 
-pub fn connect() -> Sender<ScreenAction> {
+pub fn connect(pod: impl Pod + Send + 'static) -> Sender<ScreenAction> {
 	curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 	clear();
+	let mut pod = Box::new(pod);
 	let (screen_link, actions_source) = mpsc::channel();
 	{
 		let screen_link = screen_link.clone();
 		thread::Builder::new().name("CursesScreen::start".into()).spawn(move || {
-			let pod = YardPod::new(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
-			let mut next = ScreenState::init(Box::new(pod));
+			pod.set_refresh_trigger(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
+			let mut next = ScreenState::init(pod);
 			while let Some(state) = next {
 				let action = next_screen_action(&actions_source, &screen_link).ok();
 				next = action.map(|action| state.update(action)).flatten();
@@ -78,8 +78,9 @@ impl ScreenState {
 			ScreenAction::Close => { stop = true; }
 			ScreenAction::ResizeRefresh => {
 				self.pod.set_width_height(width_height());
-				let rendering = self.pod.layout_and_render();
-				update_screen(rendering);
+				if let Some(rendering) = self.pod.spot_table() {
+					update_screen(&rendering);
+				}
 			}
 			ScreenAction::SetYard(yard) => self.pod.set_yard(yard),
 			ScreenAction::Space => self.pod.insert_space(),

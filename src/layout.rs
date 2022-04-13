@@ -1,8 +1,10 @@
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use crate::{ArcYard, Bounds, Focus, SenderLink, Trigger};
 use crate::bounds::BoundsHold;
+use crate::story_id::StoryId;
 use crate::yui::layout::ActiveFocus;
 
 pub struct LayoutState {
@@ -11,6 +13,20 @@ pub struct LayoutState {
 	pub start_index: usize,
 	pub bounds_hold: Rc<RefCell<BoundsHold>>,
 	pub active_focus: ActiveFocus,
+	pub dependencies: HashSet<(i32, StoryId)>,
+}
+
+impl LayoutState {
+	pub fn to_sub_pods(&self) -> HashSet<(StoryId, (i32, i32))> {
+		self.dependencies.iter().map(|(yard_id, sub_story_id)| {
+			let size = if let Some(bounds) = self.bounds_hold.borrow().yard_bounds(*yard_id) {
+				(bounds.width(), bounds.height())
+			} else {
+				(0, 0)
+			};
+			(*sub_story_id, size)
+		}).collect::<HashSet<_>>()
+	}
 }
 
 
@@ -26,7 +42,8 @@ pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, p
 	{
 		trace!("Ending BoundsHold: {:?}", bounds.borrow());
 	}
-	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus }
+	let dependencies = layout_ctx.dependencies.borrow();
+	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus, dependencies: dependencies.clone() }
 }
 
 
@@ -37,29 +54,15 @@ pub struct LayoutContext {
 	focus_vec: Rc<RefCell<Vec<Rc<Focus>>>>,
 	focus_max: i32,
 	refresh_link: SenderLink<()>,
-}
-
-fn pick_priority_focus(mut candidates: Vec<Rc<Focus>>) -> (Option<Rc<Focus>>, Vec<Rc<Focus>>) {
-	let (_, max_priority_index) = candidates.iter().enumerate().fold(
-		(0, None),
-		|(max_priority, max_priority_index), (focus_index, focus)| {
-			if max_priority_index.is_none() || focus.priority > max_priority {
-				(focus.priority, Some(focus_index))
-			} else {
-				(max_priority, max_priority_index)
-			}
-		},
-	);
-	match max_priority_index {
-		None => (None, candidates),
-		Some(index) => {
-			let focus = candidates.remove(index);
-			(Some(focus), candidates)
-		}
-	}
+	dependencies: Rc<RefCell<HashSet<(i32, StoryId)>>>,
 }
 
 impl LayoutContext {
+	pub fn add_dependency(&mut self, yard_id: i32, story_id: StoryId) {
+		trace!("Add dependency on {:?} to yard:{:?}", story_id, yard_id);
+		(*self.dependencies).borrow_mut().insert((yard_id, story_id));
+		trace!("Dependencies after add {:?}", self.dependencies);
+	}
 	pub fn refresh_fn(&self) -> SenderLink<()> { self.refresh_link.clone() }
 	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {
 		self.focus_vec.borrow().last().map(|it| it.clone())
@@ -134,6 +137,27 @@ impl LayoutContext {
 			focus_vec: Rc::new(RefCell::new(Vec::new())),
 			focus_max: i32::max_value(),
 			refresh_link,
+			dependencies: Rc::new(RefCell::new(HashSet::new())),
+		}
+	}
+}
+
+fn pick_priority_focus(mut candidates: Vec<Rc<Focus>>) -> (Option<Rc<Focus>>, Vec<Rc<Focus>>) {
+	let (_, max_priority_index) = candidates.iter().enumerate().fold(
+		(0, None),
+		|(max_priority, max_priority_index), (focus_index, focus)| {
+			if max_priority_index.is_none() || focus.priority > max_priority {
+				(focus.priority, Some(focus_index))
+			} else {
+				(max_priority, max_priority_index)
+			}
+		},
+	);
+	match max_priority_index {
+		None => (None, candidates),
+		Some(index) => {
+			let focus = candidates.remove(index);
+			(Some(focus), candidates)
 		}
 	}
 }
