@@ -79,11 +79,8 @@ pub fn connect_story<S: Spark>(
 	story_box_link: Sender<StoryBoxAction>,
 	story_verse_link: Sender<StoryVerseAction>,
 ) -> Story<S> where S: Send + 'static {
-	let edge = MinEdge::new(
-		story_id,
-		StoryBoxAction::EndDialog.into_trigger(&story_box_link),
-		story_verse_link,
-	);
+	let end_dialog_trigger = StoryBoxAction::EndDialog.into_trigger(&story_box_link);
+	let edge = MinEdge::new(story_id, end_dialog_trigger, story_verse_link);
 	let story = story::spark(spark, Some(edge), reports_link);
 	match story.subscribe() {
 		Ok(yard_source) => {

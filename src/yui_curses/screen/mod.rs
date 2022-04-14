@@ -107,15 +107,15 @@ fn update_screen(spot_table: &SpotTable) {
 	spot_table.each(|y, x, front| {
 		if let Some((glyph, attr)) = palette.to_glyph_attr(front) {
 			if y == 0 && x == 0 {
-				info!("Top left: {}, attr: {}", glyph, attr);
+				trace!("Top left: {}, attr: {}", glyph, attr);
 			} else if y == 0 && x == (max_x - 1) {
-				info!("Top right: {}, attr: {}", glyph, attr);
+				trace!("Top right: {}, attr: {}", glyph, attr);
 			} else if y == (max_y - 1) && x == (max_x - 1) {
-				info!("Bottom right: {}, attr: {}", glyph, attr);
+				trace!("Bottom right: {}, attr: {}", glyph, attr);
 			} else if y == (max_y - 1) && x == 0 {
-				info!("Bottom left: {}, attr:{}", glyph, attr);
+				trace!("Bottom left: {}, attr:{}", glyph, attr);
 			} else if (y - max_y / 2).abs() < 2 && (x - max_x / 2).abs() < 2 {
-				info!("Center ({},{}): {}, attr:{}", x, y, glyph, attr);
+				trace!("Center ({},{}): {}, attr:{}", x, y, glyph, attr);
 			}
 			attrset(attr);
 			mvaddstr(y as i32, x as i32, glyph);

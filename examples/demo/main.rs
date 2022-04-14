@@ -12,7 +12,7 @@ use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
 pub use app_tab::*;
-use yui::{Create, Flow, Link, SenderLink, Story};
+use yui::{console, Create, Flow, Link, SenderLink, Story};
 use yui::{AfterFlow, ArcYard, Before, Cling, Padding, story, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
@@ -39,7 +39,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 		File::create("yui.log").expect("create yui.log"),
 	).expect("result");
 	info!("Demo");
-	yui::main(Main { dialog_id: 1 })
+	let spark = Main { dialog_id: 1 };
+	console::run_spark(spark);
+	Ok(())
 }
 
 pub struct Main {

@@ -3,8 +3,9 @@ use std::collections::{HashMap, HashSet};
 pub use branch::*;
 pub use path::*;
 
-use crate::{ArcYard, Bounds, layout, render, StoryId, Trigger, yard};
+use crate::{ArcYard, Bounds, layout, Link, render, StoryId, Trigger, yard};
 use crate::layout::LayoutState;
+use crate::pod::Pod;
 use crate::spot::spot_table::SpotTable;
 use crate::yui::layout::ActiveFocus;
 
@@ -20,6 +21,50 @@ pub struct PodTree {
 	spots_map: HashMap<PodPath, SpotTable>,
 	active_focus: ActiveFocus,
 	linked_table: SpotTable,
+}
+
+impl Pod for PodTree {
+	fn set_yard(&mut self, yard: ArcYard) {
+		self.set_story_yard(self.root_path.last_story_id().clone(), Some(yard));
+	}
+
+	fn set_width_height(&mut self, width_height: (i32, i32)) {
+		self.set_bounds(Bounds::new(width_height.0, width_height.1));
+	}
+
+	fn focus_up(&mut self) {
+		self.active_focus = self.active_focus.move_up();
+	}
+
+	fn focus_down(&mut self) {
+		self.active_focus = self.active_focus.move_down();
+	}
+
+	fn focus_left(&mut self) {
+		self.active_focus = self.active_focus.move_left();
+	}
+
+	fn focus_right(&mut self) {
+		self.active_focus = self.active_focus.move_right();
+	}
+
+	fn insert_char(&self, char: char) {
+		let refresh_trigger = self.refresh_trigger.clone();
+		self.active_focus.insert_char(char, move || { refresh_trigger.send(()); });
+	}
+
+	fn insert_space(&self) {
+		let refresh_trigger = self.refresh_trigger.clone();
+		self.active_focus.insert_space(move || { refresh_trigger.send(()); });
+	}
+
+	fn set_refresh_trigger(&mut self, trigger: Trigger) {
+		self.refresh_trigger = trigger;
+	}
+
+	fn spot_table(&self) -> Option<SpotTable> {
+		Some(self.to_spot_table())
+	}
 }
 
 impl PodTree {
@@ -38,7 +83,11 @@ impl PodTree {
 		tree
 	}
 
+	pub fn to_spot_table(&self) -> SpotTable { self.linked_table.clone() }
+
 	pub fn root_path(&self) -> &PodPath { &self.root_path }
+
+	pub fn layout_count(&self) -> usize { self.layout_map.len() }
 
 	pub fn set_bounds(&mut self, bounds: Bounds) {
 		let path = PodPath::new(self.root_path.last_branch().story_id, bounds);
@@ -49,7 +98,7 @@ impl PodTree {
 		}
 	}
 
-	pub fn set_yard(&mut self, story_id: StoryId, yard: Option<ArcYard>) {
+	pub fn set_story_yard(&mut self, story_id: StoryId, yard: Option<ArcYard>) {
 		let story_paths = self.layout_map.keys().cloned().filter(|it| it.last_story_id() == &story_id).collect::<Vec<_>>();
 		if let Some(yard) = yard {
 			self.yard_map.insert(story_id, yard);
@@ -58,6 +107,11 @@ impl PodTree {
 			self.yard_map.remove(&story_id);
 			self.drop_paths(story_paths);
 		}
+	}
+
+	pub fn redraw(&mut self) {
+		self.drop_paths(vec![self.root_path.clone()]);
+		self.layout_paths(vec![self.root_path.clone()]);
 	}
 
 	fn drop_paths(&mut self, mut paths: Vec<PodPath>) {

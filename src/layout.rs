@@ -29,21 +29,11 @@ impl LayoutState {
 			PodBranch { story_id: *sub_story_id, bounds }
 		}).collect::<HashSet<_>>()
 	}
-	pub fn to_sub_pods(&self) -> HashSet<(StoryId, (i32, i32))> {
-		self.dependencies.iter().map(|(yard_id, sub_story_id)| {
-			let size = if let Some(bounds) = self.bounds_hold.borrow().yard_bounds(*yard_id) {
-				(bounds.width(), bounds.height())
-			} else {
-				(0, 0)
-			};
-			(*sub_story_id, size)
-		}).collect::<HashSet<_>>()
-	}
 }
 
 
 pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, prev_focus: &ActiveFocus) -> LayoutState {
-	info!("Layout width: {}, height: {}", width, height);
+	trace!("Layout width: {}, height: {}", width, height);
 	let (start_index, bounds) = BoundsHold::init(width, height);
 	{
 		trace!("Starting BoundsHold: {:?}", bounds.borrow());
