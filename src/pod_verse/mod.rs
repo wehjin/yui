@@ -11,6 +11,8 @@ use crate::pod::yard::YardPod;
 use crate::spot::spot_table::SpotTable;
 use crate::story_id::StoryId;
 
+pub mod tree;
+
 #[derive(Clone)]
 pub struct PodVerse {
 	pod_verse_link: Sender<PodVerseAction>,
@@ -39,7 +41,7 @@ pub enum PodVerseAction {
 	YardUpdate { story_id: StoryId, story_yard: Option<ArcYard> },
 	SetWidthHeight { width: i32, height: i32 },
 	Edit(EditAction),
-	SpotTable(Sender<Option<SpotTable>>),
+	ReadSpotTable(Sender<Option<SpotTable>>),
 	SetDoneTrigger(Sender<()>),
 	SetScreenRefreshTrigger(Trigger),
 	Refresh,
@@ -229,7 +231,7 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 					}
 					own_actions.send(PodVerseAction::FullRefresh).expect("send refresh");
 				}
-				PodVerseAction::SpotTable(result) => {
+				PodVerseAction::ReadSpotTable(result) => {
 					let spot_table = pod_bank.to_spot_table();
 					result.send(spot_table).expect("send spot-table");
 				}

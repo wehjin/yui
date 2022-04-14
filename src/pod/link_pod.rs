@@ -64,7 +64,7 @@ impl Pod for MainPod {
 
 	fn spot_table(&self) -> Option<SpotTable> {
 		let (sender, receiver) = channel();
-		self.pod_verse_link.send(PodVerseAction::SpotTable(sender)).expect("read spot-table");
+		self.pod_verse_link.send(PodVerseAction::ReadSpotTable(sender)).expect("read spot-table");
 		receiver.recv().expect("receive spot-table")
 	}
 }

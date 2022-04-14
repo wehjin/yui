@@ -206,7 +206,7 @@ impl Bounds {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoundsHold {
 	holdings: Vec<Bounds>,
 	map: HashMap<i32, usize>,

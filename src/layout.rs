@@ -4,9 +4,11 @@ use std::rc::Rc;
 
 use crate::{ArcYard, Bounds, Focus, SenderLink, Trigger};
 use crate::bounds::BoundsHold;
+use crate::pod_verse::tree::PodBranch;
 use crate::story_id::StoryId;
 use crate::yui::layout::ActiveFocus;
 
+#[derive(Clone)]
 pub struct LayoutState {
 	pub max_x: i32,
 	pub max_y: i32,
@@ -17,6 +19,16 @@ pub struct LayoutState {
 }
 
 impl LayoutState {
+	pub fn to_pod_branches(&self) -> HashSet<PodBranch> {
+		self.dependencies.iter().map(|(yard_id, sub_story_id)| {
+			let bounds = if let Some(bounds) = self.bounds_hold.borrow().yard_bounds(*yard_id) {
+				bounds.clone()
+			} else {
+				Bounds::new(0, 0)
+			};
+			PodBranch { story_id: *sub_story_id, bounds }
+		}).collect::<HashSet<_>>()
+	}
 	pub fn to_sub_pods(&self) -> HashSet<(StoryId, (i32, i32))> {
 		self.dependencies.iter().map(|(yard_id, sub_story_id)| {
 			let size = if let Some(bounds) = self.bounds_hold.borrow().yard_bounds(*yard_id) {
