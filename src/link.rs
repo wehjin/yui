@@ -1,7 +1,7 @@
 use std::sync::mpsc::{channel, Sender, sync_channel, SyncSender};
 use std::thread;
 
-pub trait Link<A> {
+pub trait Link<A: Send> {
 	fn send(&self, action: A);
 }
 
@@ -12,11 +12,11 @@ pub trait Sendable: Clone + Send + 'static {
 }
 
 #[derive(Debug)]
-pub struct SenderLink<A> {
+pub struct SenderLink<A: Send> {
 	pub tx: Sender<A>,
 }
 
-impl<A> Clone for SenderLink<A> {
+impl<A: Send> Clone for SenderLink<A> {
 	fn clone(&self) -> Self {
 		SenderLink { tx: self.tx.clone() }
 	}
@@ -81,7 +81,7 @@ impl<A> Clone for SyncLink<A> {
 	}
 }
 
-impl<A> Link<A> for SyncLink<A> {
+impl<A: Send> Link<A> for SyncLink<A> {
 	fn send(&self, action: A) {
 		self.tx.send(action).expect("send action")
 	}

@@ -4,13 +4,14 @@ pub use basic::fade::*;
 pub use basic::glyph::*;
 pub use basic::label::*;
 pub use basic::story::*;
+pub use scalar::button::*;
+pub use scalar::button2::*;
 
 use crate::bounds::Bounds;
 use crate::DrawPad;
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};
 
-pub use self::button::*;
 pub use self::empty::*;
 pub use self::fill::*;
 pub use self::grade::*;
@@ -26,7 +27,6 @@ pub use self::textfield::*;
 pub use self::title::*;
 pub use self::trellis::*;
 
-mod button;
 mod empty;
 mod fill;
 mod grade;
@@ -42,6 +42,7 @@ mod textfield;
 mod title;
 mod trellis;
 mod basic;
+mod scalar;
 
 pub trait Yard {
 	fn id(&self) -> i32;

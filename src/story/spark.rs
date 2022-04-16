@@ -63,19 +63,19 @@ pub trait Spark {
 }
 
 // TODO Have Create implement Edge. Make Edge non-optional.
-pub struct Create<Action, Report, E: Edge> {
+pub struct Create<Action: Send, Report: Send, E: Edge> {
 	action_link: SenderLink<Action>,
 	report_link: Option<SenderLink<Report>>,
 	edge: Option<E>,
 }
 
-impl<Action, Report, E: Edge> Create<Action, Report, E> {
+impl<Action: Send, Report: Send, E: Edge> Create<Action, Report, E> {
 	pub fn link(&self) -> &SenderLink<Action> { &self.action_link }
 	pub fn report_link(&self) -> &Option<SenderLink<Report>> { &self.report_link }
 	pub fn edge(&self) -> &Option<E> { &self.edge }
 }
 
-pub trait Flow<State, Action, Report> {
+pub trait Flow<State, Action: Send, Report: Send> {
 	//! TODO: Move start_prequel and end_prequel into edge component.
 	fn state(&self) -> &State;
 	fn link(&self) -> &SenderLink<Action>;
