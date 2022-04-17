@@ -49,7 +49,7 @@ impl<Spk> Story<Spk> where Spk: Spark + 'static, Spk::Action: 'static
 {
 	pub fn link(&self) -> SenderLink<Spk::Action> {
 		let sender = self.tx.to_owned();
-		SenderLink::new_f(move |action: Spk::Action| { sender.send(Msg::Update(action)).expect("send Msg::Update"); })
+		SenderLink::wrap_sink(move |action: Spk::Action| { sender.send(Msg::Update(action)).expect("send Msg::Update"); })
 	}
 
 	pub fn visions(&self, id: i32) -> Result<Receiver<Spk::State>, Box<dyn Error>> {

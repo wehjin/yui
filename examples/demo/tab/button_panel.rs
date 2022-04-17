@@ -63,13 +63,13 @@ impl Spark for ButtonDemo {
 		let dark_half =
 			yard::trellis(1, 1, Cling::Center, vec![
 				yard::button(text1, ButtonState::enabled(link.map(|_| Action::OfferChoice))),
-				yard::button(text2, ButtonState::default(SenderLink::new_f(|_| info!("Butthead")))),
+				yard::button(text2, ButtonState::default(SenderLink::wrap_sink(|_| info!("Butthead")))),
 			])
 				.pad(3).before(yard::fill(FillColor::Primary, Plain));
 		let light_half =
 			yard::trellis(1, 1, Cling::Center, vec![
-				yard::button("Garfunkel", ButtonState::enabled(SenderLink::new_f(|_| info!("Garfunkel")))),
-				yard::button("Simon", ButtonState::enabled(SenderLink::new_f(|_| info!("Simon")))),
+				yard::button("Garfunkel", ButtonState::enabled(SenderLink::wrap_sink(|_| info!("Garfunkel")))),
+				yard::button("Simon", ButtonState::enabled(SenderLink::wrap_sink(|_| info!("Simon")))),
 			]).pad(3).before(yard::fill(FillColor::Background, Plain));
 		let content = light_half.pack_right(40, dark_half);
 		let page = AppTab::Buttons.page(content, Some(link.clone().map(Action::ShowTab)));

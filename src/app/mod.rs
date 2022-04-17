@@ -20,7 +20,7 @@ pub fn run<S>(spark: S, report_link: Option<SenderLink<S::Report>>) -> Result<()
 	let (yard_tx, yard_rx) = channel();
 	let on_close: SenderLink<()> = {
 		let yard_tx = yard_tx.clone();
-		SenderLink::new(yard_tx, |_| None)
+		SenderLink::wrap_sender(yard_tx, |_| None)
 	};
 	let refresh_link = refresher.clone().map(|_| RefresherAction::Refresh);
 	let stack_edge = AppEdge::new(SenderLink::ignore(), refresh_link.clone());

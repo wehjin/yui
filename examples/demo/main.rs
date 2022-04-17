@@ -70,7 +70,7 @@ impl story::Spark for Main {
 				story::spark(
 					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
 					edge,
-					Some(SenderLink::new_f(move |report| {
+					Some(SenderLink::wrap_sink(move |report| {
 						match report {
 							Report::SelectedTab(index) => action_link.send(SetTab(AppTab::from_index(index))),
 							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
@@ -78,10 +78,10 @@ impl story::Spark for Main {
 					})),
 				)
 			},
-			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
-			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
-			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
-			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SenderLink::new_f(ctx.link().callback(select_tab)))),
+			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
+			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
+			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
+			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
 		}
 	}
 

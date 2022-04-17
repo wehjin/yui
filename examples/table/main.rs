@@ -55,7 +55,7 @@ impl Spark for Main {
 			"Close".to_string(),
 			ButtonState::Enabled(Priority::None, link.map(|_| ())),
 		);
-		let select_link = SenderLink::new_f(|index| log::info!("Selected row index: {}", index));
+		let select_link = SenderLink::wrap_sink(|index| log::info!("Selected row index: {}", index));
 		let page = yard::table(5000, focus, headers, rows, select_link)
 			.pad(2)
 			.pack_bottom(7, close_button.pad(2))

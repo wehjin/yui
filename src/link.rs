@@ -9,6 +9,13 @@ pub trait Sendable: Clone + Send + 'static {
 	fn send(self, sender_link: &SenderLink<Self>) { sender_link.send(self); }
 	fn send2(self, sender: &Sender<Self>, msg: &str) { sender.send(self).expect(msg); }
 	fn into_trigger(self, sender: &Sender<Self>) -> Trigger { trigger(self.clone(), sender) }
+	fn into_trigger_link(self, sender_link: &SenderLink<Self>) -> Trigger {
+		sender_link.map(move |_| self.clone())
+	}
+	fn to_sync<B: Send + 'static>(self, link: &SenderLink<Self>) -> SyncLink<B> {
+		let link = link.clone();
+		SyncLink::wrap_sink(move |_: B| { link.send(self.clone()) })
+	}
 }
 
 #[derive(Debug)]
@@ -29,7 +36,7 @@ impl<A: Send> Link<A> for SenderLink<A> {
 }
 
 impl<A: Send + 'static> SenderLink<A> {
-	pub fn new<B: Send + 'static>(sender: Sender<B>, f: impl Fn(A) -> B + Send + 'static) -> Self {
+	pub fn wrap_sender<B: Send + 'static>(sender: Sender<B>, f: impl Fn(A) -> B + Send + 'static) -> Self {
 		let (tx, rx) = channel();
 		thread::Builder::new().name("SenderLink::new".to_string()).spawn(move || {
 			for a in rx {
@@ -39,15 +46,17 @@ impl<A: Send + 'static> SenderLink<A> {
 		}).expect("spawn");
 		SenderLink { tx }
 	}
-	pub fn new_f(f: impl Fn(A) + Send + 'static) -> Self {
-		let f = Box::new(f);
+	pub fn wrap_sink(sink: impl Fn(A) + Send + 'static) -> Self {
+		let sink_a = Box::new(sink);
 		let (tx, rx) = channel();
 		thread::Builder::new().name("SenderLink::new_f".to_string()).spawn(move || {
-			for a in rx { f(a) }
+			for a in rx {
+				sink_a(a)
+			}
 		}).expect("spawn");
 		SenderLink { tx }
 	}
-	pub fn ignore() -> Self { Self::new_f(|_| {}) }
+	pub fn ignore() -> Self { Self::wrap_sink(|_| {}) }
 	pub fn map<B: Send + 'static>(&self, f: impl Fn(B) -> A + Send + 'static) -> SenderLink<B> {
 		let f = Box::new(f);
 		let link = self.clone();
@@ -68,9 +77,10 @@ impl<A: Send + 'static> SenderLink<A> {
 pub type Trigger = SenderLink<()>;
 
 pub fn trigger<F: Clone + Send + 'static>(value: F, sender: &Sender<F>) -> Trigger {
-	SenderLink::new(sender.clone(), move |_| value.clone())
+	SenderLink::wrap_sender(sender.clone(), move |_| value.clone())
 }
 
+#[derive(Debug)]
 pub struct SyncLink<A> {
 	tx: SyncSender<A>,
 }
@@ -100,16 +110,18 @@ impl<A: Send + 'static> From<SenderLink<A>> for SyncLink<A> {
 }
 
 impl<A: Send + 'static> SyncLink<A> {
-	pub fn new(f: impl Fn(A) + Sync + Send + 'static) -> Self {
-		let f = Box::new(f);
+	pub fn wrap_sink(f: impl Fn(A) + Send + 'static) -> Self {
+		let sink_a = Box::new(f);
 		let (tx, rx) = sync_channel(100);
 		thread::Builder::new().name("SyncLink new".to_string()).spawn(move || {
-			for a in rx { f(a) }
+			for a in rx {
+				sink_a(a)
+			}
 		}).expect("spawn");
 		SyncLink { tx }
 	}
 	pub fn ignore() -> Self {
-		Self::new(|_| {})
+		Self::wrap_sink(|_| {})
 	}
 	pub fn map<B: Send + 'static>(self, f: impl Fn(B) -> A + Send + 'static) -> SyncLink<B> {
 		let f = Box::new(f);
