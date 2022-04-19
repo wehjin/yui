@@ -13,7 +13,7 @@ use simplelog::{Config, WriteLogger};
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pack, Padding, Sendable, SenderLink, Spark, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, FillGrade, StrokeColor};
-use yui::yard::{Button, ButtonAction, SubmitAffordance, Priority};
+use yui::yard::{Button, ButtonAction, Priority, SubmitAffordance};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let log_file = File::create("counter.log")?;
@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			buttons[position] = button.update(ButtonAction::Press);
 			MainState { buttons, ..self.clone() }
 		}
-		pub fn release(&self) -> Self {
+		fn release(&self) -> Self {
 			let buttons = self.buttons.iter().map(|button| {
 				button.update(ButtonAction::Release)
 			}).collect();

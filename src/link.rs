@@ -12,6 +12,10 @@ pub trait Sendable: Clone + Send + 'static {
 	fn into_trigger_link(self, sender_link: &SenderLink<Self>) -> Trigger {
 		sender_link.map(move |_| self.clone())
 	}
+	fn to_send<B: Send + 'static>(self, link: &SenderLink<Self>) -> SenderLink<B> {
+		let link = link.clone();
+		SenderLink::wrap_sink(move |_: B| { link.send(self.clone()) })
+	}
 	fn to_sync<B: Send + 'static>(self, link: &SenderLink<Self>) -> SyncLink<B> {
 		let link = link.clone();
 		SyncLink::wrap_sink(move |_: B| { link.send(self.clone()) })
