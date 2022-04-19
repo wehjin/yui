@@ -54,7 +54,7 @@ impl Button {
 		};
 		if let Some(trigger) = submit_trigger {
 			thread::spawn(move || {
-				thread::sleep(Duration::from_millis(100));
+				thread::sleep(Duration::from_millis(300));
 				trigger.send(());
 			});
 		}
