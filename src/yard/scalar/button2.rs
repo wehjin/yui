@@ -16,6 +16,12 @@ pub enum SubmitAffordance {
 	Pressed { press_link: SyncLink<i32>, priority: Priority },
 }
 
+impl SubmitAffordance {
+	pub fn enabled(press_link: SyncLink<i32>) -> Self {
+		SubmitAffordance::Enabled { press_link, priority: Priority::None }
+	}
+}
+
 #[derive(Debug)]
 pub enum ButtonAction {
 	Press,
@@ -31,6 +37,9 @@ pub struct Button {
 }
 
 impl Button {
+	pub fn set_label(&self, label: &str) -> Self {
+		Button { label: label.to_string(), ..self.clone() }
+	}
 	pub fn update(&self, action: ButtonAction) -> Self {
 		match action {
 			ButtonAction::Press => self.press(),

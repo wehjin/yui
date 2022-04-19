@@ -13,7 +13,7 @@ use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Pack, Padding, Send
 use yui::app::Edge;
 use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
-use yui::yard::{Button, ButtonAction, Priority, SubmitAffordance};
+use yui::yard::{Button, ButtonAction, SubmitAffordance};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(
@@ -48,10 +48,7 @@ impl Spark for Main {
 			id: random(),
 			label: "Close".into(),
 			submit_link: MainAction::Close.to_send(ctx.link()),
-			affordance: SubmitAffordance::Enabled {
-				press_link: MainAction::PressButton.to_sync(ctx.link()),
-				priority: Priority::None,
-			},
+			affordance: SubmitAffordance::enabled(MainAction::PressButton.to_sync(ctx.link())),
 		};
 		button
 	}
