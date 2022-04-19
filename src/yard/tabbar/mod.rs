@@ -1,28 +1,46 @@
-use std::ops::Deref;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
-use crate::{ArcYard, Before, Bounds, Cling, DrawPad, Focus, FocusType, Link, Pack, Place, render_submit, SenderLink, SyncLink, yard};
+use crate::{ArcYard, Before, Bounds, Cling, DrawPad, Focus, FocusType, Link, Pack, Place, SenderLink, SyncLink, yard};
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade, StrokeColor};
-use crate::yard::{ignore_touch, Yard, YardOption};
+use crate::yard::{Yard, YardOption};
 
 pub use self::tab::*;
 
 mod tab;
 
-pub fn tabbar(
-	tabs: &[impl Tab],
-	selected_index: usize,
+#[derive(Clone)]
+pub struct TabItem {
+	id: i32,
+	label: String,
+}
+
+impl TabItem {
+	pub fn new(id: i32, label: &str) -> Self { TabItem { id, label: label.to_string() } }
+}
+
+#[derive(Clone)]
+pub struct TabBar {
+	items: Vec<TabItem>,
 	on_select: SenderLink<usize>,
-) -> ArcYard {
-	let tabs: Vec<(i32, ArcYard)> = tabs.iter().enumerate().map({
-		let on_select = on_select.clone();
+	selected_index: usize,
+}
+
+impl TabBar {
+	pub fn new(items: Vec<TabItem>, selected_index: usize, on_select: SenderLink<usize>) -> Self {
+		TabBar { items, selected_index, on_select }
+	}
+}
+
+pub fn tabbar(tab_bar: &TabBar) -> ArcYard {
+	let tabs: Vec<(i32, ArcYard)> = tab_bar.items.iter().enumerate().map({
+		let on_select = tab_bar.on_select.clone();
 		move |(index, tab)| {
-			let id = tab.uid();
-			let label = tab.label();
+			let id = tab.id;
+			let label = tab.label.to_string();
 			let tab_width = (label.chars().count() + 2 * 2) as i32;
 			let tab_on_select = on_select.clone().map(move |_| index);
-			let tab_yard = tab_yard(id, label, index, selected_index, tab_on_select);
+			let tab_yard = tab_yard(id, &label, index, tab_bar.selected_index, tab_on_select);
 			(tab_width, tab_yard)
 		}
 	}).collect();
@@ -40,22 +58,13 @@ fn tab_yard(id: i32, label: &str, index: usize, active_index: usize, select: Sen
 	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::Center);
 	let underline = yard::glyph(StrokeColor::EnabledOnPrimary, move || if index == active_index { '_' } else { '\0' });
 	let content = yard::empty().pack_bottom(1, label).pack_bottom(1, underline);
-	let is_pressed = Arc::new(RwLock::new(false));
-	Arc::new(TabYard { id, content, is_pressed, select: select.into() })
+	Arc::new(TabYard { id, content, select: select.into() })
 }
 
 struct TabYard {
 	id: i32,
 	content: ArcYard,
-	is_pressed: Arc<RwLock<bool>>,
 	select: SyncLink<()>,
-}
-
-impl TabYard {
-	fn is_pressed(&self) -> bool {
-		let is_pressed = self.is_pressed.read().expect("read is_pressed").deref().to_owned();
-		is_pressed
-	}
 }
 
 impl Yard for TabYard {
@@ -65,33 +74,20 @@ impl Yard for TabYard {
 		let (bounds_id, bounds) = ctx.edge_bounds();
 		self.content.layout(ctx);
 		ctx.set_yard_bounds(self.id(), bounds_id);
-		let is_pressed = self.is_pressed.clone();
+
+		let on_select = self.select.clone();
 		ctx.add_focus(Focus {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds,
 			priority: 0,
-			action_block: Arc::new({
-				let on_select = self.select.clone();
-				move |ctx| {
-					render_submit(&is_pressed, ctx, &ignore_touch());
-					on_select.send(());
-				}
-			}),
+			action_block: Arc::new(move |_| { on_select.send(()); }),
 		});
 		bounds_id
 	}
 
 	fn render(&self, bounds: &Bounds, focus_id: i32, pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>> {
-		let fill_grade = if focus_id == self.id() {
-			if self.is_pressed() {
-				FillGrade::Press
-			} else {
-				FillGrade::Focus
-			}
-		} else {
-			FillGrade::Plain
-		};
+		let fill_grade = if focus_id == self.id() { FillGrade::Focus } else { FillGrade::Plain };
 		pad.grade(bounds, fill_grade);
 		pad.fill(bounds, FillColor::Primary);
 		Some(vec![(self.content.clone(), None)])

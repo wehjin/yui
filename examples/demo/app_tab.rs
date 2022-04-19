@@ -1,5 +1,6 @@
 use yui::{ArcYard, Before, Pack, SenderLink, yard};
 use yui::palette::{FillColor, FillGrade};
+use yui::yard::{TabBar, TabItem};
 
 use crate::app_bar;
 
@@ -62,7 +63,12 @@ fn tab_page(content: ArcYard, active_tab_index: usize, select_tab: Option<Sender
 		None => SenderLink::ignore(),
 		Some(link) => link.clone(),
 	};
-	let tabbar = yard::tabbar(TABBAR, active_tab_index, select_tab);
+	let tab_bar = TabBar::new(
+		TABBAR.iter().map(|(id, label)| TabItem::new(*id, *label)).collect::<Vec<_>>(),
+		active_tab_index,
+		select_tab,
+	);
+	let tabbar = yard::tabbar(&tab_bar);
 	content
 		.pack_top(3, tabbar)
 		.pack_top(3, app_bar())
