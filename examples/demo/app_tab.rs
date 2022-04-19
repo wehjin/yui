@@ -52,8 +52,11 @@ impl AppTab {
 		index
 	}
 
-	pub fn page(&self, content: ArcYard, select_tab: Option<SenderLink<usize>>) -> ArcYard {
-		let index = self.index();
+	pub fn page(&self, content: ArcYard, _select_tab: Option<SenderLink<usize>>) -> ArcYard {
+		content
+	}
+
+	pub fn main_page(content: ArcYard, index: usize, select_tab: Option<SenderLink<usize>>) -> ArcYard {
 		tab_page(content, index, select_tab)
 	}
 }

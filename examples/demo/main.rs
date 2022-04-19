@@ -12,11 +12,12 @@ use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
 pub use app_tab::*;
-use yui::{console, Create, Flow, Link, SenderLink, Story};
+use yui::{console, Create, Flow, Link, SenderLink};
 use yui::{AfterFlow, ArcYard, Before, Cling, Padding, story, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
+use yui::story_id::StoryId;
 
 use crate::MainAction::SetTab;
 use crate::tab::button_panel::ButtonDemo;
@@ -48,6 +49,16 @@ pub struct Main {
 	dialog_id: u32,
 }
 
+#[derive(Debug, Clone)]
+pub struct State {
+	main_tab: AppTab,
+	dialog_story: StoryId,
+	form_story: StoryId,
+	selector_story: StoryId,
+	text_story: StoryId,
+	buttons_story: StoryId,
+}
+
 #[derive(Debug)]
 pub enum MainAction {
 	SetTab(AppTab),
@@ -61,34 +72,29 @@ impl story::Spark for Main {
 
 	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State where E: Clone
 	{
+		let edge = ctx.edge().clone().expect("edge in create");
+		let dialog_reports = {
+			let own_link = ctx.link().clone();
+			let report_link = ctx.report_link().clone();
+			Some(SenderLink::wrap_sink(move |report| match report {
+				Report::SelectedTab(index) => own_link.send(SetTab(AppTab::from_index(index))),
+				Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
+			}))
+		};
 		State {
 			main_tab: AppTab::from_index(0),
-			dialog_story: {
-				let report_link = ctx.report_link().clone();
-				let action_link = ctx.link().clone();
-				let edge = ctx.edge().clone();
-				story::spark(
-					DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 },
-					edge,
-					Some(SenderLink::wrap_sink(move |report| {
-						match report {
-							Report::SelectedTab(index) => action_link.send(SetTab(AppTab::from_index(index))),
-							Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
-						}
-					})),
-				)
-			},
-			form_story: story::spark(FormListDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
-			selector_story: story::spark(SelectorListDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
-			text_story: story::spark(TextDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
-			buttons_story: story::spark(ButtonDemo {}, ctx.edge().clone(), Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))),
+			dialog_story: edge.sub_story(DialogDemo { dialog: self.dialog_id, next_dialog: self.dialog_id + 1 }, dialog_reports).story_id,
+			form_story: edge.sub_story(FormListDemo {}, Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))).story_id,
+			selector_story: edge.sub_story(SelectorListDemo {}, Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))).story_id,
+			text_story: edge.sub_story(TextDemo {}, Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))).story_id,
+			buttons_story: edge.sub_story(ButtonDemo {}, Some(SenderLink::wrap_sink(ctx.link().callback(select_tab)))).story_id,
 		}
 	}
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		info!("{:?}", action);
 		match action {
-			SetTab(tab) => {
+			MainAction::SetTab(tab) => {
 				let next = flow.state().with_tab(tab);
 				AfterFlow::Revise(next)
 			}
@@ -100,14 +106,16 @@ impl story::Spark for Main {
 	}
 
 	fn render(state: &State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
-		let refresh_link = link.clone().map(|_| MainAction::Refresh);
-		let yard = match state.main_tab {
-			AppTab::Dialog => yard::publisher(&state.dialog_story, refresh_link.clone()),
-			AppTab::FormList => yard::publisher(&state.form_story, refresh_link.clone()),
-			AppTab::SelectorList => yard::publisher(&state.selector_story, refresh_link.clone()),
-			AppTab::Text => yard::publisher(&state.text_story, refresh_link.clone()),
-			AppTab::Buttons => yard::publisher(&state.buttons_story, refresh_link.clone()),
+		let sub_story_id = match state.main_tab {
+			AppTab::Dialog => state.dialog_story,
+			AppTab::FormList => state.form_story,
+			AppTab::SelectorList => state.selector_story,
+			AppTab::Text => state.text_story,
+			AppTab::Buttons => state.buttons_story,
 		};
+		let content_yard = yard::story(sub_story_id);
+		let select_tab = link.map(|index: usize| MainAction::SetTab(AppTab::from_index(index)));
+		let yard = AppTab::main_page(content_yard, state.main_tab.index(), Some(select_tab));
 		Some(yard)
 	}
 }
@@ -118,16 +126,6 @@ impl State {
 		next.main_tab = main_tab;
 		next
 	}
-}
-
-#[derive(Debug, Clone)]
-pub struct State {
-	main_tab: AppTab,
-	dialog_story: Story<DialogDemo>,
-	form_story: Story<FormListDemo>,
-	selector_story: Story<SelectorListDemo>,
-	text_story: Story<TextDemo>,
-	buttons_story: Story<ButtonDemo>,
 }
 
 fn app_bar() -> ArcYard {

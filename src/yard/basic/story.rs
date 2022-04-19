@@ -18,7 +18,7 @@ impl Yard for StoryYard {
 	fn id(&self) -> i32 { self.yard_id }
 	fn update(&self, _option: YardOption) {}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
-		println!("LAYOUT yard: {:?} depends on story: {:?}", self.yard_id, self.story_id);
+		trace!("LAYOUT yard: {:?} depends on story: {:?}", self.yard_id, self.story_id);
 		let (bounds_id, _bounds) = ctx.edge_bounds();
 		ctx.set_yard_bounds(self.yard_id, bounds_id);
 		ctx.add_dependency(self.yard_id, self.story_id);
