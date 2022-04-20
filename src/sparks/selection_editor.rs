@@ -2,7 +2,7 @@ use std::fmt;
 
 use selection_editor::Action;
 
-use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Pack, Padding, selection_editor, SenderLink, Spark};
+use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Link, Pack, Padding, selection_editor, SenderLink, Spark, SyncLink};
 use crate::app::Edge;
 use crate::palette::StrokeColor;
 use crate::selection_editor::SelectionEditor;
@@ -36,7 +36,7 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 		let content = if state.choices.is_empty() {
 			yard::label("Empty", StrokeColor::CommentOnBackground, Cling::Center)
 		} else {
-			let items = state.choices.iter().enumerate().map(|(i, it)| {
+			let yards = state.choices.iter().enumerate().map(|(i, it)| {
 				let (text, color) = if state.selected_index() == i {
 					(format!("{}", it).to_uppercase(), StrokeColor::BodyOnBackground)
 				} else {
@@ -44,9 +44,14 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 				};
 				let label = yard::label(text, color, Cling::Center);
 				let yard = label.pressable(link.map(move |_| Action::SelectIndex(i)));
-				(3, yard)
-			}).collect();
-			yard::list(rand::random(), state.selected_index(), items)
+				yard
+			}).collect::<Vec<_>>();
+
+			let link = link.clone();
+			let send_action = SyncLink::wrap_sink(move |action| {
+				link.send(Action::ToListArt(action));
+			});
+			yard::list(yards, state.list_art.clone(), send_action)
 		};
 		let close = yard::button("Close", ButtonState::enabled(link.map(|_| Action::Close))).confine_width(9, Cling::Center);
 		let yard = content.pack_bottom(1, close).pad(1)

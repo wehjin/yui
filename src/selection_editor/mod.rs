@@ -1,3 +1,5 @@
+use crate::yard::model::{ScrollModel, ScrollAction};
+
 #[cfg(test)]
 mod tests;
 
@@ -10,6 +12,7 @@ pub struct SelectionEditor<T: Clone> {
 	pub is_pressed: bool,
 	pub selection: Option<(usize, T)>,
 	pub is_closed: bool,
+	pub list_art: ScrollModel,
 }
 
 /// Enumerates the actions available to a SelectionEditor.
@@ -20,6 +23,7 @@ pub enum Action {
 	Select,
 	SelectIndex(usize),
 	Close,
+	ToListArt(ScrollAction),
 }
 
 /// Enumerates the states of an index.
@@ -36,6 +40,8 @@ pub enum IndexState {
 impl<T: Clone> SelectionEditor<T> {
 	/// Construct the editor.
 	pub fn new(index: usize, choices: &[T]) -> Self {
+		let heights = (0..choices.len()).map(|_| 3u8).collect::<Vec<_>>();
+		let list_art = ScrollModel::new(rand::random(), heights, index);
 		SelectionEditor {
 			choices: choices.to_vec(),
 			start_index: index,
@@ -43,6 +49,7 @@ impl<T: Clone> SelectionEditor<T> {
 			is_pressed: false,
 			selection: None,
 			is_closed: false,
+			list_art,
 		}
 	}
 	/// Read the index of the currently selected item.
@@ -113,6 +120,13 @@ impl<T: Clone> SelectionEditor<T> {
 					is_closed: true,
 					is_pressed: false,
 					..self
+				},
+				Action::ToListArt(list_action) => {
+					if let Some(list_art) = self.list_art.update(list_action) {
+						SelectionEditor { list_art, ..self }
+					} else {
+						self
+					}
 				}
 			}
 		}

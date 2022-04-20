@@ -63,6 +63,8 @@ pub enum Nexus {
 }
 
 impl Nexus {
+	pub fn can_up(&self) -> bool { self.item_index() > 0 }
+	pub fn can_down(&self) -> bool { (self.item_index() + 1) < self.max_index() }
 	pub fn down(&self, item_heights: &Vec<i32>) -> Option<Self> {
 		match self {
 			Nexus::Up { first_pos: first_row, item_index, max_index } => {
@@ -178,6 +180,12 @@ impl Nexus {
 		match self {
 			Nexus::Up { item_index, .. } => *item_index,
 			Nexus::Down { item_index, .. } => *item_index,
+		}
+	}
+	pub fn max_index(&self) -> usize {
+		match self {
+			Nexus::Up { max_index, .. } => *max_index,
+			Nexus::Down { max_index, .. } => *max_index,
 		}
 	}
 	pub fn new(index: usize, item_heights: &Vec<i32>) -> Self {

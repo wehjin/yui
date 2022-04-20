@@ -1,3 +1,4 @@
+
 use std::sync::mpsc::{channel, Sender, sync_channel, SyncSender};
 use std::thread;
 
@@ -40,6 +41,9 @@ impl<A: Send> Link<A> for SenderLink<A> {
 }
 
 impl<A: Send + 'static> SenderLink<A> {
+	pub fn to_sync(&self) -> SyncLink<A> {
+		SyncLink::from(self.clone())
+	}
 	pub fn wrap_sender<B: Send + 'static>(sender: Sender<B>, f: impl Fn(A) -> B + Send + 'static) -> Self {
 		let (tx, rx) = channel();
 		thread::Builder::new().name("SenderLink::new".to_string()).spawn(move || {
