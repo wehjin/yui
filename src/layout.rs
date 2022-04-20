@@ -34,17 +34,10 @@ impl LayoutState {
 
 
 pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, prev_focus: &ActiveFocus) -> LayoutState {
-	trace!("Layout width: {}, height: {}", width, height);
 	let (start_index, bounds) = BoundsHold::init(width, height);
-	{
-		trace!("Starting BoundsHold: {:?}", bounds.borrow());
-	}
 	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone(), refresh_trigger.clone());
 	yard.layout(&mut layout_ctx);
 	let active_focus = layout_ctx.pop_active_focus(prev_focus);
-	{
-		trace!("Ending BoundsHold: {:?}", bounds.borrow());
-	}
 	let dependencies = layout_ctx.dependencies.borrow();
 	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus, dependencies: dependencies.clone() }
 }
@@ -61,9 +54,7 @@ pub struct LayoutContext {
 
 impl LayoutContext {
 	pub fn add_dependency(&mut self, yard_id: i32, story_id: StoryId) {
-		trace!("Add dependency on {:?} to yard:{:?}", story_id, yard_id);
 		(*self.dependencies).borrow_mut().insert((yard_id, story_id));
-		trace!("Dependencies after add {:?}", self.dependencies);
 	}
 	pub fn refresh_fn(&self) -> SenderLink<()> { self.refresh_link.clone() }
 	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {

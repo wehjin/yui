@@ -48,7 +48,6 @@ impl story::Spark for PubStack {
 					rear_yard.fade((4, 4), fore_yard)
 				},
 			);
-			info!("New yard for YardStack");
 			Some(yard)
 		} else {
 			None

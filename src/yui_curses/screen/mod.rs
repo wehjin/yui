@@ -1,6 +1,7 @@
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, RecvError, Sender};
+use std::sync::mpsc::{Receiver, RecvError, RecvTimeoutError, Sender};
 use std::thread;
+use std::time::Duration;
 
 use ncurses::*;
 
@@ -34,10 +35,56 @@ pub fn connect_pod_verse(pod_verse: PodVerse) -> Sender<ScreenAction> {
 		let screen_link = screen_link.clone();
 		thread::spawn(move || {
 			let pod = pod_verse.to_main_pod(ScreenAction::ResizeRefresh.into_trigger(&screen_link));
-			let mut next = ScreenState::init(Box::new(pod));
-			while let Some(state) = next {
-				let action = next_screen_action(&actions_source, &screen_link).ok();
-				next = action.map(|action| state.update(action)).flatten();
+			let mut state = ScreenState::init(Box::new(pod)).expect("ScreenState");
+			let mut delay_refresh = false;
+			loop {
+				let mut repeat_try = false;
+				match actions_source.recv_timeout(Duration::from_millis(30)) {
+					Ok(action) => {
+						repeat_try = true;
+						if let ScreenAction::ResizeRefresh = action {
+							delay_refresh = true;
+						} else {
+							match state.update(action) {
+								None => break,
+								Some(new_state) => {
+									state = new_state;
+								}
+							}
+						}
+					}
+					Err(e) => match e {
+						RecvTimeoutError::Timeout => {
+							if delay_refresh {
+								delay_refresh = false;
+								match state.update(ScreenAction::ResizeRefresh) {
+									None => break,
+									Some(new_state) => {
+										state = new_state;
+									}
+								}
+							}
+						}
+						RecvTimeoutError::Disconnected => break,
+					},
+				}
+				if !repeat_try {
+					match actions_source.recv() {
+						Ok(action) => {
+							if let ScreenAction::ResizeRefresh = action {
+								delay_refresh = true
+							} else {
+								match state.update(action) {
+									None => break,
+									Some(new_state) => {
+										state = new_state;
+									}
+								}
+							}
+						}
+						Err(_) => break,
+					}
+				}
 			}
 		});
 	}
@@ -102,21 +149,11 @@ fn width_height() -> (i32, i32) {
 }
 
 fn update_screen(spot_table: &SpotTable) {
+	erase();
+	info!("Update Screen");
 	let palette = Palette::new();
-	let (max_x, max_y) = spot_table.width_height();
 	spot_table.each(|y, x, front| {
 		if let Some((glyph, attr)) = palette.to_glyph_attr(front) {
-			if y == 0 && x == 0 {
-				trace!("Top left: {}, attr: {}", glyph, attr);
-			} else if y == 0 && x == (max_x - 1) {
-				trace!("Top right: {}, attr: {}", glyph, attr);
-			} else if y == (max_y - 1) && x == (max_x - 1) {
-				trace!("Bottom right: {}, attr: {}", glyph, attr);
-			} else if y == (max_y - 1) && x == 0 {
-				trace!("Bottom left: {}, attr:{}", glyph, attr);
-			} else if (y - max_y / 2).abs() < 2 && (x - max_x / 2).abs() < 2 {
-				trace!("Center ({},{}): {}, attr:{}", x, y, glyph, attr);
-			}
 			attrset(attr);
 			mvaddstr(y as i32, x as i32, glyph);
 		}
