@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use crate::{ArcYard, Bounds, Focus, SenderLink, Trigger};
+use crate::{ArcYard, Bounds, Focus};
 use crate::bounds::BoundsHold;
 use crate::pod_verse::tree::PodBranch;
 use crate::story_id::StoryId;
@@ -33,9 +33,9 @@ impl LayoutState {
 }
 
 
-pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, prev_focus: &ActiveFocus) -> LayoutState {
+pub fn run(height: i32, width: i32, yard: &ArcYard, prev_focus: &ActiveFocus) -> LayoutState {
 	let (start_index, bounds) = BoundsHold::init(width, height);
-	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone(), refresh_trigger.clone());
+	let mut layout_ctx = LayoutContext::new(start_index, bounds.clone());
 	yard.layout(&mut layout_ctx);
 	let active_focus = layout_ctx.pop_active_focus(prev_focus);
 	let dependencies = layout_ctx.dependencies.borrow();
@@ -48,7 +48,6 @@ pub struct LayoutContext {
 	bounds_hold: Rc<RefCell<BoundsHold>>,
 	focus_vec: Rc<RefCell<Vec<Rc<Focus>>>>,
 	focus_max: i32,
-	refresh_link: SenderLink<()>,
 	dependencies: Rc<RefCell<HashSet<(i32, StoryId)>>>,
 }
 
@@ -56,7 +55,7 @@ impl LayoutContext {
 	pub fn add_dependency(&mut self, yard_id: i32, story_id: StoryId) {
 		(*self.dependencies).borrow_mut().insert((yard_id, story_id));
 	}
-	pub fn refresh_fn(&self) -> SenderLink<()> { self.refresh_link.clone() }
+
 	pub fn trapped_focus(&self) -> Option<Rc<Focus>> {
 		self.focus_vec.borrow().last().map(|it| it.clone())
 	}
@@ -110,13 +109,12 @@ impl LayoutContext {
 		LayoutContext { current_index: index, ..self.to_owned() }
 	}
 
-	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>, refresh_link: SenderLink<()>) -> Self {
+	pub fn new(current_index: usize, bounds_hold: Rc<RefCell<BoundsHold>>) -> Self {
 		LayoutContext {
 			current_index,
 			bounds_hold,
 			focus_vec: Rc::new(RefCell::new(Vec::new())),
 			focus_max: i32::max_value(),
-			refresh_link,
 			dependencies: Rc::new(RefCell::new(HashSet::new())),
 		}
 	}

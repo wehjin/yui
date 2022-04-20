@@ -142,7 +142,7 @@ impl PodTree {
 		while let Some(path) = paths.pop() {
 			let tail_branch = path.last_branch();
 			let yard = self.yard_map.get(&tail_branch.story_id).cloned().unwrap_or_else(yard::empty);
-			let layout_state = layout::run(tail_branch.bounds.height(), tail_branch.bounds.width(), &yard, &self.refresh_trigger, &self.active_focus);
+			let layout_state = layout::run(tail_branch.bounds.height(), tail_branch.bounds.width(), &yard, &self.active_focus);
 			let cur_children = layout_state.to_branches().into_iter().map(|child_branch| path.append_branch(child_branch)).collect::<HashSet<_>>();
 			let old_children = self.children.remove(&path).unwrap_or_else(|| HashSet::new());
 			self.layout_map.insert(path.clone(), layout_state);

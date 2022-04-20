@@ -192,7 +192,7 @@ mod tests {
 		let edit = StringEdit::new("words", 5, Validity::NotEmpty);
 		let yard = yard::textfield(300, "Label", edit, SenderLink::ignore());
 		let (max_x, max_y) = (4, 3);
-		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let layout = layout::run(max_y, max_x, &yard, &ActiveFocus::default());
 		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), layout.active_focus.focus_id());
 		let fronts = spot_table.to_fronts();
 

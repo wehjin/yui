@@ -62,7 +62,7 @@ impl Yard for FadeYard {
 
 #[cfg(test)]
 mod tests {
-	use crate::{FillColor, FillGrade, layout, render, SenderLink, yard};
+	use crate::{FillColor, FillGrade, layout, render, yard};
 	use crate::FillColor::{Background, Primary};
 	use crate::yui::layout::ActiveFocus;
 
@@ -72,7 +72,7 @@ mod tests {
 		let fore = yard::fill(FillColor::Primary, FillGrade::Plain);
 		let yard = yard::fade((1, 1), back, fore);
 		let (max_x, max_y) = (3, 3);
-		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let layout = layout::run(max_y, max_x, &yard, &ActiveFocus::default());
 		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), 0);
 		let fronts = spot_table.to_fronts();
 		let computed = fronts.iter().flatten()

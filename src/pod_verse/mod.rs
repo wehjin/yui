@@ -77,9 +77,11 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 					screen_refresh_trigger = Some(trigger);
 				}
 				PodVerseAction::Refresh => {
+					info!("PodVerseRefresh");
 					if let Some(trigger) = &screen_refresh_trigger { trigger.send(()); }
 				}
 				PodVerseAction::FullRefresh => {
+					info!("FullRefresh");
 					pod_tree.redraw();
 					own_actions.send(PodVerseAction::Refresh).expect("send refresh");
 				}

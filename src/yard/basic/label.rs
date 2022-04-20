@@ -48,7 +48,7 @@ impl Yard for LabelYard {
 
 #[cfg(test)]
 mod tests {
-	use crate::{Cling, layout, render, SenderLink, StrokeColor, yard};
+	use crate::{Cling, layout, render, StrokeColor, yard};
 	use crate::StrokeColor::BodyOnBackground;
 	use crate::yui::layout::ActiveFocus;
 
@@ -56,7 +56,7 @@ mod tests {
 	fn layout_render() {
 		let yard = yard::label("Hi", StrokeColor::BodyOnBackground, Cling::Left);
 		let (max_x, max_y) = (2, 1);
-		let layout = layout::run(max_y, max_x, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let layout = layout::run(max_y, max_x, &yard, &ActiveFocus::default());
 		let spot_table = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), layout.active_focus.focus_id());
 		let fronts = spot_table.to_fronts();
 		let computed = fronts.iter().flatten()

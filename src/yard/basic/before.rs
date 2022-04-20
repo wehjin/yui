@@ -52,7 +52,7 @@ impl Yard for BeforeYard {
 
 #[cfg(test)]
 mod tests {
-	use crate::{Before, FillColor, FillGrade, layout, render, SenderLink, yard};
+	use crate::{Before, FillColor, FillGrade, layout, render, yard};
 	use crate::yui::layout::ActiveFocus;
 
 	#[test]
@@ -63,7 +63,7 @@ mod tests {
 		println!("START_ID: {}", yard.id());
 
 		let (max_x, max_y) = (2, 1);
-		let layout = layout::run(max_x, max_y, &yard, &SenderLink::ignore(), &ActiveFocus::default());
+		let layout = layout::run(max_x, max_y, &yard, &ActiveFocus::default());
 		let draw_pad = render::run(&yard, layout.max_x, layout.max_y, layout.bounds_hold.clone(), 0);
 		let fronts = draw_pad.to_fronts();
 		let fills = fronts.iter().flatten().map(|front| front.fill_color).collect::<Vec<_>>();

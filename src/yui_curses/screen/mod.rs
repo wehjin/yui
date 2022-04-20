@@ -113,18 +113,23 @@ pub fn connect(pod: impl Pod + Send + 'static) -> Sender<ScreenAction> {
 
 struct ScreenState {
 	pod: Box<dyn Pod>,
+	width_height: (i32, i32),
 }
 
 impl ScreenState {
 	fn init(pod: Box<dyn Pod>) -> Option<Self> {
-		Some(ScreenState { pod })
+		Some(ScreenState { pod, width_height: (0, 0) })
 	}
 	fn update(mut self, action: ScreenAction) -> Option<Self> {
 		let mut stop = false;
 		match action {
 			ScreenAction::Close => { stop = true; }
 			ScreenAction::ResizeRefresh => {
-				self.pod.set_width_height(width_height());
+				let width_height = width_height();
+				if self.width_height != width_height {
+					self.width_height = width_height;
+					self.pod.set_width_height(width_height);
+				}
 				if let Some(rendering) = self.pod.spot_table() {
 					update_screen(&rendering);
 				}
@@ -137,7 +142,7 @@ impl ScreenState {
 			ScreenAction::FocusLeft => self.pod.focus_left(),
 			ScreenAction::FocusRight => self.pod.focus_right(),
 		}
-		if stop { None } else { Some(ScreenState { pod: self.pod }) }
+		if stop { None } else { Some(ScreenState { pod: self.pod, width_height: self.width_height }) }
 	}
 }
 
