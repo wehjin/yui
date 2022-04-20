@@ -13,7 +13,7 @@ use simplelog::{Config, WriteLogger};
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pack, Padding, Sendable, SenderLink, Spark, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, FillGrade, StrokeColor};
-use yui::yard::{Button, ButtonAction, Priority, SubmitAffordance};
+use yui::yard::{ButtonModel, ButtonAction, Priority, SubmitAffordance};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let log_file = File::create("counter.log")?;
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	#[derive(Clone)]
 	pub struct MainState {
 		value: i32,
-		buttons: Vec<Button>,
+		buttons: Vec<ButtonModel>,
 		index: HashMap<i32, usize>,
 	}
 	impl MainState {
@@ -71,29 +71,29 @@ fn main() -> Result<(), Box<dyn Error>> {
 		fn create<E: Edge>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
 			let (plus, minus, zero, done) = (random(), random(), random(), random());
 			let buttons = vec![
-				Button {
+				ButtonModel {
 					id: plus,
 					label: "+".into(),
 					affordance: SubmitAffordance::Enabled { priority: Priority::Default, press_link: MainAction::Press(plus).to_sync(ctx.link()) },
-					submit_link: MainAction::Increment.into_trigger_link(ctx.link()),
+					release_trigger: MainAction::Increment.into_trigger_link(ctx.link()),
 				},
-				Button {
+				ButtonModel {
 					id: minus,
 					label: "-".into(),
 					affordance: SubmitAffordance::Enabled { priority: Priority::None, press_link: MainAction::Press(minus).to_sync(ctx.link()) },
-					submit_link: MainAction::Decrement.into_trigger_link(ctx.link()),
+					release_trigger: MainAction::Decrement.into_trigger_link(ctx.link()),
 				},
-				Button {
+				ButtonModel {
 					id: zero,
 					label: "0".into(),
 					affordance: SubmitAffordance::Enabled { priority: Priority::None, press_link: MainAction::Press(zero).to_sync(ctx.link()) },
-					submit_link: MainAction::Zero.into_trigger_link(ctx.link()),
+					release_trigger: MainAction::Zero.into_trigger_link(ctx.link()),
 				},
-				Button {
+				ButtonModel {
 					id: done,
 					label: "X".into(),
 					affordance: SubmitAffordance::Enabled { priority: Priority::None, press_link: MainAction::Press(done).to_sync(ctx.link()) },
-					submit_link: MainAction::Done.into_trigger_link(ctx.link()),
+					release_trigger: MainAction::Done.into_trigger_link(ctx.link()),
 				},
 			];
 			let index = buttons.iter().enumerate().map(|(i, button)| (button.id, i)).collect::<HashMap<_, _>>();

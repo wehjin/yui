@@ -4,7 +4,7 @@ use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Padding, Sen
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
-use yui::yard::{Button, ButtonAction, SubmitAffordance};
+use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
 
 use crate::{AppTab, Main};
 
@@ -12,8 +12,8 @@ fn next_label(n: u32) -> String { format!("Next {}", n) }
 
 #[derive(Clone)]
 pub struct DialogButtons {
-	pub open: Button,
-	pub close: Button,
+	pub open: ButtonModel,
+	pub close: ButtonModel,
 }
 
 impl DialogButtons {
@@ -40,16 +40,16 @@ impl Spark for DialogDemo {
 
 	fn create<E: Edge>(&self, create: &Create<Self::Action, Self::Report, E>) -> Self::State {
 		let buttons = DialogButtons {
-			open: Button {
+			open: ButtonModel {
 				id: random(),
 				label: next_label(self.next_dialog),
-				submit_link: Action::Open.to_send(create.link()),
+				release_trigger: Action::Open.to_send(create.link()),
 				affordance: SubmitAffordance::enabled(Action::PressOpen.to_sync(create.link())),
 			},
-			close: Button {
+			close: ButtonModel {
 				id: random(),
 				label: "Close".to_string(),
-				submit_link: Action::Close.to_send(create.link()),
+				release_trigger: Action::Close.to_send(create.link()),
 				affordance: SubmitAffordance::enabled(Action::PressClose.to_sync(create.link())),
 			},
 		};

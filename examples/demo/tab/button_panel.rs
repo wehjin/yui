@@ -7,7 +7,7 @@ use yui::app::Edge;
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
 use yui::sparks::selection_editor::SelectionEditorSpark;
-use yui::yard::{Button, ButtonAction, SubmitAffordance};
+use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
 
 use crate::AppTab;
 
@@ -29,7 +29,7 @@ impl Choice {
 #[derive(Clone)]
 pub struct State {
 	pub choice: Choice,
-	pub buttons: HashMap<(usize, usize), Button>,
+	pub buttons: HashMap<(usize, usize), ButtonModel>,
 }
 
 impl State {
@@ -84,28 +84,28 @@ impl Spark for ButtonDemo {
 		let choice = Choice::Beavis;
 		let button_names = choice.button_names();
 		let mut buttons = HashMap::new();
-		buttons.insert((0, 0), Button {
+		buttons.insert((0, 0), ButtonModel {
 			id: random(),
 			label: "Garfunkel".to_string(),
-			submit_link: Action::ReleaseIgnore.to_send(&ctx.link()),
+			release_trigger: Action::ReleaseIgnore.to_send(&ctx.link()),
 			affordance: SubmitAffordance::enabled(Action::PressButton(0, 0).to_sync(ctx.link())),
 		});
-		buttons.insert((0, 1), Button {
+		buttons.insert((0, 1), ButtonModel {
 			id: random(),
 			label: "Simon".to_string(),
-			submit_link: Action::ReleaseIgnore.to_send(&ctx.link()),
+			release_trigger: Action::ReleaseIgnore.to_send(&ctx.link()),
 			affordance: SubmitAffordance::enabled(Action::PressButton(0, 1).to_sync(ctx.link())),
 		});
-		buttons.insert((1, 0), Button {
+		buttons.insert((1, 0), ButtonModel {
 			id: random(),
 			label: button_names.0.to_string(),
-			submit_link: Action::OfferChoice.to_send(&ctx.link()),
+			release_trigger: Action::OfferChoice.to_send(&ctx.link()),
 			affordance: SubmitAffordance::enabled(Action::PressButton(1, 0).to_sync(ctx.link())),
 		});
-		buttons.insert((1, 1), Button {
+		buttons.insert((1, 1), ButtonModel {
 			id: random(),
 			label: button_names.1.to_string(),
-			submit_link: Action::ReleaseIgnore.to_send(&ctx.link()),
+			release_trigger: Action::ReleaseIgnore.to_send(&ctx.link()),
 			affordance: SubmitAffordance::enabled(Action::PressButton(1, 1).to_sync(ctx.link())),
 		});
 		State { choice, buttons }

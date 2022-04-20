@@ -1,4 +1,3 @@
-
 use std::sync::mpsc::{channel, Sender, sync_channel, SyncSender};
 use std::thread;
 
@@ -79,6 +78,9 @@ impl<A: Send + 'static> SenderLink<A> {
 	pub fn callback<B>(&self, f: impl Fn(B) -> A + Send) -> impl Fn(B) {
 		let link = self.clone();
 		move |b: B| link.send(f(b))
+	}
+	pub fn to_trigger(&self, action: A) -> Trigger where A: Clone {
+		self.map(move |_| action.clone())
 	}
 }
 

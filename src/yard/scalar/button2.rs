@@ -2,6 +2,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use rand::random;
+
 use crate::{DrawPad, Link, SyncLink, Trigger, yard};
 use crate::bounds::Bounds;
 use crate::layout::LayoutContext;
@@ -22,23 +24,41 @@ impl SubmitAffordance {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ButtonAction {
 	Press,
 	Release,
 }
 
 #[derive(Debug, Clone)]
-pub struct Button {
+pub struct ButtonModel {
 	pub id: i32,
 	pub label: String,
-	pub submit_link: Trigger,
+	pub release_trigger: Trigger,
 	pub affordance: SubmitAffordance,
 }
 
-impl Button {
+impl ButtonModel {
+	pub fn disabled(label: &str, release_trigger: Trigger) -> Self {
+		let id = random();
+		let label = label.into();
+		let affordance = SubmitAffordance::Disabled;
+		ButtonModel { id, label, release_trigger, affordance }
+	}
 	pub fn set_label(&self, label: &str) -> Self {
-		Button { label: label.to_string(), ..self.clone() }
+		ButtonModel { label: label.to_string(), ..self.clone() }
+	}
+	pub fn enable(&self, label: &str, press_link: SyncLink<i32>) -> Self {
+		let mut button = self.clone();
+		button.label = label.to_string();
+		button.affordance = SubmitAffordance::enabled(press_link);
+		button
+	}
+	pub fn disable(&self, label: &str) -> Self {
+		let mut button = self.clone();
+		button.label = label.to_string();
+		button.affordance = SubmitAffordance::Disabled;
+		button
 	}
 	pub fn update(&self, action: ButtonAction) -> Self {
 		match action {
@@ -49,7 +69,7 @@ impl Button {
 	fn press(&self) -> Self {
 		let (new_affordance, submit_trigger) = match &self.affordance {
 			SubmitAffordance::Disabled => (SubmitAffordance::Disabled, None),
-			SubmitAffordance::Enabled { press_link: press, priority, .. } => (SubmitAffordance::Pressed { press_link: press.clone(), priority: priority.clone() }, Some(self.submit_link.clone())),
+			SubmitAffordance::Enabled { press_link: press, priority, .. } => (SubmitAffordance::Pressed { press_link: press.clone(), priority: priority.clone() }, Some(self.release_trigger.clone())),
 			SubmitAffordance::Pressed { press_link: press, priority } => (SubmitAffordance::Pressed { press_link: press.clone(), priority: priority.clone() }, None),
 		};
 		if let Some(trigger) = submit_trigger {
@@ -58,7 +78,7 @@ impl Button {
 				trigger.send(());
 			});
 		}
-		Button { affordance: new_affordance, ..self.clone() }
+		ButtonModel { affordance: new_affordance, ..self.clone() }
 	}
 	fn release(&self) -> Self {
 		let material = match &self.affordance {
@@ -66,11 +86,11 @@ impl Button {
 			SubmitAffordance::Enabled { press_link: press, priority, .. } => SubmitAffordance::Enabled { press_link: press.clone(), priority: priority.clone() },
 			SubmitAffordance::Pressed { press_link: press, priority } => SubmitAffordance::Enabled { press_link: press.clone(), priority: priority.clone() }
 		};
-		Button { affordance: material, ..self.clone() }
+		ButtonModel { affordance: material, ..self.clone() }
 	}
 }
 
-pub fn button2(button: &Button) -> ArcYard {
+pub fn button2(button: &ButtonModel) -> ArcYard {
 	let label_yard = yard::label(
 		&button.label.to_uppercase(),
 		match &button.affordance {

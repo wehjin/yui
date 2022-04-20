@@ -13,7 +13,7 @@ use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Pack, Padding, Send
 use yui::app::Edge;
 use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
-use yui::yard::{Button, ButtonAction, SubmitAffordance};
+use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
 use yui::yard::model::{ScrollModel, ScrollAction};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -41,7 +41,7 @@ pub enum MainAction {
 impl Sendable for MainAction {}
 
 impl Spark for Main {
-	type State = (Vec<Vec<String>>, ScrollModel, Button);
+	type State = (Vec<Vec<String>>, ScrollModel, ButtonModel);
 	type Action = MainAction;
 	type Report = ();
 
@@ -53,10 +53,10 @@ impl Spark for Main {
 			format!("${:0.2}", 1.26 * it as f32),
 		]).collect();
 		let list = ScrollModel::new_count_height(random(), rows.len(), 3, 0);
-		let button = Button {
+		let button = ButtonModel {
 			id: random(),
 			label: "Close".into(),
-			submit_link: MainAction::Close.to_send(ctx.link()),
+			release_trigger: MainAction::Close.to_send(ctx.link()),
 			affordance: SubmitAffordance::enabled(MainAction::PressButton.to_sync(ctx.link())),
 		};
 		(rows, list, button)
