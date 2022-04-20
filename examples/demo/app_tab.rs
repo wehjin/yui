@@ -4,11 +4,12 @@ use yui::yard::{TabBar, TabItem};
 
 use crate::app_bar;
 
-const DIALOG_ID: i32 = 1;
-const FORM_LIST_ID: i32 = 2;
-const SELECTOR_LIST_ID: i32 = 3;
-const TEXT_ID: i32 = 4;
-const BUTTONS_ID: i32 = 5;
+const BASE_ID: i32 = 50000;
+const DIALOG_ID: i32 = BASE_ID + 1;
+const FORM_LIST_ID: i32 = BASE_ID + 2;
+const SELECTOR_LIST_ID: i32 = BASE_ID + 3;
+const TEXT_ID: i32 = BASE_ID + 4;
+const BUTTONS_ID: i32 = BASE_ID + 5;
 
 #[derive(Debug, Copy, Clone)]
 pub enum AppTab {

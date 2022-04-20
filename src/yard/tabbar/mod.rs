@@ -58,12 +58,13 @@ fn tab_yard(id: i32, label: &str, index: usize, active_index: usize, select: Sen
 	let label = yard::label(label, StrokeColor::EnabledOnPrimary, Cling::Center);
 	let underline = yard::glyph(StrokeColor::EnabledOnPrimary, move || if index == active_index { '_' } else { '\0' });
 	let content = yard::empty().pack_bottom(1, label).pack_bottom(1, underline);
-	Arc::new(TabYard { id, content, select: select.into() })
+	Arc::new(TabYard { id, content, is_selected: index == active_index, select: select.into() })
 }
 
 struct TabYard {
 	id: i32,
 	content: ArcYard,
+	is_selected: bool,
 	select: SyncLink<()>,
 }
 
@@ -80,7 +81,7 @@ impl Yard for TabYard {
 			yard_id: self.id(),
 			focus_type: FocusType::Submit,
 			bounds,
-			priority: 0,
+			priority: if self.is_selected { 500 } else { 0 },
 			action_block: Arc::new(move |_| { on_select.send(()); }),
 		});
 		bounds_id

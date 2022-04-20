@@ -4,7 +4,7 @@ pub use branch::*;
 pub use path::*;
 
 use crate::{ArcYard, Bounds, layout, Link, render, StoryId, Trigger, yard};
-use crate::layout::LayoutState;
+use crate::layout::{LayoutState, to_active_focus};
 use crate::pod::Pod;
 use crate::spot::spot_table::SpotTable;
 use crate::yui::layout::ActiveFocus;
@@ -17,6 +17,7 @@ pub struct PodTree {
 	refresh_trigger: Trigger,
 	yard_map: HashMap<StoryId, ArcYard>,
 	layout_map: HashMap<PodPath, LayoutState>,
+	focus_map: HashMap<PodPath, ActiveFocus>,
 	children: HashMap<PodPath, HashSet<PodPath>>,
 	spots_map: HashMap<PodPath, SpotTable>,
 	active_focus: ActiveFocus,
@@ -74,6 +75,7 @@ impl PodTree {
 			refresh_trigger,
 			yard_map: HashMap::new(),
 			layout_map: HashMap::new(),
+			focus_map: HashMap::new(),
 			children: HashMap::new(),
 			spots_map: HashMap::new(),
 			active_focus: ActiveFocus::default(),
@@ -124,26 +126,61 @@ impl PodTree {
 		}
 	}
 
+	fn child_layout_depth(&self, child_path: &PodPath) -> i32 {
+		if let Some(layout) = self.layout_map.get(child_path) {
+			(layout.bounds_hold.borrow().nearest_z() - 1).abs()
+		} else { 0 }
+	}
+
+	fn path_active_focus(&self, path: &PodPath) -> Option<&ActiveFocus> {
+		self.layout_map.get(&path).map(|it| &it.active_focus)
+	}
+
 	fn layout_paths(&mut self, mut paths: Vec<PodPath>) {
 		let mut altered = Vec::new();
+		//Layout the supplied paths and their descendents.
 		while let Some(path) = paths.pop() {
 			let tail_branch = path.last_branch();
 			let yard = self.yard_map.get(&tail_branch.story_id).cloned().unwrap_or_else(yard::empty);
 			let layout_state = layout::run(tail_branch.bounds.height(), tail_branch.bounds.width(), &yard, &self.refresh_trigger, &self.active_focus);
-			let children = layout_state.to_pod_branches().into_iter().map(|child_branch| path.append_branch(child_branch)).collect::<HashSet<_>>();
-			self.layout_map.insert(path.clone(), layout_state);
+			let cur_children = layout_state.to_branches().into_iter().map(|child_branch| path.append_branch(child_branch)).collect::<HashSet<_>>();
 			let old_children = self.children.remove(&path).unwrap_or_else(|| HashSet::new());
-			let dropped_children = old_children.difference(&children).cloned().collect::<Vec<_>>();
-			let added_children = children.difference(&old_children).cloned().collect::<Vec<_>>();
-			if !children.is_empty() {
-				self.children.insert(path.clone(), children);
+			self.layout_map.insert(path.clone(), layout_state);
+			let dropped_children = old_children.difference(&cur_children).cloned().collect::<Vec<_>>();
+			let added_children = cur_children.difference(&old_children).cloned().collect::<Vec<_>>();
+			if !cur_children.is_empty() {
+				self.children.insert(path.clone(), cur_children);
 			}
 			self.drop_paths(dropped_children);
 			paths.extend(added_children);
 			altered.push(path.clone());
 		}
-		// TODO Update the active focus based on all layouts instead of just the root
-		self.active_focus = self.layout_map.get(&self.root_path).map(|layout| layout.active_focus.clone()).unwrap_or_else(|| ActiveFocus::default());
+		// Next recompute the focus.
+		{
+			let all_paths_longest_first = {
+				let mut paths = self.layout_map.keys().cloned().collect::<Vec<_>>();
+				paths.sort_by_key(|it| it.len());
+				paths.reverse();
+				paths
+			};
+			for parent_path in all_paths_longest_first {
+				let mut parent_focus = self.path_active_focus(&parent_path).cloned().unwrap_or_else(|| ActiveFocus::default());
+				if let Some(direct_children) = self.children.get(&parent_path) {
+					for child_path in direct_children {
+						let child_bounds = child_path.last_bounds();
+						let child_depth = self.child_layout_depth(child_path);
+						parent_focus.expand_seam(child_bounds.z, child_depth);
+						if let Some(child_active_focus) = self.path_active_focus(child_path) {
+							parent_focus.insert_seam(child_active_focus, child_bounds.z, child_bounds.left, child_bounds.top);
+						}
+					}
+				};
+				self.focus_map.insert(parent_path, parent_focus);
+			}
+			let root_active = self.focus_map.get(&self.root_path).cloned().unwrap_or_else(|| ActiveFocus::default());
+			self.active_focus = to_active_focus(&self.active_focus, root_active.to_foci());
+		}
+		// Render altered pods.
 		while let Some(path) = altered.pop() {
 			let yard = self.yard_map.get(path.last_story_id()).cloned().unwrap_or_else(yard::empty);
 			let bounds_hold = self.layout_map.get(&path).expect("layout state").bounds_hold.clone();
@@ -162,10 +199,9 @@ impl PodTree {
 					let child_story = child.last_story_id();
 					let child_bounds = child.last_bounds();
 					let child_table = expanded_tables.get(child).expect("child table");
-					let child_z = child_bounds.z;
-					let child_depth = child_table.nearest_z().min(0).abs() + 1;
-					sum = sum.expand_seam(child_z, child_depth, (child_story, child_bounds));
-					sum.insert_seam(child_table, child_z, child_bounds.left, child_bounds.top);
+					let child_depth = self.child_layout_depth(child);
+					sum = sum.expand_seam(child_bounds.z, child_depth, (child_story, child_bounds));
+					sum.insert_seam(child_table, child_bounds.z, child_bounds.left, child_bounds.top);
 				}
 				sum
 			} else { unlinked_table };

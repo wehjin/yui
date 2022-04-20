@@ -1,12 +1,11 @@
-
+use std::fmt::Debug;
 use std::ops::Deref;
 use std::rc::Rc;
 
-
 use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
-use crate::yui::bounds::{Bounds};
+use crate::yui::bounds::Bounds;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ActiveFocus {
 	pub focus: Option<Rc<Focus>>,
 	pub peers: Vec<Rc<Focus>>,
@@ -19,11 +18,47 @@ impl Default for ActiveFocus {
 }
 
 impl ActiveFocus {
+	pub fn to_foci(&self) -> Vec<Rc<Focus>> {
+		let mut all = self.peers.clone();
+		if let Some(focus) = &self.focus {
+			all.push(focus.clone())
+		}
+		all
+	}
+	pub fn insert_seam(&mut self, from: &Self, z: i32, left: i32, top: i32) {
+		for peer in &from.peers {
+			let focus = peer.shift_seam(z, left, top);
+			self.peers.push(Rc::new(focus));
+		}
+		if let Some(focus) = &from.focus {
+			let new = focus.shift_seam(z, left, top);
+			self.peers.push(Rc::new(new));
+		}
+	}
+	pub fn expand_seam(&mut self, z: i32, depth: i32) {
+		let mut new_peers = self.peers.iter().map(|it| Rc::new(it.expand_seam(z, depth)))
+			.collect::<Vec<_>>();
+		if let Some(focus) = &self.focus {
+			let new_focus = focus.expand_seam(z, depth);
+			new_peers.push(Rc::new(new_focus));
+		}
+		self.peers = new_peers;
+		self.focus = None;
+	}
+
 	pub fn focus_id(&self) -> i32 {
 		match self.focus {
 			Some(ref focus) => focus.yard_id,
 			None => 0
 		}
+	}
+	pub fn nearest_z(&self) -> i32 {
+		let near = if let Some(focus) = &self.focus {
+			focus.bounds.z.min(0)
+		} else { 0 };
+		self.peers.iter().fold(near, |near, more| {
+			near.min(more.bounds.z)
+		})
 	}
 
 	pub fn insert_space(&self, refresh: impl Fn() + Send + 'static) {

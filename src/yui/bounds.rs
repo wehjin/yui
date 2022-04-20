@@ -57,7 +57,7 @@ impl Bounds {
 	}
 	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
 		Bounds {
-			left: 0,
+			left: self.left,
 			right: self.right,
 			top: self.top,
 			bottom: self.bottom,
@@ -71,8 +71,8 @@ impl Bounds {
 			right: self.right + left,
 			top: self.top + top,
 			bottom: self.bottom + top,
-			z: self.z - z,
-			far_z: self.far_z - z,
+			z: self.z + z,
+			far_z: self.far_z + z,
 		}
 	}
 	pub fn pad(&self, left_cols: i32, right_cols: i32, top_rows: i32, bottom_rows: i32) -> Self {
@@ -246,5 +246,12 @@ impl BoundsHold {
 
 	pub fn insert_yard_bounds(&mut self, id: i32, bounds_index: usize) {
 		self.map.insert(id, bounds_index);
+	}
+
+	pub fn nearest_z(&self) -> i32 {
+		self.holdings.iter().fold(0, |nearest, next| {
+			let nearest = next.z.min(nearest);
+			nearest
+		})
 	}
 }

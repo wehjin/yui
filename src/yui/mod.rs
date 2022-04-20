@@ -42,7 +42,27 @@ pub struct Focus {
 	pub action_block: Arc<dyn Fn(&FocusActionContext) + Send + Sync>,
 }
 
+impl Debug for Focus {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		f.debug_struct("Focus")
+			.field("yard", &self.yard_id)
+			.field("bounds", &self.bounds)
+			.finish()
+	}
+}
+
 impl Focus {
+	pub fn shift_seam(&self, z: i32, left: i32, top: i32) -> Self {
+		let mut focus = self.clone();
+		focus.bounds = self.bounds.shift_seam(z, left, top);
+		focus
+	}
+	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
+		let mut focus = self.clone();
+		focus.bounds = self.bounds.expand_seam(z, depth);
+		focus
+	}
+
 	pub fn is_in_range(&self, focus_max: i32) -> bool {
 		self.bounds.z <= focus_max
 	}

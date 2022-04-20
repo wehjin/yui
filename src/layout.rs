@@ -19,9 +19,10 @@ pub struct LayoutState {
 }
 
 impl LayoutState {
-	pub fn to_pod_branches(&self) -> HashSet<PodBranch> {
+	pub fn to_branches(&self) -> HashSet<PodBranch> {
 		self.dependencies.iter().map(|(yard_id, sub_story_id)| {
-			let bounds = if let Some(bounds) = self.bounds_hold.borrow().yard_bounds(*yard_id) {
+			let bounds_hold = self.bounds_hold.borrow();
+			let bounds = if let Some(bounds) = bounds_hold.yard_bounds(*yard_id) {
 				bounds.clone()
 			} else {
 				Bounds::new(0, 0)
@@ -48,7 +49,6 @@ pub fn run(height: i32, width: i32, yard: &ArcYard, refresh_trigger: &Trigger, p
 	LayoutState { max_x: width, max_y: height, start_index, bounds_hold: bounds, active_focus, dependencies: dependencies.clone() }
 }
 
-
 #[derive(Clone)]
 pub struct LayoutContext {
 	current_index: usize,
@@ -71,21 +71,8 @@ impl LayoutContext {
 	}
 	pub fn pop_active_focus(&mut self, past_active: &ActiveFocus) -> ActiveFocus {
 		let available_foci = self.all_focus_in_range();
-		let (focus, peers) =
-			if let ActiveFocus { focus: Some(past_focus), .. } = past_active {
-				let (mut continuity_foci, new_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
-				if continuity_foci.is_empty() {
-					pick_priority_focus(new_foci)
-				} else {
-					let focus = continuity_foci.remove(0);
-					(Some(focus), new_foci)
-				}
-			} else {
-				pick_priority_focus(available_foci)
-			};
-		ActiveFocus { focus, peers }
+		to_active_focus(past_active, available_foci)
 	}
-
 	pub fn all_focus_in_range(&self) -> Vec<Rc<Focus>> {
 		let all_focus = (*self.focus_vec).borrow().clone();
 		all_focus.into_iter().filter(|it| it.is_in_range(self.focus_max)).collect()
@@ -142,6 +129,23 @@ impl LayoutContext {
 			dependencies: Rc::new(RefCell::new(HashSet::new())),
 		}
 	}
+}
+
+
+pub fn to_active_focus(past_active: &ActiveFocus, available_foci: Vec<Rc<Focus>>) -> ActiveFocus {
+	let (focus, peers) =
+		if let ActiveFocus { focus: Some(past_focus), .. } = past_active {
+			let (mut continuity_foci, new_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
+			if continuity_foci.is_empty() {
+				pick_priority_focus(new_foci)
+			} else {
+				let focus = continuity_foci.remove(0);
+				(Some(focus), new_foci)
+			}
+		} else {
+			pick_priority_focus(available_foci)
+		};
+	ActiveFocus { focus, peers }
 }
 
 fn pick_priority_focus(mut candidates: Vec<Rc<Focus>>) -> (Option<Rc<Focus>>, Vec<Rc<Focus>>) {
