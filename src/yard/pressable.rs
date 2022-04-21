@@ -1,19 +1,62 @@
 use std::sync::{Arc, RwLock};
+use std::thread;
+use std::time::Duration;
 
-use crate::{Bounds, DrawPad, Link, SenderLink, SyncLink};
+use crate::{Bounds, DrawPad, Link, SenderLink, SyncLink, Trigger};
 use crate::layout::LayoutContext;
 use crate::palette::FillGrade;
 use crate::yard::{ArcTouch, ArcYard, Yard};
 use crate::yui::{Focus, FocusType, render_submit};
 
-pub fn pressable(face_yard: ArcYard, on_press: SenderLink<i32>) -> ArcYard {
+#[derive(Debug, Copy, Clone)]
+pub enum PressAction {
+	Press,
+	Release,
+}
+
+#[derive(Debug, Clone)]
+pub struct PressModel {
+	id: i32,
+	is_pressed: bool,
+	release_trigger: Trigger,
+}
+
+impl PressModel {
+	pub fn id(&self) -> i32 { self.id }
+	pub fn is_pressed(&self) -> bool { self.is_pressed }
+	pub fn new(id: i32, release_trigger: Trigger) -> Self {
+		PressModel { id, is_pressed: false, release_trigger }
+	}
+	pub fn update(&self, action: PressAction) -> Self {
+		let mut model = self.clone();
+		match action {
+			PressAction::Press => {
+				if !model.is_pressed {
+					model.is_pressed = true;
+					let trigger = model.release_trigger.clone();
+					thread::spawn(move || {
+						thread::sleep(Duration::from_millis(100));
+						trigger.send(());
+					});
+				}
+			}
+			PressAction::Release => {
+				model.is_pressed = false;
+			}
+		}
+		model
+	}
+}
+
+
+pub fn pressable(yard: ArcYard, on_press: SenderLink<i32>) -> ArcYard {
 	let id = rand::random();
 	let is_pressed = Arc::new(RwLock::new(false));
 	let on_press = Arc::new({
 		let sync_press: SyncLink<i32> = on_press.into();
 		move || sync_press.send(id)
 	});
-	Arc::new(PressYard { id, yard: face_yard, is_pressed, on_press })
+	Arc::new(PressYard { id, yard, is_pressed, on_press })
 }
 
 struct PressYard {

@@ -67,16 +67,16 @@ pub mod model {
 	}
 }
 
-pub fn list(yards: Vec<ArcYard>, model: ScrollModel, link: SyncLink<ScrollAction>) -> ArcYard {
-	assert_eq!(model.item_count(), yards.len());
+pub fn list(yards: Vec<ArcYard>, scroll: ScrollModel, scroll_link: SyncLink<ScrollAction>) -> ArcYard {
+	assert_eq!(scroll.item_count(), yards.len());
 	let sub_focus = Arc::new(RwLock::new(None));
-	Arc::new(ListYard { list: model, yards, sub_focus, list_link: link })
+	Arc::new(ListYard { scroll, yards, sub_focus, scroll_link })
 }
 
 struct ListYard {
-	list: ScrollModel,
+	scroll: ScrollModel,
 	yards: Vec<ArcYard>,
-	list_link: SyncLink<ScrollAction>,
+	scroll_link: SyncLink<ScrollAction>,
 	sub_focus: Arc<RwLock<Option<Arc<Focus>>>>,
 }
 
@@ -87,7 +87,7 @@ struct LayoutItem {
 }
 
 impl Yard for ListYard {
-	fn id(&self) -> i32 { self.list.id }
+	fn id(&self) -> i32 { self.scroll.id }
 	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
@@ -96,13 +96,13 @@ impl Yard for ListYard {
 		let final_bounds_id = {
 			let mut multi_layout = MultiLayout::new(ctx);
 			multi_layout.trap_foci(true);
-			let focus_index = self.list.nexus.item_index();
+			let focus_index = self.scroll.nexus.item_index();
 			for layout_item in self.layout_items(&bounds) {
 				multi_layout.layout(&layout_item.yard, &layout_item.bounds);
 				if layout_item.index == focus_index {
 					let sub_focus = multi_layout.trapped_focus().map(|it| Arc::new((*it).clone()));
 					*self.sub_focus.write().expect("write sub_focus") = sub_focus.to_owned();
-					focus = Some(self.create_focus(&bounds, sub_focus, &self.list.nexus, self.list_link.clone()))
+					focus = Some(self.create_focus(&bounds, sub_focus, &self.scroll.nexus, self.scroll_link.clone()))
 				}
 			}
 			multi_layout.finish()
@@ -120,8 +120,8 @@ impl Yard for ListYard {
 		} else {
 			None
 		};
-		let sub_focus_index = if focus_id == self.list.id {
-			Some(self.list.nexus.item_index())
+		let sub_focus_index = if focus_id == self.scroll.id {
+			Some(self.scroll.nexus.item_index())
 		} else {
 			None
 		};
@@ -182,7 +182,7 @@ impl ListYard {
 			}
 		};
 		let focus = Focus {
-			yard_id: self.list.id,
+			yard_id: self.scroll.id,
 			focus_type,
 			bounds: bounds.to_owned(),
 			priority: 0,
@@ -196,23 +196,23 @@ impl ListYard {
 	}
 
 	fn layout_items(&self, bounds: &Bounds) -> Vec<LayoutItem> {
-		let nexus = &self.list.nexus;
+		let nexus = &self.scroll.nexus;
 		let pivot_row = nexus.pivot_row(
 			bounds.height(),
 			bounds.top,
-			self.list.sum_heights,
-			self.list.min_item_height,
-			&self.list.item_tops,
+			self.scroll.sum_heights,
+			self.scroll.min_item_height,
+			&self.scroll.item_tops,
 		);
 		let pivot_pos = nexus.pivot_pos();
 		let mut layout_items = Vec::new();
 		let mut next_index = Some(0);
 		while next_index.is_some() {
 			let index = next_index.expect("next_index");
-			next_index = if index >= self.list.item_heights.len() {
+			next_index = if index >= self.scroll.item_heights.len() {
 				None
 			} else {
-				let item_bounds = nexus.item_bounds(index, bounds, pivot_row, pivot_pos, &self.list.item_tops, &self.list.item_heights);
+				let item_bounds = nexus.item_bounds(index, bounds, pivot_row, pivot_pos, &self.scroll.item_tops, &self.scroll.item_heights);
 				let (next, keep) = if item_bounds.bottom < bounds.top {
 					// Full underflow
 					(Some(index + 1), false)

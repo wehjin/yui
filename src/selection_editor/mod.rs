@@ -45,7 +45,7 @@ impl<T: Clone> SelectionEditor<T> {
 	/// Construct the editor.
 	pub fn new(index: usize, choices: &[T]) -> Self {
 		let heights = (0..choices.len()).map(|_| 3u8).collect::<Vec<_>>();
-		let list_art = ScrollModel::new(rand::random(), heights, index);
+		let scroll = ScrollModel::new(rand::random(), heights, index);
 		SelectionEditor {
 			choices: choices.to_vec(),
 			start_index: index,
@@ -53,7 +53,7 @@ impl<T: Clone> SelectionEditor<T> {
 			is_pressed: false,
 			selection: None,
 			is_closed: false,
-			scroll: list_art,
+			scroll,
 		}
 	}
 	/// Read the index of the currently selected item.
@@ -127,8 +127,8 @@ impl<T: Clone> SelectionEditor<T> {
 					..self
 				},
 				Action::UpdateScroll(list_action) => {
-					if let Some(list_art) = self.scroll.update(list_action) {
-						SelectionEditor { scroll: list_art, ..self }
+					if let Some(scroll) = self.scroll.update(list_action) {
+						SelectionEditor { scroll, ..self }
 					} else {
 						self
 					}
