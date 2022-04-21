@@ -64,6 +64,7 @@ pub struct State {
 pub enum MainAction {
 	SetTab(AppTab),
 	Refresh,
+	Close(u32),
 }
 
 impl story::Spark for Main {
@@ -76,17 +77,14 @@ impl story::Spark for Main {
 		let edge = ctx.edge().clone().expect("edge in create");
 		let dialog_reports = {
 			let own_link = ctx.link().clone();
-			let report_link = ctx.report_link().clone();
 			Some(SenderLink::wrap_sink(move |report| {
 				info!("DIALOG DEMO REPORT");
 				match report {
 					Report::SelectedTab(index) => {
-						own_link.send(SetTab(AppTab::from_index(index)))
+						own_link.send(SetTab(AppTab::from_index(index)));
 					}
 					Report::NextDialog(next_dialog) => {
-						if let Some(ref report_link) = report_link {
-							report_link.send(next_dialog)
-						}
+						own_link.send(MainAction::Close(next_dialog));
 					}
 				}
 			}))
@@ -111,6 +109,9 @@ impl story::Spark for Main {
 			MainAction::Refresh => {
 				flow.redraw();
 				AfterFlow::Ignore
+			}
+			MainAction::Close(next_dialog) => {
+				AfterFlow::Close(Some(next_dialog))
 			}
 		}
 	}

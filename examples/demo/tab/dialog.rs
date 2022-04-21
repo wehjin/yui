@@ -65,7 +65,7 @@ impl Spark for DialogDemo {
 			}
 			Action::Close => {
 				let (_, next_dialog, _, _) = *flow.state();
-				AfterFlow::Close(Some(Report::NextDialog(next_dialog)))
+				AfterFlow::Report(Report::NextDialog(next_dialog))
 			}
 			Action::PressOpen => {
 				let state = flow.state();
