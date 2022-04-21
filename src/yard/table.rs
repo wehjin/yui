@@ -1,8 +1,7 @@
 use crate::{ArcYard, Before, Cling, Pack, Padding, SenderLink, SyncLink};
 use crate::palette::FillGrade::Select;
 use crate::palette::StrokeColor;
-use crate::yard::model::{ScrollModel, ScrollAction};
-use crate::yard::Pressable;
+use crate::yard::model::{ScrollAction, ScrollModel};
 use crate::yui::prelude::yard;
 
 struct Table {
@@ -35,7 +34,7 @@ impl Table {
 						let width = headers[i].0 as i32;
 						row.pack_left(width, label.pad_cols(CELL_PADDING))
 					});
-				yard.pressable(link.map(move |_| row_index))
+				yard::pressable(yard, link.map(move |_| row_index))
 			})
 			.collect::<Vec<_>>();
 		yard::list(item_yards, list, list_link)

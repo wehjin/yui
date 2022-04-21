@@ -1,7 +1,7 @@
 use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Padding, SenderLink, Spark, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
-use yui::yard::{ButtonAction, ButtonModel, Pressable};
+use yui::yard::{ButtonAction, ButtonModel};
 use yui::yard::model::{ScrollAction, ScrollModel};
 
 use crate::AppTab;
@@ -66,7 +66,9 @@ impl Spark for SelectorListDemo {
 				15,
 				FillColor::Side,
 			);
-			let item = quad_label.pad(1).pressable(link.clone().map(move |_| Action::SetValue(n as i32)));
+
+			let release_link = link.clone().map(move |_| Action::SetValue(n as i32));
+			let item = yard::pressable(quad_label.pad(1), release_link);
 			items.push(item);
 		};
 		let list_link = link.to_sync().map(|action| Action::UpdateScroll(action));

@@ -6,7 +6,7 @@ use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillG
 use crate::app::Edge;
 use crate::palette::StrokeColor;
 use crate::selection_editor::SelectionEditor;
-use crate::yard::{ButtonAction, ButtonModel, Pressable};
+use crate::yard::{ButtonAction, ButtonModel};
 use crate::yui::prelude::yard;
 
 pub struct SelectionEditorSpark<T> {
@@ -55,7 +55,8 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 					(format!("{}", it), StrokeColor::EnabledOnBackground)
 				};
 				let label = yard::label(text, color, Cling::Center);
-				let yard = label.pressable(link.map(move |_| Action::SelectIndex(i)));
+				let release_link = link.map(move |_| Action::SelectIndex(i));
+				let yard = yard::pressable(label, release_link);
 				yard
 			}).collect::<Vec<_>>();
 
