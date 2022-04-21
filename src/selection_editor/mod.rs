@@ -1,4 +1,5 @@
-use crate::yard::model::{ScrollModel, ScrollAction};
+use crate::yard::ButtonAction;
+use crate::yard::model::{ScrollAction, ScrollModel};
 
 #[cfg(test)]
 mod tests;
@@ -12,10 +13,12 @@ pub struct SelectionEditor<T: Clone> {
 	pub is_pressed: bool,
 	pub selection: Option<(usize, T)>,
 	pub is_closed: bool,
-	pub list_art: ScrollModel,
+	pub scroll: ScrollModel,
 }
 
+
 /// Enumerates the actions available to a SelectionEditor.
+#[derive(Clone)]
 pub enum Action {
 	FocusForward,
 	FocusBackward,
@@ -23,7 +26,8 @@ pub enum Action {
 	Select,
 	SelectIndex(usize),
 	Close,
-	ToListArt(ScrollAction),
+	UpdateScroll(ScrollAction),
+	UpdateButton(ButtonAction),
 }
 
 /// Enumerates the states of an index.
@@ -49,7 +53,7 @@ impl<T: Clone> SelectionEditor<T> {
 			is_pressed: false,
 			selection: None,
 			is_closed: false,
-			list_art,
+			scroll: list_art,
 		}
 	}
 	/// Read the index of the currently selected item.
@@ -78,6 +82,7 @@ impl<T: Clone> SelectionEditor<T> {
 	pub fn into_next(self, action: Action) -> Self {
 		if self.is_closed { self } else {
 			match action {
+				Action::UpdateButton(_) => self,
 				Action::FocusForward => SelectionEditor {
 					is_pressed: false,
 					focused_index: (self.focused_index as i64 + 1).min(self.choices.len() as i64 - 1) as usize,
@@ -121,9 +126,9 @@ impl<T: Clone> SelectionEditor<T> {
 					is_pressed: false,
 					..self
 				},
-				Action::ToListArt(list_action) => {
-					if let Some(list_art) = self.list_art.update(list_action) {
-						SelectionEditor { list_art, ..self }
+				Action::UpdateScroll(list_action) => {
+					if let Some(list_art) = self.scroll.update(list_action) {
+						SelectionEditor { scroll: list_art, ..self }
 					} else {
 						self
 					}
