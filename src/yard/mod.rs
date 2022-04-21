@@ -11,8 +11,8 @@ use crate::DrawPad;
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};
 
-pub use self::empty::*;
-pub use self::fill::*;
+pub use basic::empty::*;
+pub use basic::fill::*;
 pub use self::grade::*;
 pub use self::list::*;
 pub use self::mux::*;
@@ -26,8 +26,6 @@ pub use self::textfield::*;
 pub use self::title::*;
 pub use self::trellis::*;
 
-mod empty;
-mod fill;
 mod grade;
 mod mux;
 mod observable;
