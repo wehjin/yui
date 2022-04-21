@@ -2,6 +2,8 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
 
+use rand::random;
+
 use crate::{AfterFlow, ArcYard, Cling, Create, FillColor, FillGrade, Flow, Pack, Sendable, SenderLink, Spark, StoryVerse, StrokeColor, yard};
 use crate::app::Edge;
 use crate::pod::Pod;
@@ -31,7 +33,7 @@ fn sub_story_rendering() {
 		}
 		fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> { AfterFlow::Ignore }
 		fn render(state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
-			let yard = yard::empty().pack_right(1, yard::story(state.clone()));
+			let yard = yard::empty().pack_right(1, yard::story(random(), state.clone()));
 			Some(yard)
 		}
 	}
@@ -131,8 +133,8 @@ impl Spark for TwoWords {
 	fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> { AfterFlow::Ignore }
 	fn render(state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let yard = yard::fill(FillColor::Background, FillGrade::Plain)
-			.pack_right(1, yard::story(state.1))
-			.pack_left(1, yard::story(state.0));
+			.pack_right(1, yard::story(random(), state.1))
+			.pack_left(1, yard::story(random(), state.0));
 		Some(yard)
 	}
 }

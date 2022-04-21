@@ -5,8 +5,8 @@ use crate::layout::LayoutContext;
 use crate::story_id::StoryId;
 use crate::yard::{ArcYard, Yard};
 
-pub fn story(story_id: StoryId) -> ArcYard {
-	Arc::new(StoryYard { yard_id: rand::random(), story_id })
+pub fn story(id: i32, story_id: StoryId) -> ArcYard {
+	Arc::new(StoryYard { yard_id: id, story_id })
 }
 
 struct StoryYard {

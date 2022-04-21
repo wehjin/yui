@@ -6,7 +6,8 @@ use std::thread;
 
 use rand::random;
 
-use crate::{ArcYard, SenderLink, Spark, story_verse};
+use crate::{ArcYard, Link, SenderLink, Spark, story_verse};
+use crate::app::pub_stack::story_stack::{StoryStack, StoryStackAction};
 use crate::story_id::StoryId;
 use crate::story_verse::story_box::StoryBoxAction;
 use crate::StoryVerseAction::{GetStats, StartFeed};
@@ -29,10 +30,18 @@ pub struct StoryVerse {
 
 impl StoryVerse {
 	pub fn build<S: Spark>(spark: S, story_id: StoryId) -> (StoryVerse, SenderLink<S::Action>) where S: Send + 'static {
-		let story_verse_link = story_verse::connect();
-		let (story_box_link, story_link) = story_box::connect(spark, None, story_id, story_verse_link.clone());
-		story_verse_link.send(StoryVerseAction::AddStoryBox(story_box_link, story_id)).expect("Add main story box");
-		(StoryVerse { story_verse_link }, story_link)
+		let own_link = story_verse::connect();
+
+		let root_story_id = StoryId::random();
+		let (root_story_box, root_sender) = story_box::connect(StoryStack {}, None, root_story_id, own_link.clone());
+		own_link.send(StoryVerseAction::AddStoryBox(root_story_box, root_story_id)).expect("Add root story box");
+
+		let main_story_id = story_id;
+		let (main_story_box, main_sender) = story_box::connect(spark, None, main_story_id, own_link.clone());
+		own_link.send(StoryVerseAction::AddStoryBox(main_story_box, main_story_id)).expect("Add main story box");
+
+		root_sender.send(StoryStackAction::PushStory(main_story_id));
+		(StoryVerse { story_verse_link: own_link }, main_sender)
 	}
 	pub fn read_stats(&self) -> StoryVerseStats {
 		let (stats_link, stats_read) = channel::<StoryVerseStats>();
@@ -63,7 +72,8 @@ fn connect() -> Sender<StoryVerseAction> {
 		for action in action_source {
 			match action {
 				StoryVerseAction::GetStats(stats_link) => {
-					let stats = StoryVerseStats { story_count: story_box_links.len() };
+					let count_excluding_root = story_box_links.len() - 1;
+					let stats = StoryVerseStats { story_count: count_excluding_root };
 					stats_link.send(stats).expect("send stats response");
 				}
 				StoryVerseAction::StartFeed(yards_link) => {

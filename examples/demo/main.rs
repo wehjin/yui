@@ -9,6 +9,7 @@ use std::error::Error;
 use std::fs::File;
 
 use log::LevelFilter;
+use rand::random;
 use simplelog::{Config, WriteLogger};
 
 pub use app_tab::*;
@@ -113,7 +114,7 @@ impl story::Spark for Main {
 			AppTab::Text => state.text_story,
 			AppTab::Buttons => state.buttons_story,
 		};
-		let content_yard = yard::story(sub_story_id);
+		let content_yard = yard::story(random(), sub_story_id);
 		let select_tab = link.map(|index: usize| MainAction::SetTab(AppTab::from_index(index)));
 		let yard = AppTab::main_page(content_yard, state.main_tab.index(), Some(select_tab));
 		Some(yard)
