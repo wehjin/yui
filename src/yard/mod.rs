@@ -4,7 +4,6 @@ pub use basic::fade::*;
 pub use basic::glyph::*;
 pub use basic::label::*;
 pub use basic::story::*;
-pub use scalar::button::*;
 pub use scalar::button2::*;
 
 use crate::bounds::Bounds;

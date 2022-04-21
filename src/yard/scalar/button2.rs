@@ -8,8 +8,14 @@ use crate::{DrawPad, Link, SyncLink, Trigger, yard};
 use crate::bounds::Bounds;
 use crate::layout::LayoutContext;
 use crate::palette::{FillGrade, StrokeColor};
-use crate::yard::{ArcYard, Priority, Yard, YardOption};
+use crate::yard::{ArcYard, Yard, YardOption};
 use crate::yui::{Cling, Focus, FocusType};
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Priority {
+	None,
+	Default,
+}
 
 #[derive(Debug, Clone)]
 pub enum SubmitAffordance {
