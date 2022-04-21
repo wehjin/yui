@@ -85,7 +85,7 @@ impl Spark for Main {
 	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let (rows, list, button) = state;
 		let headers = vec![(6, "".into()), (40, "Symbol".into()), (20, "Shares".into()), (20, "Value".into())];
-		let close_button = yard::button2(button);
+		let close_button = yard::button(button);
 		let select_link = SenderLink::wrap_sink(|index| log::info!("Selected row index: {}", index));
 		let list_link = link.to_sync().map(|action| MainAction::ToListArt(action));
 		let page = yard::table(list.clone(), list_link, headers, rows.clone(), select_link)

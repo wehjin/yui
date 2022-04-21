@@ -93,8 +93,8 @@ impl Spark for DialogDemo {
 		let row_height = 3;
 		let rows = vec![
 			yard::label(&format!("{}", this_dialog), StrokeColor::BodyOnBackground, Cling::Center),
-			yard::button2(&buttons.open),
-			yard::button2(&buttons.close),
+			yard::button(&buttons.open),
+			yard::button(&buttons.close),
 		];
 		let min_trellis_height = rows.len() as i32 * (row_height + gap_height) - gap_height;
 		let trellis = yard::trellis(row_height, gap_height, Cling::Center, rows);

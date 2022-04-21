@@ -6,7 +6,7 @@ use crate::yard::model::{ScrollAction, ScrollModel};
 
 pub fn mux(center: ArcYard, yards: Vec<ArcYard>, button: ButtonModel, scroll: ScrollModel, list_link: SyncLink<ScrollAction>) -> ArcYard {
 	const SIDE_WIDTH: i32 = 40;
-	let action_button = yard::button2(&button);
+	let action_button = yard::button(&button);
 	let sidebar_fore = if yards.is_empty() {
 		action_button.confine_height(3, Cling::Top)
 	} else {

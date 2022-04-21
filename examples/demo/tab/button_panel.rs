@@ -153,7 +153,7 @@ impl Spark for ButtonDemo {
 	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		fn ordered_buttons(state: &State, col: usize) -> Vec<ArcYard> {
 			let mut buttons = state.buttons.iter().filter_map(|((left_right, top_bottom), value)| {
-				if *left_right == col { Some((*top_bottom, yard::button2(value))) } else { None }
+				if *left_right == col { Some((*top_bottom, yard::button(value))) } else { None }
 			}).collect::<Vec<_>>();
 			buttons.sort_by_key(|it| it.0);
 			buttons.into_iter().map(|(_, button)| button).collect()

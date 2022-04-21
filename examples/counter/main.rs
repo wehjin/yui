@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			let text = format!("{}", state.value);
 			let label = yard::label(&text, StrokeColor::BodyOnBackground, Cling::Left);
 			let buttons = state.buttons.iter().rev()
-				.map(|button| yard::button2(button))
+				.map(|button| yard::button(button))
 				.map(|yard| yard.confine_width(5, Cling::Left))
 				.fold(yard::empty(), |yard, button| yard.pack_left(7, button));
 			let back = yard::fill(FillColor::Background, FillGrade::Plain);

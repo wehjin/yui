@@ -81,7 +81,7 @@ impl Spark for FormListDemo {
 				).confine_height(3, Cling::Center)
 			},
 			{
-				let button = yard::button2(button);
+				let button = yard::button(button);
 				button.confine_height(3, Cling::Center)
 			},
 		];

@@ -66,7 +66,7 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 			yard::list(yards, editor.scroll.clone(), send_action)
 		};
 
-		let close = yard::button2(button).confine_width(9, Cling::Center);
+		let close = yard::button(button).confine_width(9, Cling::Center);
 		let yard = content.pack_bottom(1, close).pad(1)
 			.before(yard::fill(FillColor::Background, FillGrade::Plain));
 		Some(yard)

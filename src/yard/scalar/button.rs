@@ -102,7 +102,7 @@ impl ButtonModel {
 	}
 }
 
-pub fn button2(button: &ButtonModel) -> ArcYard {
+pub fn button(button: &ButtonModel) -> ArcYard {
 	let label_yard = yard::label(
 		&button.label.to_uppercase(),
 		match &button.affordance {
