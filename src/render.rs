@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::{ArcYard, Bounds};
-use crate::bounds::BoundsHold;
+use crate::core::bounds::BoundsHold;
 use crate::spot::spot_table::SpotTable;
 
 pub fn run(yard: &ArcYard, max_x: i32, max_y: i32, bounds_hold: Rc<RefCell<BoundsHold>>, focus_id: i32) -> SpotTable {

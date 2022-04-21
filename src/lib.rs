@@ -12,11 +12,16 @@ pub use story_verse::*;
 pub use yard::ArcYard;
 pub use yui_curses::*;
 
-use crate::bounds::Bounds;
+pub use crate::core::bounds::*;
 use crate::palette::{FillColor, FillGrade, StrokeColor};
 use crate::story_id::StoryId;
 
 pub use self::yui::*;
+
+mod core;
+mod link;
+mod yui;
+mod yui_curses;
 
 pub mod app;
 pub mod palette;
@@ -24,15 +29,11 @@ pub mod sparks;
 pub mod story;
 pub mod story_verse;
 pub mod yard;
-pub(crate) mod core;
 pub(crate) mod layout;
 pub(crate) mod render;
 pub mod pod;
 pub mod pod_verse;
 
-mod link;
-mod yui;
-mod yui_curses;
 #[cfg(test)]
 mod tests;
 

@@ -6,7 +6,7 @@ use crate::layout::LayoutContext;
 use crate::yard::{Yard};
 use crate::yard::list::nexus::Nexus;
 use crate::yard::model::{ScrollAction, ScrollModel};
-use crate::yui::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
 mod nexus;
 

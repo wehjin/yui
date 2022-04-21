@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::{DrawPad, Pack};
 use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard};
-use crate::yui::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
 impl Pack for ArcYard {
 	fn pack_top(self, top_rows: i32, top_yard: ArcYard) -> ArcYard {

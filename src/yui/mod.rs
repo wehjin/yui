@@ -10,9 +10,8 @@ pub use multi_layout::*;
 use crate::{app, Spark};
 use crate::yard::ArcYard;
 
-use self::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
-pub mod bounds;
 pub mod layout;
 pub mod pad;
 pub mod place;
@@ -188,7 +187,7 @@ pub enum Cling {
 }
 
 impl Cling {
-	fn x(&self) -> f32 {
+	pub fn x(&self) -> f32 {
 		match self {
 			Cling::Custom { x, .. } => x.to_owned(),
 			Cling::Left | Cling::LeftTop | Cling::LeftBottom => 0.0,
@@ -196,7 +195,7 @@ impl Cling {
 			Cling::Right | Cling::RightTop | Cling::RightBottom => 1.0,
 		}
 	}
-	fn y(&self) -> f32 {
+	pub fn y(&self) -> f32 {
 		match self {
 			Cling::Top | Cling::RightTop | Cling::LeftTop => 0.0,
 			Cling::Center | Cling::Left | Cling::Right => 0.5,

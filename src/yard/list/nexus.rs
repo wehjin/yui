@@ -1,5 +1,5 @@
 use crate::yard::list::nexus::Nexus::Down;
-use crate::yui::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
 #[cfg(test)]
 mod tests {

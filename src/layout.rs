@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use crate::{ArcYard, Bounds, Focus};
-use crate::bounds::BoundsHold;
+use crate::core::bounds::BoundsHold;
 use crate::pod_verse::tree::PodBranch;
 use crate::story_id::StoryId;
 use crate::yui::layout::ActiveFocus;

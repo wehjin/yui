@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
-use crate::yui::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
 #[derive(Debug, Clone)]
 pub struct ActiveFocus {

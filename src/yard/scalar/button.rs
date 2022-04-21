@@ -5,7 +5,7 @@ use std::time::Duration;
 use rand::random;
 
 use crate::{DrawPad, Link, SyncLink, Trigger, yard};
-use crate::bounds::Bounds;
+use crate::core::bounds::Bounds;
 use crate::layout::LayoutContext;
 use crate::palette::{FillGrade, StrokeColor};
 use crate::yard::{ArcYard, Yard};

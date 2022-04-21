@@ -8,7 +8,7 @@ pub use basic::label::*;
 pub use basic::story::*;
 pub use scalar::button::*;
 
-use crate::bounds::Bounds;
+use crate::core::bounds::Bounds;
 use crate::DrawPad;
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};

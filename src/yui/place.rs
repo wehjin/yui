@@ -4,7 +4,7 @@ use crate::DrawPad;
 use crate::layout::LayoutContext;
 use crate::yard::{ArcYard, Yard};
 use crate::yui::{Cling, Place};
-use crate::yui::bounds::Bounds;
+use crate::core::bounds::Bounds;
 
 impl Place for ArcYard {
 	fn place_center(self, width: i32) -> ArcYard {
