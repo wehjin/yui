@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{Bounds, DrawPad, Padding};
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 impl Padding for ArcYard {
 	fn pad(self, size: i32) -> ArcYard {
@@ -51,7 +51,6 @@ impl PadYard {
 impl Yard for PadYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Pad" }
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();

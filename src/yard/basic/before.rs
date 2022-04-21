@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{Before, Bounds, DrawPad, MultiLayout};
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 impl Before for ArcYard {
 	fn before(self, far_yard: ArcYard) -> ArcYard {
@@ -29,8 +29,6 @@ impl BeforeYard {
 impl Yard for BeforeYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Before" }
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (_edge_index, edge_bounds) = ctx.edge_bounds();

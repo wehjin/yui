@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{ArcYard, DrawPad, Focus, FocusMotion, FocusMotionFuture, FocusType, Link, MultiLayout, SyncLink};
 use crate::layout::LayoutContext;
-use crate::yard::{Yard, YardOption};
+use crate::yard::{Yard};
 use crate::yard::list::nexus::Nexus;
 use crate::yard::model::{ScrollAction, ScrollModel};
 use crate::yui::bounds::Bounds;
@@ -88,7 +88,6 @@ struct LayoutItem {
 
 impl Yard for ListYard {
 	fn id(&self) -> i32 { self.scroll.id }
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (_bounds_id, bounds) = ctx.edge_bounds();

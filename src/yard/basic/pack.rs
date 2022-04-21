@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::{DrawPad, Pack};
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 use crate::yui::bounds::Bounds;
 
 impl Pack for ArcYard {
@@ -53,7 +53,6 @@ struct PackYard {
 
 impl Yard for PackYard {
 	fn id(&self) -> i32 { self.id }
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();

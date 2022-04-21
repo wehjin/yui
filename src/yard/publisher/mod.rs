@@ -5,7 +5,7 @@ use std::thread;
 
 use crate::{ArcYard, Bounds, DrawPad, Link};
 use crate::layout::LayoutContext;
-use crate::yard::{Yard, YardOption, YardPublisher};
+use crate::yard::{Yard, YardPublisher};
 
 mod publisher;
 
@@ -43,7 +43,6 @@ struct PublisherYard {
 impl Yard for PublisherYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Publisher" }
-	fn update(&self, _option: YardOption) {}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (yard_num, bounds_index) = {
 			let (yard_num, some_yard) = self.yard_lock.read().expect("read yard_lock").deref().clone();

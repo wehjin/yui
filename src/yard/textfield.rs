@@ -6,7 +6,7 @@ use stringedit::StringEdit;
 use crate::{Before, Bounds, DrawPad, Focus, FocusAction, FocusMotion, FocusMotionFuture, FocusType, Link, SenderLink, StrokeColor, SyncLink};
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 use crate::yard;
 
 pub fn textfield(id: i32, label: &str, edit: StringEdit, update: SenderLink<stringedit::Action>) -> ArcYard {
@@ -29,8 +29,6 @@ struct TextfieldYard {
 
 impl Yard for TextfieldYard {
 	fn id(&self) -> i32 { self.id }
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();

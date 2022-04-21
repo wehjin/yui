@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{Bounds, DrawPad};
 use crate::layout::LayoutContext;
 use crate::palette::StrokeColor;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 pub fn glyph(color: StrokeColor, glyph: impl Fn() -> char + Send + Sync + 'static) -> ArcYard {
 	Arc::new(GlyphYard {
@@ -21,7 +21,6 @@ struct GlyphYard {
 
 impl Yard for GlyphYard {
 	fn id(&self) -> i32 { self.id }
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();

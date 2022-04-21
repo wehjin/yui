@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{Bounds, DrawPad, Fade, MultiLayout};
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 pub fn fade(indents: (i32, i32), rear_yard: ArcYard, fore_yard: ArcYard) -> ArcYard {
 	Arc::new(FadeYard {
@@ -30,8 +30,6 @@ impl Yard for FadeYard {
 	fn id(&self) -> i32 {
 		self.id
 	}
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (_bounds_id, bounds) = ctx.edge_bounds();

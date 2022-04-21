@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{ArcYard, Before, Bounds, Cling, DrawPad, Focus, FocusType, Link, Pack, Place, SenderLink, SyncLink, yard};
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade, StrokeColor};
-use crate::yard::{Yard, YardOption};
+use crate::yard::{Yard};
 
 pub use self::tab::*;
 
@@ -70,7 +70,6 @@ struct TabYard {
 
 impl Yard for TabYard {
 	fn id(&self) -> i32 { self.id }
-	fn update(&self, _option: YardOption) {}
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, bounds) = ctx.edge_bounds();
 		self.content.layout(ctx);

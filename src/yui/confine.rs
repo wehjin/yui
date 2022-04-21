@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{Bounds, DrawPad};
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 use crate::yui::{Cling, Confine};
 
 impl Confine for ArcYard {
@@ -42,7 +42,6 @@ impl ConfineYard {
 impl Yard for ConfineYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Confine" }
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = { ctx.edge_bounds() };

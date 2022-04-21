@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::DrawPad;
 use crate::layout::LayoutContext;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 use crate::yui::{Cling, Place};
 use crate::yui::bounds::Bounds;
 
@@ -27,7 +27,6 @@ struct PlaceYard {
 impl Yard for PlaceYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Place" }
-	fn update(&self, option: YardOption) { self.core_yard.update(option) }
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();

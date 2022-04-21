@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{Bounds, DrawPad};
 use crate::layout::LayoutContext;
 use crate::palette::FillGrade;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 pub fn grade(grade: FillGrade) -> ArcYard {
 	//! Produce a yard that changes the color grade.
@@ -20,8 +20,6 @@ struct GradeYard {
 
 impl Yard for GradeYard {
 	fn id(&self) -> i32 { self.id }
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();

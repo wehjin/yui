@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
+pub use basic::empty::*;
 pub use basic::fade::*;
+pub use basic::fill::*;
 pub use basic::glyph::*;
 pub use basic::label::*;
 pub use basic::story::*;
@@ -11,8 +13,6 @@ use crate::DrawPad;
 use crate::layout::LayoutContext;
 use crate::palette::{FillColor, FillGrade};
 
-pub use basic::empty::*;
-pub use basic::fill::*;
 pub use self::grade::*;
 pub use self::list::*;
 pub use self::mux::*;
@@ -45,10 +45,6 @@ pub trait Yard {
 	fn id(&self) -> i32;
 	fn type_desc(&self) -> &'static str { "" }
 	fn desc(&self) -> String { format!("{}Yard {{ id:{} }}", self.type_desc(), self.id()) }
-
-	// TODO: Delete this
-	fn update(&self, _option: YardOption) {}
-
 	fn layout(&self, ctx: &mut LayoutContext) -> usize;
 	fn render(&self, _bounds: &Bounds, _focus_id: i32, _pad: &mut dyn DrawPad) -> Option<Vec<(ArcYard, Option<i32>)>>;
 }

@@ -8,7 +8,7 @@ use crate::{DrawPad, Link, SyncLink, Trigger, yard};
 use crate::bounds::Bounds;
 use crate::layout::LayoutContext;
 use crate::palette::{FillGrade, StrokeColor};
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 use crate::yui::{Cling, Focus, FocusType};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -131,8 +131,6 @@ struct ButtonYard {
 
 impl Yard for ButtonYard {
 	fn id(&self) -> i32 { self.id }
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (edge_index, edge_bounds) = ctx.edge_bounds();

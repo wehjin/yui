@@ -5,7 +5,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::{Bounds, Cling, DrawPad};
 use crate::layout::LayoutContext;
 use crate::palette::StrokeColor;
-use crate::yard::{ArcYard, Yard, YardOption};
+use crate::yard::{ArcYard, Yard};
 
 pub fn label<S: AsRef<str>>(string: S, color: StrokeColor, cling: Cling) -> ArcYard {
 	//! Generate a yard that displays a string of characters.
@@ -26,8 +26,6 @@ struct LabelYard {
 impl Yard for LabelYard {
 	fn id(&self) -> i32 { self.id }
 	fn type_desc(&self) -> &'static str { "Label" }
-
-	fn update(&self, _option: YardOption) {}
 
 	fn layout(&self, ctx: &mut LayoutContext) -> usize {
 		let (bounds_id, _bounds) = ctx.edge_bounds();
