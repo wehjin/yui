@@ -1,16 +1,14 @@
 use std::{fmt, thread};
 use std::error::Error;
 use std::fmt::{Debug, Formatter};
-use std::ops::Deref;
-use std::sync::{Arc, RwLock};
-use std::time::Duration;
+use std::sync::Arc;
 
 pub use stringedit::{Action as StringEditAction, StringEdit, Validity as ValidIf};
 
 pub use multi_layout::*;
 
 use crate::{app, Spark};
-use crate::yard::{ArcTouch, ArcYard};
+use crate::yard::ArcYard;
 
 use self::bounds::Bounds;
 
@@ -143,30 +141,6 @@ pub enum FocusMotion {
 pub enum FocusMotionFuture {
 	Default,
 	Skip,
-}
-
-
-pub(crate) fn render_submit(is_pressed: &Arc<RwLock<bool>>, ctx: &FocusActionContext, touch: &ArcTouch) -> () {
-	{
-		*is_pressed.write().expect("write is_pressed") = true;
-	}
-	ctx.refresh.deref()();
-	{
-		// For longer yard::lists, 100 is too fast for the pressed state to render
-		// consistently when the cursor is at the bottom of the list.
-		let millis = if cfg!(debug_assertions) {
-			200
-		} else {
-			100
-		};
-		thread::sleep(Duration::from_millis(millis));
-	}
-	{
-		*is_pressed.write().expect("write is_pressed") = false;
-	}
-	ctx.refresh.deref()();
-	touch.deref()();
-	ctx.refresh.deref()();
 }
 
 pub trait Padding {

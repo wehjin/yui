@@ -1,6 +1,5 @@
 use std::fmt;
 
-
 use rand::random;
 
 use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Link, Pack, Padding, SenderLink, Spark};
@@ -87,15 +86,16 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 		} else {
 			let selected_index = scroll.selected_index();
 			let yards = choices.iter().enumerate()
-				.map(|(i, value)| {
-					let (text, color) = if selected_index == i {
+				.map(|(index, value)| {
+					let (text, color) = if selected_index == index {
 						(format!("{}", value).to_uppercase(), StrokeColor::BodyOnBackground)
 					} else {
 						(format!("{}", value), StrokeColor::EnabledOnBackground)
 					};
-					let label = yard::label(text, color, Cling::Center);
-					let press_link = link.map(move |_| SelectionAction::SelectIndex(i));
-					yard::pressable(label, press_link)
+					let yard = yard::label(text, color, Cling::Center);
+					let press = &presses[index];
+					let press_link = link.to_sync().map(move |_| SelectionAction::SelectIndex(index));
+					yard::pressable(yard, press, press_link)
 				})
 				.collect::<Vec<_>>();
 

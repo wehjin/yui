@@ -4,7 +4,7 @@ use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Padding, Sen
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
-use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
+use yui::yard::{ButtonAction, ButtonModel, SubmitAffordance};
 
 use crate::{AppTab, Main};
 

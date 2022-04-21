@@ -5,16 +5,16 @@ extern crate yui;
 use std::error::Error;
 use std::fs::File;
 
-use log::{info, LevelFilter};
+use log::LevelFilter;
 use rand::random;
 use simplelog::{Config, WriteLogger};
 
-use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Pack, Padding, Sendable, SenderLink, Spark, yard};
+use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Link, Pack, Padding, Sendable, SenderLink, Spark, yard};
 use yui::app::Edge;
 use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
-use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
-use yui::yard::model::{ScrollModel, ScrollAction};
+use yui::yard::{ButtonAction, ButtonModel, PressAction, PressModel, SubmitAffordance};
+use yui::yard::model::{ScrollAction, ScrollModel};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(
@@ -35,13 +35,15 @@ pub struct Main();
 pub enum MainAction {
 	Close,
 	PressButton,
-	ToListArt(ScrollAction),
+	SubmitRow(usize),
+	UpdateScroll(ScrollAction),
+	UpdatePress(usize, PressAction),
 }
 
 impl Sendable for MainAction {}
 
 impl Spark for Main {
-	type State = (Vec<Vec<String>>, ScrollModel, ButtonModel);
+	type State = (Vec<Vec<String>>, ScrollModel, ButtonModel, Vec<PressModel>);
 	type Action = MainAction;
 	type Report = ();
 
@@ -59,36 +61,50 @@ impl Spark for Main {
 			release_trigger: MainAction::Close.to_send(ctx.link()),
 			affordance: SubmitAffordance::enabled(MainAction::PressButton.to_sync(ctx.link())),
 		};
-		(rows, list, button)
+		let presses = rows.iter().enumerate()
+			.map(|(index, _)| {
+				let trigger = ctx.link().to_trigger(MainAction::SubmitRow(index));
+				PressModel::new(random(), trigger)
+			})
+			.collect::<Vec<_>>();
+		(rows, list, button, presses)
 	}
 
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		let (rows, scroll, button, presses) = ctx.state();
 		match action {
 			MainAction::Close => AfterFlow::Close(None),
 			MainAction::PressButton => {
-				let state = ctx.state();
-				let next_button = state.2.update(ButtonAction::Press);
-				AfterFlow::Revise((state.0.clone(), state.1.clone(), next_button))
+				let next_button = button.update(ButtonAction::Press);
+				AfterFlow::Revise((rows.clone(), scroll.clone(), next_button, presses.clone()))
 			}
-			MainAction::ToListArt(action) => {
-				let (rows, list, button) = ctx.state();
-				if let Some(list) = list.update(action) {
-					info!("Nexux: {:?}", &list.nexus);
-					AfterFlow::Revise((rows.clone(), list, button.clone()))
+			MainAction::SubmitRow(index) => {
+				ctx.link().send(MainAction::UpdatePress(index, PressAction::Release));
+				AfterFlow::Revise((rows.clone(), scroll.clone(), button.clone(), presses.clone()))
+			}
+			MainAction::UpdateScroll(action) => {
+				if let Some(scroll) = scroll.update(action) {
+					AfterFlow::Revise((rows.clone(), scroll, button.clone(), presses.clone()))
 				} else {
 					AfterFlow::Ignore
 				}
+			}
+			MainAction::UpdatePress(index, action) => {
+				let mut presses = presses.clone();
+				let press = presses.remove(index).update(action);
+				presses.insert(index, press);
+				AfterFlow::Revise((rows.clone(), scroll.clone(), button.clone(), presses))
 			}
 		}
 	}
 
 	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
-		let (rows, list, button) = state;
+		let (rows, list, button, presses) = state;
 		let headers = vec![(6, "".into()), (40, "Symbol".into()), (20, "Shares".into()), (20, "Value".into())];
 		let close_button = yard::button(button);
 		let select_link = SenderLink::wrap_sink(|index| log::info!("Selected row index: {}", index));
-		let list_link = link.to_sync().map(|action| MainAction::ToListArt(action));
-		let page = yard::table(list.clone(), list_link, headers, rows.clone(), select_link)
+		let list_link = link.to_sync().map(|action| MainAction::UpdateScroll(action));
+		let page = yard::table(list.clone(), list_link, headers, rows.clone(), select_link, presses.clone())
 			.pad(2)
 			.pack_bottom(7, close_button.pad(2))
 			.before(yard::fill(Background, Plain))
