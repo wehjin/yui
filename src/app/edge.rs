@@ -43,6 +43,7 @@ impl Edge for MinEdge {
 		unimplemented!()
 	}
 	fn end_dialog(&self) {
+		info!("MIN EDGE END DIALOG: {:?}", &self.story_id);
 		self.end_dialog_trigger.send(());
 	}
 	fn redraw(&self) {}

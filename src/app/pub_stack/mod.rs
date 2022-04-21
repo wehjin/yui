@@ -61,7 +61,11 @@ pub mod story_stack {
 				StoryStackAction::PopStory(story_id) => {
 					let mut model = ctx.state().clone();
 					model.pop_story(story_id);
-					AfterFlow::Revise(model)
+					if model.story_ids.is_empty() {
+						AfterFlow::Close(None)
+					} else {
+						AfterFlow::Revise(model)
+					}
 				}
 			}
 		}

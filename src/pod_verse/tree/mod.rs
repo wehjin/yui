@@ -132,11 +132,17 @@ impl PodTree {
 		} else { 0 }
 	}
 
-	fn path_active_focus(&self, path: &PodPath) -> Option<&ActiveFocus> {
-		self.layout_map.get(&path).map(|it| &it.active_focus)
+	fn path_active_focus<'a>(&'a self, path: &PodPath, expanded_focus_map: &'a HashMap<PodPath, ActiveFocus>) -> Option<&'a ActiveFocus> {
+		let expanded = expanded_focus_map.get(path);
+		if expanded.is_some() {
+			expanded
+		} else {
+			self.layout_map.get(&path).map(|it| &it.active_focus)
+		}
 	}
 
 	fn layout_paths(&mut self, mut paths: Vec<PodPath>) {
+		info!("LAYOUT PATHS({}): {:?}", paths.len(), paths);
 		let mut altered = Vec::new();
 		//Layout the supplied paths and their descendents.
 		while let Some(path) = paths.pop() {
@@ -163,22 +169,29 @@ impl PodTree {
 				paths.reverse();
 				paths
 			};
+			trace!("Pod paths longest first({}): {:?}", all_paths_longest_first.len(),&all_paths_longest_first);
+			let mut expanded_focus_map: HashMap<PodPath, ActiveFocus> = HashMap::new();
 			for parent_path in all_paths_longest_first {
-				let mut parent_focus = self.path_active_focus(&parent_path).cloned().unwrap_or_else(|| ActiveFocus::default());
+				let mut parent_focus = self.path_active_focus(&parent_path, &expanded_focus_map).cloned().unwrap_or_else(|| ActiveFocus::default());
+				trace!("Parent focus BEFORE expansion({:?}): {:?}",parent_path.last_story_id(), &parent_focus);
 				if let Some(direct_children) = self.children.get(&parent_path) {
 					for child_path in direct_children {
 						let child_bounds = child_path.last_bounds();
 						let child_depth = self.child_layout_depth(child_path);
 						parent_focus.expand_seam(child_bounds.z, child_depth);
-						if let Some(child_active_focus) = self.path_active_focus(child_path) {
+						if let Some(child_active_focus) = self.path_active_focus(child_path, &expanded_focus_map) {
+							trace!("CHILD focus for insertion({:?}: {:?}", child_path.last_story_id(), child_active_focus);
 							parent_focus.insert_seam(child_active_focus, child_bounds.z, child_bounds.left, child_bounds.top);
 						}
 					}
 				};
-				self.focus_map.insert(parent_path, parent_focus);
+				trace!("Parent focus AFTER expansion: {:?}", &parent_focus);
+				expanded_focus_map.insert(parent_path, parent_focus);
 			}
+			self.focus_map = expanded_focus_map;
 			let root_active = self.focus_map.get(&self.root_path).cloned().unwrap_or_else(|| ActiveFocus::default());
 			self.active_focus = to_active_focus(&self.active_focus, root_active.to_foci());
+			trace!("NEW ACTIVE FOCUS: {:?}", &self.active_focus);
 		}
 		// Render altered pods.
 		while let Some(path) = altered.pop() {
@@ -191,6 +204,7 @@ impl PodTree {
 		paths.sort_by_key(PodPath::len);
 		paths.reverse();
 		let mut expanded_tables = HashMap::<PodPath, SpotTable>::new();
+		let fallback_spot_table = SpotTable::new(0, 0);
 		for path in paths {
 			let unlinked_table = self.spots_map.get(&path).expect("spot table").clone();
 			let linked_table = if let Some(children) = self.children.get(&path) {
@@ -198,7 +212,11 @@ impl PodTree {
 				for child in children {
 					let child_story = child.last_story_id();
 					let child_bounds = child.last_bounds();
-					let child_table = expanded_tables.get(child).expect("child table");
+					let child_table = expanded_tables.get(child)
+						.unwrap_or_else(|| {
+							warn!("Not expanded table for child pod: {:?}", child);
+							&fallback_spot_table
+						});
 					let child_depth = self.child_layout_depth(child);
 					sum = sum.expand_seam(child_bounds.z, child_depth, (child_story, child_bounds));
 					sum.insert_seam(child_table, child_bounds.z, child_bounds.left, child_bounds.top);

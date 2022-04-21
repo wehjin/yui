@@ -15,7 +15,7 @@ use crate::yui_curses::keyboard::Keyboard;
 pub fn run_spark<S: Spark>(spark: S) where S: Send + 'static {
 	let main_story_id = StoryId::new(0);
 	let (story_verse, _) = StoryVerse::build(spark, main_story_id);
-	let pod_verse = PodVerse::build(&story_verse, main_story_id);
+	let pod_verse = PodVerse::build(&story_verse);
 	run_pod_verse(&pod_verse);
 }
 

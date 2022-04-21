@@ -16,8 +16,8 @@ pub struct PodVerse {
 }
 
 impl PodVerse {
-	pub fn build(story_verse: &StoryVerse, main_story_id: StoryId) -> Self {
-		let link = pod_verse::connect(story_verse, main_story_id);
+	pub fn build(story_verse: &StoryVerse) -> Self {
+		let link = pod_verse::connect(story_verse);
 		PodVerse { pod_verse_link: link }
 	}
 	pub fn to_main_pod(&self, screen_refresh_trigger: Trigger) -> MainPod {
@@ -63,12 +63,13 @@ pub enum MoveDirection {
 
 impl Sendable for PodVerseAction {}
 
-fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseAction> {
+fn connect(story_verse: &StoryVerse) -> Sender<PodVerseAction> {
 	let (pod_verse_link, action_source) = channel::<PodVerseAction>();
 	let own_actions = pod_verse_link.clone();
+	let root_story_id = story_verse.root_story_id();
 	thread::spawn(move || {
 		let refresh_trigger = PodVerseAction::FullRefresh.into_trigger(&own_actions);
-		let mut pod_tree = PodTree::new(main_story_id, refresh_trigger.clone());
+		let mut pod_tree = PodTree::new(root_story_id, refresh_trigger.clone());
 		let mut screen_refresh_trigger: Option<Trigger> = None;
 		let mut done_trigger: Option<Sender<()>> = None;
 		for action in action_source {
@@ -97,7 +98,7 @@ fn connect(story_verse: &StoryVerse, main_story_id: StoryId) -> Sender<PodVerseA
 					own_actions.send(PodVerseAction::Refresh).expect("send refresh");
 				}
 				PodVerseAction::YardUpdate { story_id, story_yard: yard } => {
-					if yard.is_none() && story_id == main_story_id && done_trigger.is_some() {
+					if yard.is_none() && story_id == root_story_id && done_trigger.is_some() {
 						done_trigger.clone().unwrap().send(()).expect("send done");
 					} else {
 						pod_tree.set_story_yard(story_id, yard);

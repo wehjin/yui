@@ -77,9 +77,18 @@ impl story::Spark for Main {
 		let dialog_reports = {
 			let own_link = ctx.link().clone();
 			let report_link = ctx.report_link().clone();
-			Some(SenderLink::wrap_sink(move |report| match report {
-				Report::SelectedTab(index) => own_link.send(SetTab(AppTab::from_index(index))),
-				Report::NextDialog(next_dialog) => if let Some(ref report_link) = report_link { report_link.send(next_dialog) },
+			Some(SenderLink::wrap_sink(move |report| {
+				info!("DIALOG DEMO REPORT");
+				match report {
+					Report::SelectedTab(index) => {
+						own_link.send(SetTab(AppTab::from_index(index)))
+					}
+					Report::NextDialog(next_dialog) => {
+						if let Some(ref report_link) = report_link {
+							report_link.send(next_dialog)
+						}
+					}
+				}
 			}))
 		};
 		State {

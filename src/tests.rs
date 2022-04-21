@@ -51,7 +51,7 @@ fn sub_story_rendering() {
 	let main_id = StoryId::new(0);
 	let (story_verse, _main_link) = StoryVerse::build(Main {}, main_id);
 	thread::sleep(Duration::from_millis(1));
-	let pod_verse = PodVerse::build(&story_verse, main_id);
+	let pod_verse = PodVerse::build(&story_verse);
 	thread::sleep(Duration::from_millis(1));
 	let mut main_pod = pod_verse.to_main_pod(SenderLink::ignore());
 	main_pod.set_width_height((2, 1));
@@ -71,7 +71,7 @@ fn simple_sub_story() {
 	let (story_verse, _main_link) = StoryVerse::build(TwoWords { left: "Hello".into(), right: "World".into() }, main_id);
 	thread::sleep(Duration::from_millis(1));
 	assert_eq!(story_verse.read_stats().story_count, 3);
-	let pod_verse = PodVerse::build(&story_verse, main_id);
+	let pod_verse = PodVerse::build(&story_verse);
 	thread::sleep(Duration::from_millis(1));
 	let mut main_pod = pod_verse.to_main_pod(SenderLink::ignore());
 	let (test_link, test_source) = channel();
