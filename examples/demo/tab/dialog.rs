@@ -70,11 +70,9 @@ impl Spark for DialogDemo {
 				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.press_open()))
 			}
 			Action::Open => {
-				let link = flow.link().clone();
-				flow.start_prequel(
-					Main { dialog_id: next_dialog.clone() },
-					link.clone().map(|next_dialog| Action::NextDialog(next_dialog)),
-				);
+				let dialog_spark = Main { dialog_id: next_dialog.clone() };
+				let report_link = flow.link().clone().map(|next_dialog| Action::NextDialog(next_dialog));
+				flow.start_prequel(dialog_spark, report_link);
 				AfterFlow::Ignore
 			}
 			Action::NextDialog(next_dialog) => {

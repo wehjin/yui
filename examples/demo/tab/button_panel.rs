@@ -111,35 +111,36 @@ impl Spark for ButtonDemo {
 	}
 
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		let state = ctx.state();
 		match action {
 			Action::PressButton(left_right, top_bottom) => {
-				let state = ctx.state().press_button((left_right, top_bottom));
+				let state = state.press_button((left_right, top_bottom));
 				AfterFlow::Revise(state)
 			}
 			Action::ReleaseIgnore => {
-				let state = ctx.state();
-				AfterFlow::Revise(state.release_buttons())
+				let state = state.release_buttons();
+				AfterFlow::Revise(state)
 			}
 			Action::OfferChoice => {
 				let choices = vec!["Beavis", "Hall  "];
-				let selected = match ctx.state().choice {
+				let selected = match state.choice {
 					Choice::Beavis => 0,
 					Choice::Hall => 1,
 				};
-				let spark = SelectionEditorSpark { selected, choices };
-				let choice_link = ctx.link()
-					.map(|it: Option<(usize, &'static str)>| {
-						let choice = it.map(|(i, _)| i);
+				let choose_spark = SelectionEditorSpark { selected, choices };
+				let choose_link = ctx.link()
+					.map(|choice: Option<(usize, &'static str)>| {
+						let choice = choice.map(|(index, _)| index);
 						Action::Choose(choice)
 					});
-				ctx.start_prequel(spark, choice_link);
+				ctx.start_prequel(choose_spark, choose_link);
 				let state = ctx.state().release_buttons();
 				AfterFlow::Revise(state)
 			}
 			Action::Choose(choice) => {
 				if let Some(choice) = choice {
 					let choice = if choice == 0 { Choice::Beavis } else { Choice::Hall };
-					let state = ctx.state().choose(choice);
+					let state = state.choose(choice);
 					AfterFlow::Revise(state)
 				} else {
 					AfterFlow::Ignore
