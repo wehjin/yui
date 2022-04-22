@@ -16,6 +16,7 @@ pub mod story_id;
 
 pub mod sub_story;
 pub mod super_story;
+pub mod dialog_story;
 pub(crate) mod story_box;
 
 #[derive(Debug, Clone)]
@@ -31,19 +32,11 @@ pub struct StoryVerse {
 
 impl StoryVerse {
 	pub fn build<S: Spark>(spark: S, story_id: StoryId) -> (StoryVerse, SenderLink<S::Action>) where S: Send + 'static {
-		let own_link = story_verse::connect();
-
-		let root_story_id = StoryId::random();
-		let (root_story_box, root_sender) = story_box::connect(StoryStack {}, None, root_story_id, own_link.clone());
-		own_link.send(StoryVerseAction::AddStoryBox(root_story_box, root_story_id)).expect("Add root story box");
-		pop_story_on_stop(&own_link, &root_sender);
-
+		let (story_verse_link, root_story_id) = story_verse::connect();
 		let main_story_id = story_id;
-		let (main_story_box, main_sender) = story_box::connect(spark, None, main_story_id, own_link.clone());
-		own_link.send(StoryVerseAction::AddStoryBox(main_story_box, main_story_id)).expect("Add main story box");
-
-		root_sender.send(StoryStackAction::PushStory(main_story_id));
-		(StoryVerse { story_verse_link: own_link, root_story_id }, main_sender)
+		let (main_story_box, main_sender) = story_box::connect(spark, None, main_story_id, story_verse_link.clone());
+		story_verse_link.send(StoryVerseAction::AddStackStoryBox(main_story_box, main_story_id)).expect("Add main story box to stack");
+		(StoryVerse { story_verse_link, root_story_id }, main_sender)
 	}
 
 	pub fn read_stats(&self) -> StoryVerseStats {
@@ -59,7 +52,7 @@ impl StoryVerse {
 	pub fn root_story_id(&self) -> StoryId { self.root_story_id }
 }
 
-fn pop_story_on_stop(story_verse_link: &Sender<StoryVerseAction>, story_stack_link: &SenderLink<StoryStackAction>) {
+fn notify_stack_when_story_stops(story_verse_link: &Sender<StoryVerseAction>, story_stack_link: &SenderLink<StoryStackAction>) {
 	let (send_story_stopped, receive_story_stopped) = channel();
 	story_verse_link.send(StoryVerseAction::StartStoryStopFeed(send_story_stopped)).expect("Send StartStoryStopFeed");
 	let root_sender = story_stack_link.clone();
@@ -74,13 +67,20 @@ pub enum StoryVerseAction {
 	GetStats(Sender<StoryVerseStats>),
 	StartYardsFeed(Sender<(StoryId, Option<ArcYard>)>),
 	AddStoryBox(Sender<StoryBoxAction>, StoryId),
+	AddStackStoryBox(Sender<StoryBoxAction>, StoryId),
 	StoryBoxStopped(StoryId),
 	StartStoryStopFeed(Sender<StoryId>),
 	StoryBoxUpdate(StoryId, Option<ArcYard>),
 }
 
-fn connect() -> Sender<StoryVerseAction> {
+fn connect() -> (Sender<StoryVerseAction>, StoryId) {
 	let (story_verse_link, action_source) = channel();
+
+	let stack_story_id = StoryId::random();
+	let (stack_story_box, stack_link) = story_box::connect(StoryStack {}, None, stack_story_id, story_verse_link.clone());
+	story_verse_link.send(StoryVerseAction::AddStoryBox(stack_story_box, stack_story_id)).expect("Add root story box");
+	notify_stack_when_story_stops(&story_verse_link, &stack_link);
+
 	let own_link = story_verse_link.clone();
 	thread::spawn(move || {
 		let mut latest_yards: HashMap<StoryId, Option<ArcYard>> = HashMap::new();
@@ -103,6 +103,10 @@ fn connect() -> Sender<StoryVerseAction> {
 					story_box_links.insert(story_id, story_box.clone());
 					start_story_box_feed(&story_box, own_link.clone());
 				}
+				StoryVerseAction::AddStackStoryBox(story_box, story_id) => {
+					own_link.send(StoryVerseAction::AddStoryBox(story_box, story_id)).expect("Add story box");
+					stack_link.send(StoryStackAction::PushStory(story_id));
+				}
 				StoryVerseAction::StoryBoxStopped(story_id) => {
 					info!("STORY VERSE STORY BOX STOPPED: {:?}", story_id);
 					story_box_links.remove(&story_id);
@@ -120,7 +124,7 @@ fn connect() -> Sender<StoryVerseAction> {
 			}
 		}
 	});
-	story_verse_link
+	(story_verse_link, stack_story_id)
 }
 
 fn push_yards_to_feed(story_yards: &HashMap<StoryId, Option<ArcYard>>, yards_link: &Sender<(StoryId, Option<ArcYard>)>) -> Result<(), Box<dyn Error>> {

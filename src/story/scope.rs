@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::Sender;
 
-use crate::{Flow, Link, SenderLink, Spark, Story};
+use crate::{Flow, Link, SenderLink, Spark};
 use crate::app::Edge;
+use crate::dialog_story::DialogStory;
 
 pub(super) struct StoryScope<V, A: Send, R: Send, E: Edge> {
 	vision: V,
@@ -47,12 +48,10 @@ impl<S, A: Send, R: Send + 'static, E: Edge> Flow<S, A, R> for StoryScope<S, A, 
 
 	fn link(&self) -> &SenderLink<A> { &self.link }
 
-	fn start_prequel<Sprk>(&self, spark: Sprk, on_report: SenderLink<Sprk::Report>) -> Story<Sprk>
-		where Sprk: Spark + Send + 'static
-	{
+	fn start_prequel<T: Spark + Send + 'static>(&self, spark: T, on_report: SenderLink<T::Report>) -> DialogStory {
 		match &self.edge {
 			None => panic!("No edge in StoryScope"),
-			Some(ctx) => ctx.start_dialog::<Sprk>(spark, on_report),
+			Some(ctx) => ctx.start_dialog::<T>(spark, on_report),
 		}
 	}
 

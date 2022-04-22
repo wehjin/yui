@@ -5,7 +5,7 @@ use rand::random;
 use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Link, Pack, Padding, SenderLink, Spark};
 use crate::app::Edge;
 use crate::palette::StrokeColor;
-use crate::sparks::selection_editor::SelectionAction::{UpdateButton, UpdatePress};
+use crate::sparks::selection_editor::SelectionAction::UpdateButton;
 use crate::yard::{ButtonAction, ButtonModel, PressAction, PressModel};
 use crate::yard::model::{ScrollAction, ScrollModel};
 use crate::yui::prelude::yard;
@@ -17,8 +17,8 @@ pub struct SelectionEditorSpark<T> {
 
 #[derive(Debug, Clone)]
 pub enum SelectionAction {
-	SelectIndex(usize),
 	Close,
+	SelectIndex(usize),
 	UpdatePress(usize, PressAction),
 	UpdateButton(ButtonAction),
 	UpdateScroll(ScrollAction),
@@ -49,15 +49,14 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		let (choices, presses, scroll, button) = ctx.state();
 		match action {
-			SelectionAction::SelectIndex(index) => {
-				ctx.link().send(UpdatePress(index, PressAction::Release));
-				let scroll = scroll.with_selected_index(index);
-				AfterFlow::Revise((choices.clone(), presses.clone(), scroll, button.clone()))
-			}
 			SelectionAction::Close => {
 				ctx.link().send(UpdateButton(ButtonAction::Release));
 				ctx.end_prequel();
 				AfterFlow::Report(None)
+			}
+			SelectionAction::SelectIndex(index) => {
+				let report = Some((index, choices[index].clone()));
+				AfterFlow::Close(Some(report))
 			}
 			SelectionAction::UpdatePress(index, action) => {
 				let mut presses = presses.clone();
