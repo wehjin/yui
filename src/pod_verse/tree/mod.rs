@@ -6,11 +6,13 @@ pub use path::*;
 use crate::{ArcYard, Bounds, layout, Link, render, StoryId, Trigger, yard};
 use crate::layout::{LayoutState, to_active_focus};
 use crate::pod::Pod;
+use crate::pod_verse::tree::linker::link_spot_tables;
 use crate::spot::spot_table::SpotTable;
 use crate::yui::layout::ActiveFocus;
 
 mod branch;
 mod path;
+mod linker;
 
 pub struct PodTree {
 	root_path: PodPath,
@@ -128,7 +130,7 @@ impl PodTree {
 
 	fn child_layout_depth(&self, child_path: &PodPath) -> i32 {
 		if let Some(layout) = self.layout_map.get(child_path) {
-			(layout.bounds_hold.borrow().nearest_z() - 1).abs()
+			(layout.bounds_hold.borrow().nearest_z()).abs() + 1
 		} else { 0 }
 	}
 
@@ -200,32 +202,7 @@ impl PodTree {
 			let spot_table = render::run(&yard, path.last_bounds().width(), path.last_bounds().height(), bounds_hold, self.active_focus.focus_id());
 			self.spots_map.insert(path, spot_table);
 		}
-		let mut paths = self.spots_map.keys().cloned().collect::<Vec<_>>();
-		paths.sort_by_key(PodPath::len);
-		paths.reverse();
-		let mut expanded_tables = HashMap::<PodPath, SpotTable>::new();
-		let fallback_spot_table = SpotTable::new(0, 0);
-		for path in paths {
-			let unlinked_table = self.spots_map.get(&path).expect("spot table").clone();
-			let linked_table = if let Some(children) = self.children.get(&path) {
-				let mut sum = unlinked_table;
-				for child in children {
-					let child_story = child.last_story_id();
-					let child_bounds = child.last_bounds();
-					let child_table = expanded_tables.get(child)
-						.unwrap_or_else(|| {
-							warn!("Not expanded table for child pod: {:?}", child);
-							&fallback_spot_table
-						});
-					let child_depth = self.child_layout_depth(child);
-					sum = sum.expand_seam(child_bounds.z, child_depth, (child_story, child_bounds));
-					sum.insert_seam(child_table, child_bounds.z, child_bounds.left, child_bounds.top);
-				}
-				sum
-			} else { unlinked_table };
-			expanded_tables.insert(path, linked_table);
-		}
-		self.linked_table = expanded_tables.get(&self.root_path).cloned().expect("root table");
+		self.linked_table = link_spot_tables(&self.spots_map, &self.children, &&self.root_path);
 	}
 }
 

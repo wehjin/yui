@@ -23,6 +23,9 @@ impl<T: Clone> SpotField<T> {
 		}
 	}
 	pub fn nearest_z(&self, z: i32) -> i32 { self.z.min(z) }
+	pub fn furthest_z(&self, z: i32) -> i32 {
+		if self.z == i32::MAX { z } else { self.z.max(z) }
+	}
 }
 
 

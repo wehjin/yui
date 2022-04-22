@@ -34,12 +34,20 @@ impl SpotStack {
 		self.dark.insert_seam(z, &stack.dark);
 	}
 	pub fn nearest_z(&self, z: i32) -> i32 {
-		let nearest = z;
-		let nearest = self.fill_color.nearest_z(nearest);
-		let nearest = self.fill_grade.nearest_z(nearest);
-		let nearest = self.stroke.nearest_z(nearest);
-		let nearest = self.dark.nearest_z(nearest);
-		nearest
+		let result = z;
+		let result = self.fill_color.nearest_z(result);
+		let result = self.fill_grade.nearest_z(result);
+		let result = self.stroke.nearest_z(result);
+		let result = self.dark.nearest_z(result);
+		result
+	}
+	pub fn furthest_z(&self, z: i32) -> i32 {
+		let result = z;
+		let result = self.fill_color.furthest_z(result);
+		let result = self.fill_grade.furthest_z(result);
+		let result = self.stroke.furthest_z(result);
+		let result = self.dark.furthest_z(result);
+		result
 	}
 	pub fn set_fill(&mut self, color: FillColor, z: i32) {
 		self.fill_color.set_near_equal(color, z);

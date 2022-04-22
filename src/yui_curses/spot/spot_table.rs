@@ -6,7 +6,7 @@ use crate::{Bounds, DrawPad, FillColor, FillGrade, StoryId, StrokeColor};
 use crate::spot::SpotFront;
 use crate::yui_curses::spot::spot_stack::SpotStack;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SpotTable {
 	rows: i32,
 	cols: i32,
@@ -76,9 +76,16 @@ impl SpotTable {
 
 	pub fn width_height(&self) -> (i32, i32) { (self.cols, self.rows) }
 	pub fn nearest_z(&self) -> i32 {
-		self.spots.iter().fold(0, |nearest, next| {
+		self.spots.iter().fold(0, |result, next| {
 			let stack = next.borrow();
-			let nearest = stack.nearest_z(nearest);
+			let nearest = stack.nearest_z(result);
+			nearest
+		})
+	}
+	pub fn furthest_z(&self) -> i32 {
+		self.spots.iter().fold(i32::MIN, |result, next| {
+			let stack = next.borrow();
+			let nearest = stack.furthest_z(result);
 			nearest
 		})
 	}

@@ -114,7 +114,7 @@ impl LayoutContext {
 			current_index,
 			bounds_hold,
 			focus_vec: Rc::new(RefCell::new(Vec::new())),
-			focus_max: i32::max_value(),
+			focus_max: i32::MAX,
 			dependencies: Rc::new(RefCell::new(HashSet::new())),
 		}
 	}
