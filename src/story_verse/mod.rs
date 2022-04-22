@@ -7,8 +7,8 @@ use std::thread;
 use rand::random;
 
 use crate::{ArcYard, Link, SenderLink, Spark, story_verse};
-use crate::app::pub_stack::story_stack::{StoryStack, StoryStackAction};
 use crate::story_id::StoryId;
+use crate::story_stack::{StoryStack, StoryStackAction};
 use crate::story_verse::story_box::StoryBoxAction;
 use crate::StoryVerseAction::{GetStats, StartYardsFeed};
 
@@ -18,6 +18,7 @@ pub mod sub_story;
 pub mod super_story;
 pub mod dialog_story;
 pub(crate) mod story_box;
+pub mod story_stack;
 
 #[derive(Debug, Clone)]
 pub struct StoryVerseStats {

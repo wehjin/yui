@@ -1,7 +1,6 @@
 use std::sync::mpsc::Sender;
 
 use crate::{Link, SenderLink, Spark, story_box, StoryVerseAction, Trigger};
-use crate::app::pub_stack;
 use crate::dialog_story::DialogStory;
 use crate::story_id::StoryId;
 use crate::sub_story::SubStory;
@@ -52,49 +51,4 @@ impl Edge for MinEdge {
 	}
 
 	fn redraw(&self) {}
-}
-
-pub struct AppEdge {
-	link: SenderLink<pub_stack::Action>,
-	redraw: SenderLink<()>,
-}
-
-impl Clone for AppEdge {
-	fn clone(&self) -> Self {
-		AppEdge { link: self.link.clone(), redraw: self.redraw.clone() }
-	}
-}
-
-impl AppEdge {
-	pub(crate) fn new(link: SenderLink<pub_stack::Action>, redraw: SenderLink<()>) -> Self {
-		AppEdge { link, redraw }
-	}
-}
-
-impl SuperStory for AppEdge {
-	fn sub_story<S: Spark>(&self, _spark: S, _reports_link: Option<SenderLink<S::Report>>) -> SubStory {
-		todo!()
-	}
-}
-
-impl Edge for AppEdge {
-	fn story_id(&self) -> &StoryId {
-		todo!()
-	}
-
-	fn start_dialog<S: Spark + Send + 'static>(&self, _spark: S, _report_link: SenderLink<S::Report>) -> DialogStory {
-		// let story = story::spark(spark, Some(self.clone()), Some(report_link));
-		// self.link.send(pub_stack::Action::Push(story.connect()));
-		// story
-		unimplemented!()
-	}
-
-	fn end_dialog(&self) {
-		self.link.send(pub_stack::Action::Pop);
-	}
-
-
-	fn redraw(&self) {
-		self.redraw.send(())
-	}
 }

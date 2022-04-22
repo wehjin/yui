@@ -1,5 +1,4 @@
 use std::{fmt, thread};
-use std::error::Error;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
@@ -7,10 +6,8 @@ pub use stringedit::{Action as StringEditAction, StringEdit, Validity as ValidIf
 
 pub use multi_layout::*;
 
-use crate::{app, Spark};
-use crate::yard::ArcYard;
-
 use crate::core::bounds::Bounds;
+use crate::yard::ArcYard;
 
 pub mod layout;
 pub mod pad;
@@ -18,12 +15,6 @@ pub mod place;
 pub mod confine;
 mod multi_layout;
 pub mod prelude;
-
-// TODO Delete this entrypoint
-pub fn main<T>(spark: T) -> Result<(), Box<dyn Error>> where T: Spark + Sync + Send + 'static {
-	//! Activate the main yui interaction.
-	app::run(spark, None)
-}
 
 pub enum FocusAction {
 	Go,
