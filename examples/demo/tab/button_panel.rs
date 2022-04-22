@@ -7,7 +7,7 @@ use yui::app::Edge;
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
 use yui::sparks::selection_editor::SelectionEditorSpark;
-use yui::yard::{ButtonModel, ButtonAction, SubmitAffordance};
+use yui::yard::{ButtonAction, ButtonModel, SubmitAffordance};
 
 use crate::AppTab;
 
@@ -69,7 +69,6 @@ pub enum Action {
 	PressButton(usize, usize),
 	OfferChoice,
 	Choose(Option<usize>),
-	ShowTab(usize),
 	ReleaseIgnore,
 }
 
@@ -146,11 +145,10 @@ impl Spark for ButtonDemo {
 					AfterFlow::Ignore
 				}
 			}
-			Action::ShowTab(index) => AfterFlow::Report(index),
 		}
 	}
 
-	fn render(state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
+	fn render(state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		fn ordered_buttons(state: &State, col: usize) -> Vec<ArcYard> {
 			let mut buttons = state.buttons.iter().filter_map(|((left_right, top_bottom), value)| {
 				if *left_right == col { Some((*top_bottom, yard::button(value))) } else { None }
@@ -165,7 +163,7 @@ impl Spark for ButtonDemo {
 			.pad(3)
 			.before(yard::fill(FillColor::Background, Plain));
 		let content = light_half.pack_right(40, dark_half);
-		let page = AppTab::Buttons.page(content, Some(link.clone().map(Action::ShowTab)));
+		let page = AppTab::Buttons.page(content);
 		Some(page)
 	}
 }

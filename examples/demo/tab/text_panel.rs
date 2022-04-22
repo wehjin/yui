@@ -9,9 +9,7 @@ use crate::AppTab;
 #[derive(Debug)]
 pub struct TextDemo {}
 
-pub enum Action {
-	ShowTab(usize)
-}
+pub enum Action {}
 
 impl Spark for TextDemo {
 	type State = ();
@@ -20,13 +18,11 @@ impl Spark for TextDemo {
 
 	fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State { () }
 
-	fn flow(&self, action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
-		match action {
-			Action::ShowTab(index) => AfterFlow::Report(index),
-		}
+	fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		AfterFlow::Ignore
 	}
 
-	fn render(_state: &Self::State, link: &SenderLink<Self::Action>) -> Option<ArcYard> {
+	fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		let light_innards = vec![
 			yard::label("[left]", StrokeColor::BodyOnBackground, Cling::Left),
 			yard::label("[かいさつぐち]", StrokeColor::BodyOnBackground, Cling::Center),
@@ -42,7 +38,7 @@ impl Spark for TextDemo {
 			.before(yard::fill(FillColor::Primary, Plain))
 			;
 		let content = light_half.pack_right(50, dark_half);
-		let page = AppTab::Text.page(content, Some(link.clone().map(Action::ShowTab)));
+		let page = AppTab::Text.page(content);
 		Some(page)
 	}
 }

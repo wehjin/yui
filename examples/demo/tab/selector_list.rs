@@ -11,7 +11,6 @@ use crate::AppTab;
 #[derive(Debug, Clone)]
 pub enum Action {
 	SetValue(i32),
-	ShowTab(usize),
 	UpdateScroll(ScrollAction),
 	UpdateButton(ButtonAction),
 	UpdatePress(usize, PressAction),
@@ -47,9 +46,6 @@ impl Spark for SelectorListDemo {
 				flow.link().send(Action::UpdateButton(ButtonAction::Release));
 				flow.link().send(Action::UpdatePress(index, PressAction::Release));
 				AfterFlow::Revise((scroll, button.clone(), presses.clone()))
-			}
-			Action::ShowTab(index) => {
-				AfterFlow::Report(index)
 			}
 			Action::UpdateScroll(action) => {
 				if let Some(scroll) = scroll.update(action) {
@@ -98,10 +94,7 @@ impl Spark for SelectorListDemo {
 			scroll.clone(),
 			list_link,
 		);
-		let page = AppTab::SelectorList.page(
-			body,
-			Some(link.clone().map(Action::ShowTab)),
-		);
+		let page = AppTab::SelectorList.page(body);
 		Some(page)
 	}
 }

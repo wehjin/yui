@@ -20,7 +20,6 @@ use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::story_id::StoryId;
 
-use crate::MainAction::SetTab;
 use crate::tab::button_panel::ButtonDemo;
 use crate::tab::dialog::{DialogDemo, Report};
 use crate::tab::form_list::FormListDemo;
@@ -80,10 +79,7 @@ impl story::Spark for Main {
 			Some(SenderLink::wrap_sink(move |report| {
 				info!("DIALOG DEMO REPORT");
 				match report {
-					Report::SelectedTab(index) => {
-						own_link.send(SetTab(AppTab::from_index(index)));
-					}
-					Report::NextDialog(next_dialog) => {
+					Report::ShouldCloseDialog(next_dialog) => {
 						own_link.send(MainAction::Close(next_dialog));
 					}
 				}

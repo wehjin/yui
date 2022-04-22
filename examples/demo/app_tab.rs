@@ -53,7 +53,7 @@ impl AppTab {
 		index
 	}
 
-	pub fn page(&self, content: ArcYard, _select_tab: Option<SenderLink<usize>>) -> ArcYard {
+	pub fn page(&self, content: ArcYard) -> ArcYard {
 		content
 	}
 

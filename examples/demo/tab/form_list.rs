@@ -92,7 +92,7 @@ impl Spark for FormListDemo {
 			.confine_width(50, Cling::Center)
 			.pad(1)
 			.before(yard::fill(FillColor::Background, Plain));
-		let page = AppTab::FormList.page(body, Some(link.clone().map(Action::ShowTab)));
+		let page = AppTab::FormList.page(body);
 		Some(page)
 	}
 }

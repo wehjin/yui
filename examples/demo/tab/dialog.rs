@@ -34,7 +34,7 @@ pub enum Action {
 }
 
 impl Spark for DialogDemo {
-	type State = (u32, u32, Option<SenderLink<Self::Report>>, DialogButtons);
+	type State = (u32, u32, DialogButtons);
 	type Action = Action;
 	type Report = Report;
 
@@ -53,42 +53,38 @@ impl Spark for DialogDemo {
 				affordance: SubmitAffordance::enabled(Action::PressClose.to_sync(create.link())),
 			},
 		};
-		(self.dialog, self.next_dialog, create.report_link().clone(), buttons)
+		(self.dialog, self.next_dialog, buttons)
 	}
 
 
 	fn flow(&self, action: Self::Action, flow: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
+		let (dialog, next_dialog, buttons) = flow.state();
 		match action {
 			Action::PressClose => {
-				let state = flow.state();
-				AfterFlow::Revise((state.0, state.1, state.2.clone(), state.3.press_close()))
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.press_close()))
 			}
 			Action::Close => {
-				let (_, next_dialog, _, _) = *flow.state();
-				AfterFlow::Report(Report::NextDialog(next_dialog))
+				AfterFlow::Report(Report::ShouldCloseDialog(*next_dialog))
 			}
 			Action::PressOpen => {
-				let state = flow.state();
-				AfterFlow::Revise((state.0, state.1, state.2.clone(), state.3.press_open()))
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.press_open()))
 			}
 			Action::Open => {
-				let (_, next_dialog, _, _) = *flow.state();
 				let link = flow.link().clone();
 				flow.start_prequel(
-					Main { dialog_id: next_dialog },
+					Main { dialog_id: next_dialog.clone() },
 					link.clone().map(|next_dialog| Action::NextDialog(next_dialog)),
 				);
 				AfterFlow::Ignore
 			}
 			Action::NextDialog(next_dialog) => {
-				let (dialog, _, ref reports, ref buttons) = *flow.state();
-				AfterFlow::Revise((dialog, next_dialog, reports.clone(), buttons.next_dialog(next_dialog)))
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.next_dialog(next_dialog)))
 			}
 		}
 	}
 
 	fn render(state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
-		let (this_dialog, _, ref report_link, ref buttons) = *state;
+		let (this_dialog, _, ref buttons) = *state;
 		let gap_height = 1;
 		let row_height = 3;
 		let rows = vec![
@@ -102,7 +98,7 @@ impl Spark for DialogDemo {
 			.pad(1)
 			.before(yard::fill(FillColor::Background, Plain));
 
-		let page = AppTab::Dialog.page(content, report_link.clone().map(|report_link| report_link.map(Report::SelectedTab)));
+		let page = AppTab::Dialog.page(content);
 		Some(page)
 	}
 }
@@ -116,6 +112,5 @@ pub struct DialogDemo {
 impl Sendable for Action {}
 
 pub enum Report {
-	SelectedTab(usize),
-	NextDialog(u32),
+	ShouldCloseDialog(u32),
 }
