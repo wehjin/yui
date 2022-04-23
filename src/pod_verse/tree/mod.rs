@@ -150,9 +150,8 @@ impl PodTree {
 		}
 		// Next recompute the focus.
 		self.focus_map = link_focus_regions(&self.layout_map, &self.children);
-		let root_active = self.focus_map.get(&self.root_path).cloned().unwrap_or_else(|| ActiveFocus::default());
-		self.active_focus = to_active_focus(&self.active_focus, root_active.to_foci());
-		trace!("NEW ACTIVE FOCUS: {:?}", &self.active_focus);
+		let linked_focus = self.focus_map.get(&self.root_path).cloned().unwrap_or_else(|| ActiveFocus::default());
+		self.active_focus = to_active_focus(&self.active_focus, linked_focus.to_foci(), linked_focus.rear_z);
 
 		// Render altered pods.
 		while let Some(path) = altered.pop() {

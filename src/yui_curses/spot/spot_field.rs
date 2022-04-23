@@ -7,7 +7,7 @@ pub struct SpotField<T: Clone> {
 impl<T: Clone> SpotField<T> {
 	pub fn new(value: T) -> Self { SpotField { value, z: i32::MAX } }
 	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
-		let adjustment = if self.z < z { -depth } else { 0 };
+		let adjustment = if self.z <= z { -depth } else { 0 };
 		SpotField {
 			value: self.value.clone(),
 			z: self.z + adjustment,

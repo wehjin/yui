@@ -2,18 +2,19 @@ use std::fmt::Debug;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
 use crate::core::bounds::Bounds;
+use crate::yui::{Focus, FocusMotion, FocusMotionFuture, FocusType};
 
 #[derive(Debug, Clone)]
 pub struct ActiveFocus {
 	pub focus: Option<Rc<Focus>>,
 	pub peers: Vec<Rc<Focus>>,
+	pub rear_z: i32,
 }
 
 impl Default for ActiveFocus {
 	fn default() -> Self {
-		ActiveFocus { focus: None, peers: Vec::new() }
+		ActiveFocus { focus: None, peers: Vec::new(), rear_z: 0 }
 	}
 }
 
@@ -25,27 +26,46 @@ impl ActiveFocus {
 		}
 		all
 	}
-	pub fn insert_seam(&mut self, from: &Self, z: i32, left: i32, top: i32) {
-		for peer in &from.peers {
-			let focus = peer.shift_seam(z, left, top);
-			self.peers.push(Rc::new(focus));
-		}
-		if let Some(focus) = &from.focus {
-			let new = focus.shift_seam(z, left, top);
-			self.peers.push(Rc::new(new));
-		}
-	}
 	pub fn expand_seam(&mut self, z: i32, depth: i32) {
-		let mut new_peers = self.peers.iter().map(|it| Rc::new(it.expand_seam(z, depth)))
+		self.peers
+			= self.to_foci()
+			.into_iter()
+			.map(|focus| {
+				if z > focus.bounds.z {
+					Rc::new(focus.expand_seam(z, depth))
+				} else {
+					focus
+				}
+			})
 			.collect::<Vec<_>>();
-		if let Some(focus) = &self.focus {
-			let new_focus = focus.expand_seam(z, depth);
-			new_peers.push(Rc::new(new_focus));
-		}
-		self.peers = new_peers;
+		self.rear_z = if z > self.rear_z {
+			self.rear_z - depth
+		} else {
+			self.rear_z
+		};
 		self.focus = None;
 	}
-
+	pub fn insert_seam(&mut self, from: &Self, z: i32, left: i32, top: i32) {
+		let mut insert_foci
+			= from.to_foci()
+			.into_iter()
+			.map(|focus| Rc::new(focus.shift_seam(z, left, top)))
+			.collect::<Vec<_>>();
+		let new_rear_z = if from.rear_z < i32::MAX {
+			let insert_rear_z = from.rear_z + z;
+			self.rear_z.min(insert_rear_z)
+		} else {
+			self.rear_z
+		};
+		self.peers = {
+			let mut vec = self.to_foci();
+			vec.append(&mut insert_foci);
+			info!("FOCI AFTER INSERTION: {:?}", &vec);
+			vec.into_iter().filter(|focus| focus.is_in_range(new_rear_z)).collect::<Vec<_>>()
+		};
+		self.rear_z = new_rear_z;
+		self.focus = None;
+	}
 	pub fn focus_id(&self) -> i32 {
 		match self.focus {
 			Some(ref focus) => focus.yard_id,
@@ -128,16 +148,17 @@ impl ActiveFocus {
 		}
 	}
 
-	fn next_focus(&self,
-	              include_bounds: impl Fn(&Bounds, &Bounds) -> bool,
-	              bounds_rank: impl Fn(&Bounds, &Bounds) -> i32,
+	fn next_focus(
+		&self,
+		include_bounds: impl Fn(&Bounds, &Bounds) -> bool,
+		bounds_rank: impl Fn(&Bounds, &Bounds) -> i32,
 	) -> ActiveFocus {
 		if let Some(ref focus) = self.focus {
 			let bounds = focus.bounds;
-			let (mut targets, mut next_peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) =
-				self.peers.clone()
-					.into_iter()
-					.partition(|it| include_bounds(&it.bounds, &bounds));
+			let (mut targets, mut next_peers): (Vec<Rc<Focus>>, Vec<Rc<Focus>>)
+				= self.peers.clone()
+				.into_iter()
+				.partition(|it| include_bounds(&it.bounds, &bounds));
 			targets.sort_by_key(|it| bounds_rank(&it.bounds, &bounds));
 			if targets.is_empty() {
 				self.to_owned()
@@ -148,6 +169,7 @@ impl ActiveFocus {
 				ActiveFocus {
 					focus: Some(next_focus),
 					peers: next_peers,
+					rear_z: self.rear_z,
 				}
 			}
 		} else {

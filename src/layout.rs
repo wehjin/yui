@@ -60,12 +60,14 @@ impl LayoutContext {
 		self.focus_vec.borrow().last().map(|it| it.clone())
 	}
 	pub fn pop_active_focus(&mut self, past_active: &ActiveFocus) -> ActiveFocus {
-		let available_foci = self.all_focus_in_range();
-		to_active_focus(past_active, available_foci)
+		let (available_foci, rear_z) = self.all_focus_in_range();
+		to_active_focus(past_active, available_foci, rear_z)
 	}
-	pub fn all_focus_in_range(&self) -> Vec<Rc<Focus>> {
+	pub fn all_focus_in_range(&self) -> (Vec<Rc<Focus>>, i32) {
 		let all_focus = (*self.focus_vec).borrow().clone();
-		all_focus.into_iter().filter(|it| it.is_in_range(self.focus_max)).collect()
+		let rear_z = self.focus_max;
+		let vec = all_focus.into_iter().filter(|it| it.is_in_range(rear_z)).collect();
+		(vec, rear_z)
 	}
 
 	pub fn current_index(&self) -> usize {
@@ -121,20 +123,20 @@ impl LayoutContext {
 }
 
 
-pub fn to_active_focus(past_active: &ActiveFocus, available_foci: Vec<Rc<Focus>>) -> ActiveFocus {
+pub fn to_active_focus(past_active: &ActiveFocus, available_foci: Vec<Rc<Focus>>, rear_z: i32) -> ActiveFocus {
 	let (focus, peers) =
 		if let ActiveFocus { focus: Some(past_focus), .. } = past_active {
-			let (mut continuity_foci, new_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
+			let (mut continuity_foci, other_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
 			if continuity_foci.is_empty() {
-				pick_priority_focus(new_foci)
+				pick_priority_focus(other_foci)
 			} else {
 				let focus = continuity_foci.remove(0);
-				(Some(focus), new_foci)
+				(Some(focus), other_foci)
 			}
 		} else {
 			pick_priority_focus(available_foci)
 		};
-	ActiveFocus { focus, peers }
+	ActiveFocus { focus, peers, rear_z }
 }
 
 fn pick_priority_focus(mut candidates: Vec<Rc<Focus>>) -> (Option<Rc<Focus>>, Vec<Rc<Focus>>) {

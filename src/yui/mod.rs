@@ -40,14 +40,14 @@ impl Debug for Focus {
 }
 
 impl Focus {
-	pub fn shift_seam(&self, z: i32, left: i32, top: i32) -> Self {
-		let mut focus = self.clone();
-		focus.bounds = self.bounds.shift_seam(z, left, top);
-		focus
-	}
 	pub fn expand_seam(&self, z: i32, depth: i32) -> Self {
 		let mut focus = self.clone();
 		focus.bounds = self.bounds.expand_seam(z, depth);
+		focus
+	}
+	pub fn shift_seam(&self, z: i32, left: i32, top: i32) -> Self {
+		let mut focus = self.clone();
+		focus.bounds = self.bounds.shift_seam(z, left, top);
 		focus
 	}
 

@@ -24,29 +24,6 @@ impl SpotTable {
 			seams: HashMap::new(),
 		}
 	}
-	pub fn insert_seam(&mut self, from: &SpotTable, z: i32, left: i32, top: i32) {
-		for from_x in 0..from.cols {
-			let to_x = from_x + left;
-			if to_x >= 0 && to_x < self.cols {
-				for from_y in 0..from.rows {
-					let to_y = from_y + top;
-					if to_y >= 0 && to_y < self.rows {
-						let mut to_cell = self.spot_stack(to_y, to_x).borrow_mut();
-						let from_cell = from.spot_stack(from_y, from_x).borrow();
-						to_cell.insert_seam(z, from_cell.borrow());
-					}
-				}
-			}
-		}
-		from.seams.iter().for_each(|(from_story_id, from_bounds)| {
-			let mut hash_set = self.seams.remove(from_story_id).unwrap_or_else(|| HashSet::new());
-			from_bounds.iter().for_each(|from_bounds| {
-				let shifted_bounds = from_bounds.shift_seam(z, left, top);
-				hash_set.insert(shifted_bounds);
-			});
-			self.seams.insert(*from_story_id, hash_set);
-		});
-	}
 	pub fn expand_seam(&self, z: i32, depth: i32, exclude: (&StoryId, &Bounds)) -> Self {
 		let spots = self.spots.iter().map(|spot| {
 			let spot = spot.borrow();
@@ -72,6 +49,29 @@ impl SpotTable {
 			}
 		}
 		SpotTable { rows: self.rows, cols: self.cols, spots, seams }
+	}
+	pub fn insert_seam(&mut self, from: &SpotTable, z: i32, left: i32, top: i32) {
+		for from_x in 0..from.cols {
+			let to_x = from_x + left;
+			if to_x >= 0 && to_x < self.cols {
+				for from_y in 0..from.rows {
+					let to_y = from_y + top;
+					if to_y >= 0 && to_y < self.rows {
+						let mut to_cell = self.spot_stack(to_y, to_x).borrow_mut();
+						let from_cell = from.spot_stack(from_y, from_x).borrow();
+						to_cell.insert_seam(z, from_cell.borrow());
+					}
+				}
+			}
+		}
+		from.seams.iter().for_each(|(from_story_id, from_bounds)| {
+			let mut hash_set = self.seams.remove(from_story_id).unwrap_or_else(|| HashSet::new());
+			from_bounds.iter().for_each(|from_bounds| {
+				let shifted_bounds = from_bounds.shift_seam(z, left, top);
+				hash_set.insert(shifted_bounds);
+			});
+			self.seams.insert(*from_story_id, hash_set);
+		});
 	}
 
 	pub fn width_height(&self) -> (i32, i32) { (self.cols, self.rows) }

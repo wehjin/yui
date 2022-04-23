@@ -61,8 +61,8 @@ impl Bounds {
 			right: self.right,
 			top: self.top,
 			bottom: self.bottom,
-			z: if self.z < z { self.z - depth } else { self.z },
-			far_z: if self.far_z < z { self.far_z - depth } else { self.far_z },
+			z: if z > self.z { self.z - depth } else { self.z },
+			far_z: if z > self.far_z  { self.far_z - depth } else { self.far_z },
 		}
 	}
 	pub fn shift_seam(&self, z: i32, left: i32, top: i32) -> Self {

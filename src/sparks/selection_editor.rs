@@ -84,7 +84,9 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 			yard::label("Empty", StrokeColor::CommentOnBackground, Cling::Center)
 		} else {
 			let selected_index = scroll.selected_index();
-			let yards = choices.iter().enumerate()
+			let yards
+				= choices.iter()
+				.enumerate()
 				.map(|(index, value)| {
 					let (text, color) = if selected_index == index {
 						(format!("{}", value).to_uppercase(), StrokeColor::BodyOnBackground)

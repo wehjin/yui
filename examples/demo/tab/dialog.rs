@@ -18,6 +18,7 @@ pub struct DialogButtons {
 
 impl DialogButtons {
 	pub fn press_open(&self) -> Self { DialogButtons { open: self.open.update(ButtonAction::Press), close: self.close.clone() } }
+	pub fn release_open(&self) -> Self { DialogButtons { open: self.open.update(ButtonAction::Release), close: self.close.clone() } }
 	pub fn press_close(&self) -> Self { DialogButtons { open: self.open.clone(), close: self.close.update(ButtonAction::Press) } }
 	pub fn next_dialog(&self, next_dialog: u32) -> Self {
 		DialogButtons { open: self.open.set_label(&next_label(next_dialog)), close: self.close.clone() }
@@ -61,22 +62,29 @@ impl Spark for DialogDemo {
 		let (dialog, next_dialog, buttons) = flow.state();
 		match action {
 			Action::PressClose => {
-				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.press_close()))
+				let buttons1 = buttons.press_close();
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons1))
 			}
 			Action::Close => {
-				AfterFlow::Report(Report::ShouldCloseDialog(*next_dialog))
+				let report = Report::ShouldCloseDialog(*next_dialog);
+				AfterFlow::Report(report)
 			}
 			Action::PressOpen => {
-				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.press_open()))
+				let buttons = buttons.press_open();
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons))
 			}
 			Action::Open => {
-				let dialog_spark = Main { dialog_id: next_dialog.clone() };
-				let report_link = flow.link().clone().map(|next_dialog| Action::NextDialog(next_dialog));
-				flow.start_prequel(dialog_spark, report_link);
-				AfterFlow::Ignore
+				{
+					let dialog_spark = Main { dialog_id: next_dialog.clone() };
+					let report_link = flow.link().clone().map(|next_dialog| Action::NextDialog(next_dialog));
+					flow.start_prequel(dialog_spark, report_link);
+				}
+				let buttons = buttons.release_open();
+				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons))
 			}
 			Action::NextDialog(next_dialog) => {
-				AfterFlow::Revise((dialog.clone(), next_dialog.clone(), buttons.next_dialog(next_dialog)))
+				let buttons = buttons.next_dialog(next_dialog);
+				AfterFlow::Revise((dialog.clone(), next_dialog, buttons))
 			}
 		}
 	}
