@@ -13,6 +13,10 @@ pub fn fill(color: FillColor, grade: FillGrade) -> ArcYard {
 	})
 }
 
+pub fn fill_plain_background() -> ArcYard {
+	fill(FillColor::Background, FillGrade::Plain)
+}
+
 struct FillYard {
 	id: i32,
 	color: (FillColor, FillGrade),

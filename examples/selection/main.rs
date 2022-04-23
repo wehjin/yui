@@ -10,7 +10,7 @@ use simplelog::{Config, WriteLogger};
 
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pack, SenderLink, Spark, yard};
 use yui::app::Edge;
-use yui::palette::{FillColor, FillGrade, StrokeColor};
+use yui::palette::StrokeColor;
 use yui::sparks::selection_editor::SelectionEditorSpark;
 use yui::yard::{ButtonAction, ButtonModel};
 
@@ -31,30 +31,39 @@ pub struct Main {}
 
 #[derive(Clone)]
 pub enum MainAction {
-	UpdateButton(ButtonAction),
+	UpdateOpen(ButtonAction),
 	OpenSelector,
 	Select(Option<(usize, usize)>),
+	UpdateClose(ButtonAction),
+	Close,
 }
 
 impl Spark for Main {
-	type State = (usize, ButtonModel);
+	type State = (usize, ButtonModel, ButtonModel);
 	type Action = MainAction;
 	type Report = ();
 
 	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
 		let value = 0usize;
-		let release_trigger = ctx.link().to_trigger(MainAction::OpenSelector);
-		let press_link = ctx.link().to_sync().map(|_| MainAction::UpdateButton(ButtonAction::Press));
-		let button = ButtonModel::enabled("Open".into(), release_trigger, press_link);
-		(value, button)
+		let open = ButtonModel::enabled(
+			"Open".into(),
+			ctx.link().to_trigger(MainAction::OpenSelector),
+			ctx.link().to_sync().map(|_| MainAction::UpdateOpen(ButtonAction::Press)),
+		);
+		let close = ButtonModel::enabled(
+			"Close".into(),
+			ctx.link().to_trigger(MainAction::Close),
+			ctx.link().to_sync().map(|_| MainAction::UpdateClose(ButtonAction::Press)),
+		);
+		(value, open, close)
 	}
 
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
-		let (value, button) = ctx.state();
+		let (value, open, close) = ctx.state();
 		match action {
-			MainAction::UpdateButton(action) => {
-				let button = button.update(action);
-				AfterFlow::Revise((value.clone(), button))
+			MainAction::UpdateOpen(action) => {
+				let open = open.update(action);
+				AfterFlow::Revise((value.clone(), open, close.clone()))
 			}
 			MainAction::OpenSelector => {
 				let spark = SelectionEditorSpark {
@@ -63,25 +72,33 @@ impl Spark for Main {
 				};
 				let report_link = ctx.link().map(|it| MainAction::Select(it));
 				ctx.start_prequel(spark, report_link);
-				let button = button.update(ButtonAction::Release);
-				AfterFlow::Revise((value.clone(), button))
+				let open = open.update(ButtonAction::Release);
+				AfterFlow::Revise((value.clone(), open, close.clone()))
 			}
 			MainAction::Select(choice) => {
 				if let Some((index, _value)) = choice {
-					AfterFlow::Revise((index, button.clone()))
+					AfterFlow::Revise((index, open.clone(), close.clone()))
 				} else {
 					AfterFlow::Ignore
 				}
+			}
+			MainAction::UpdateClose(action) => {
+				let close = close.update(action);
+				AfterFlow::Revise((value.clone(), open.clone(), close))
+			}
+			MainAction::Close => {
+				AfterFlow::Close(None)
 			}
 		}
 	}
 
 	fn render(state: &Self::State, _action_link: &SenderLink<Self::Action>) -> Option<ArcYard> {
-		let (value, button) = state;
+		let (value, button, close) = state;
 		let label = yard::label(format!("{}", value), StrokeColor::BodyOnBackground, Cling::Center);
 		let button = yard::button(button).confine(10, 1, Cling::Center);
-		let content = yard::empty().pack_top(3, button).pack_top(3, label).confine(40, 40, Cling::Center);
-		let back = yard::fill(FillColor::Background, FillGrade::Plain);
-		Some(content.before(back))
+		let body = yard::empty().pack_top(3, button).pack_top(3, label).confine(40, 40, Cling::Center);
+		let header = yard::button(close).confine_width(7, Cling::Left);
+		let yard = body.pack_top(1, header).before(yard::fill_plain_background());
+		Some(yard)
 	}
 }
