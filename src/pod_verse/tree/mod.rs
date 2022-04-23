@@ -129,7 +129,6 @@ impl PodTree {
 	}
 
 	fn layout_paths(&mut self, mut paths: Vec<PodPath>) {
-		info!("LAYOUT PATHS({}): {:?}", paths.len(), paths);
 		let mut altered = Vec::new();
 		//Layout the supplied paths and their descendents.
 		while let Some(path) = paths.pop() {

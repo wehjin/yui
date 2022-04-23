@@ -60,7 +60,6 @@ impl ActiveFocus {
 		self.peers = {
 			let mut vec = self.to_foci();
 			vec.append(&mut insert_foci);
-			info!("FOCI AFTER INSERTION: {:?}", &vec);
 			vec.into_iter().filter(|focus| focus.is_in_range(new_rear_z)).collect::<Vec<_>>()
 		};
 		self.rear_z = new_rear_z;
