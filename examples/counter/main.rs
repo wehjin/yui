@@ -11,7 +11,7 @@ use rand::random;
 use simplelog::{Config, WriteLogger};
 
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pack, Padding, Sendable, SenderLink, Spark, yard};
-use yui::app::Edge;
+
 use yui::palette::{FillColor, FillGrade, StrokeColor};
 use yui::yard::{ButtonModel, ButtonAction, Priority, SubmitAffordance};
 
@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		type Action = MainAction;
 		type Report = ();
 
-		fn create<E: Edge>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+		fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 			let (plus, minus, zero, done) = (random(), random(), random(), random());
 			let buttons = vec![
 				ButtonModel {

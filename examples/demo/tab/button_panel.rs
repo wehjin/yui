@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rand::random;
 
 use yui::{Sendable, SenderLink};
-use yui::app::Edge;
+
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
 use yui::sparks::selection_editor::SelectionEditorSpark;
@@ -79,7 +79,7 @@ impl Spark for ButtonDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create<E: Edge>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		let choice = Choice::Beavis;
 		let button_names = choice.button_names();
 		let mut buttons = HashMap::new();

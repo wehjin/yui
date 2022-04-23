@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 
 use yui::{Link, SenderLink};
-use yui::app::Edge;
+
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::prelude::*;
@@ -26,7 +26,7 @@ impl Spark for FormListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create<E: Edge>(&self, create: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
 		let edit = StringEdit::empty(ValidIf::UnsignedInt);
 		let list = ScrollModel::new(1930, vec![5, 5], 0);
 		let button = ButtonModel::disabled(DISABLED_TEXT, create.link().to_trigger(Action::ShowTab(0)));

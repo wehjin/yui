@@ -3,7 +3,6 @@ use std::fmt;
 use rand::random;
 
 use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillGrade, Flow, Link, Pack, Padding, SenderLink, Spark};
-use crate::app::Edge;
 use crate::palette::StrokeColor;
 use crate::sparks::selection_editor::SelectionAction::UpdateButton;
 use crate::yard::{ButtonAction, ButtonModel, PressAction, PressModel, Priority};
@@ -29,7 +28,7 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 	type Action = SelectionAction;
 	type Report = Option<(usize, T)>;
 
-	fn create<E: Edge>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		let choices = self.choices.clone();
 		let presses = choices.iter().enumerate()
 			.map(|(i, _)| {

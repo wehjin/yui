@@ -10,7 +10,7 @@ use rand::random;
 use simplelog::{Config, WriteLogger};
 
 use yui::{AfterFlow, ArcYard, Before, console, Create, Flow, Link, Pack, Padding, Sendable, SenderLink, Spark, yard};
-use yui::app::Edge;
+
 use yui::palette::FillColor::Background;
 use yui::palette::FillGrade::Plain;
 use yui::yard::{ButtonAction, ButtonModel, PressAction, PressModel, SubmitAffordance};
@@ -47,7 +47,7 @@ impl Spark for Main {
 	type Action = MainAction;
 	type Report = ();
 
-	fn create<E: Edge>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		let rows: Vec<Vec<String>> = (1..11).map(|it| vec![
 			format!("{}", it),
 			format!("SYM{}", it),

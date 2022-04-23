@@ -1,4 +1,4 @@
-use yui::app::Edge;
+
 use yui::palette::FillGrade::Plain;
 use yui::palette::StrokeColor;
 use yui::prelude::*;
@@ -16,7 +16,7 @@ impl Spark for TextDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create<E: Edge>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State { () }
+	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State { () }
 
 	fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {
 		AfterFlow::Ignore

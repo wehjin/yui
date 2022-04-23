@@ -5,7 +5,7 @@ use std::thread;
 use rand::random;
 
 use crate::{ArcYard, Sendable, SenderLink, Spark, story, Story, StoryVerseAction, yard};
-use crate::app::MinEdge;
+use crate::app::Edge;
 use crate::story_id::StoryId;
 use crate::yard::YardPublisher;
 
@@ -85,7 +85,7 @@ fn connect_story<S: Spark>(
 	story_verse_link: Sender<StoryVerseAction>,
 ) -> Story<S> where S: Send + 'static {
 	let end_dialog_trigger = StoryBoxAction::EndDialog.into_trigger(&story_box_link);
-	let edge = MinEdge::new(story_id, end_dialog_trigger, story_verse_link);
+	let edge = Edge::new(story_id, end_dialog_trigger, story_verse_link);
 	let story = story::spark(spark, Some(edge), reports_link);
 	match story.subscribe() {
 		Ok(yard_source) => {

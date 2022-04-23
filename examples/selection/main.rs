@@ -9,7 +9,7 @@ use log::LevelFilter;
 use simplelog::{Config, WriteLogger};
 
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pack, SenderLink, Spark, yard};
-use yui::app::Edge;
+
 use yui::palette::StrokeColor;
 use yui::sparks::selection_editor::SelectionEditorSpark;
 use yui::yard::{ButtonAction, ButtonModel, Priority};
@@ -43,7 +43,7 @@ impl Spark for Main {
 	type Action = MainAction;
 	type Report = ();
 
-	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		let value = 0usize;
 		let open = ButtonModel::enabled(
 			"Open".into(),

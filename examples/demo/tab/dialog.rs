@@ -1,7 +1,7 @@
 use rand::random;
 
 use yui::{AfterFlow, ArcYard, Before, Cling, Confine, Create, Flow, Padding, Sendable, SenderLink, Spark, yard};
-use yui::app::Edge;
+
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::yard::{ButtonAction, ButtonModel, SubmitAffordance};
@@ -39,7 +39,7 @@ impl Spark for DialogDemo {
 	type Action = Action;
 	type Report = Report;
 
-	fn create<E: Edge>(&self, create: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
 		let buttons = DialogButtons {
 			open: ButtonModel {
 				id: random(),

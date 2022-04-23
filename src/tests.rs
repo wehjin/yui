@@ -5,10 +5,11 @@ use std::time::Duration;
 use rand::random;
 
 use crate::{AfterFlow, ArcYard, Cling, Create, FillColor, FillGrade, Flow, Pack, Sendable, SenderLink, Spark, StoryVerse, StrokeColor, yard};
-use crate::app::Edge;
+
 use crate::pod::Pod;
 use crate::pod_verse::PodVerse;
 use crate::story_id::StoryId;
+use crate::super_story::SuperStory;
 
 #[derive(Clone)]
 enum TestAction {
@@ -24,7 +25,7 @@ fn sub_story_rendering() {
 		type State = StoryId;
 		type Action = ();
 		type Report = ();
-		fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+		fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 			if let Some(edge) = ctx.edge() {
 				edge.sub_story(PlainPrimary {}, None).story_id
 			} else {
@@ -42,7 +43,7 @@ fn sub_story_rendering() {
 		type State = ();
 		type Action = ();
 		type Report = ();
-		fn create<E: Edge + Clone + Send + 'static>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State { () }
+		fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State { () }
 		fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> { AfterFlow::Ignore }
 		fn render(_state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 			Some(yard::fill(FillColor::Primary, FillGrade::Plain))
@@ -104,7 +105,7 @@ impl Spark for Word {
 	type State = String;
 	type Action = ();
 	type Report = ();
-	fn create<E: Edge + Clone + Send + 'static>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State { self.chars.to_string() }
+	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State { self.chars.to_string() }
 	fn flow(&self, _action: Self::Action, _ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> { AfterFlow::Ignore }
 	fn render(state: &Self::State, _link: &SenderLink<Self::Action>) -> Option<ArcYard> {
 		Some(yard::label(state.clone(), StrokeColor::BodyOnBackground, Cling::Left))
@@ -121,7 +122,7 @@ impl Spark for TwoWords {
 	type Action = ();
 	type Report = ();
 
-	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		if let Some(edge) = ctx.edge() {
 			(edge.sub_story(Word { chars: self.left.clone() }, None).story_id,
 			 edge.sub_story(Word { chars: self.right.clone() }, None).story_id)

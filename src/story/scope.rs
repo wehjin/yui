@@ -5,15 +5,15 @@ use crate::{Flow, Link, SenderLink, Spark};
 use crate::app::Edge;
 use crate::dialog_story::DialogStory;
 
-pub(super) struct StoryScope<V, A: Send, R: Send, E: Edge> {
+pub(super) struct StoryScope<V, A: Send, R: Send, > {
 	vision: V,
 	watchers: HashMap<i32, Sender<V>>,
 	link: SenderLink<A>,
-	edge: Option<E>,
+	edge: Option<Edge>,
 	on_report: SenderLink<R>,
 }
 
-impl<V: Clone, A: Send, R: Send + 'static, E: Edge> StoryScope<V, A, R, E> {
+impl<V: Clone, A: Send, R: Send + 'static> StoryScope<V, A, R> {
 	pub fn set_vision(&mut self, vision: V, announce: bool) {
 		self.vision = vision;
 		if announce {
@@ -38,12 +38,12 @@ impl<V: Clone, A: Send, R: Send + 'static, E: Edge> StoryScope<V, A, R, E> {
 		}
 	}
 
-	pub fn new(vision: V, link: SenderLink<A>, edge: Option<E>, on_report: SenderLink<R>) -> Self {
+	pub fn new(vision: V, link: SenderLink<A>, edge: Option<Edge>, on_report: SenderLink<R>) -> Self {
 		StoryScope { vision, watchers: HashMap::new(), link, on_report, edge }
 	}
 }
 
-impl<S, A: Send, R: Send + 'static, E: Edge> Flow<S, A, R> for StoryScope<S, A, R, E> {
+impl<S, A: Send, R: Send + 'static> Flow<S, A, R> for StoryScope<S, A, R> {
 	fn state(&self) -> &S { &self.vision }
 
 	fn link(&self) -> &SenderLink<A> { &self.link }

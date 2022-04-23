@@ -15,10 +15,11 @@ use simplelog::{Config, WriteLogger};
 pub use app_tab::*;
 use yui::{console, Create, Flow, Link, SenderLink};
 use yui::{AfterFlow, ArcYard, Before, Cling, Padding, story, yard};
-use yui::app::Edge;
+
 use yui::palette::{FillColor, StrokeColor};
 use yui::palette::FillGrade::Plain;
 use yui::story_id::StoryId;
+use yui::super_story::SuperStory;
 
 use crate::tab::button_panel::ButtonDemo;
 use crate::tab::dialog::{DialogDemo, Report};
@@ -71,7 +72,7 @@ impl story::Spark for Main {
 	type Action = MainAction;
 	type Report = u32;
 
-	fn create<E: Edge + Clone + Send + 'static>(&self, ctx: &Create<Self::Action, Self::Report, E>) -> Self::State where E: Clone
+	fn create(&self, ctx: &Create<Self::Action, Self::Report>) -> Self::State
 	{
 		let edge = ctx.edge().clone().expect("edge in create");
 		let dialog_reports = {

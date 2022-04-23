@@ -1,7 +1,7 @@
 use rand::random;
 
 use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Link, Padding, SenderLink, Spark, yard};
-use yui::app::Edge;
+
 use yui::palette::{FillColor, StrokeColor};
 use yui::yard::{ButtonAction, ButtonModel, PressAction, PressModel, Priority};
 use yui::yard::model::{ScrollAction, ScrollModel};
@@ -21,7 +21,7 @@ impl Spark for SelectorListDemo {
 	type Action = Action;
 	type Report = usize;
 
-	fn create<E: Edge>(&self, create: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, create: &Create<Self::Action, Self::Report>) -> Self::State {
 		let count = 10;
 		let scroll = ScrollModel::new_count_height(LIST_ID, count, 4, 0);
 		let button = {

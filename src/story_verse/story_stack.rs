@@ -1,7 +1,7 @@
 use rand::random;
 
 use crate::{AfterFlow, ArcYard, Create, FillColor, FillGrade, Flow, SenderLink, Spark, StoryId, yard};
-use crate::app::Edge;
+
 
 #[derive(Debug, Clone)]
 pub enum StoryStackAction {
@@ -40,7 +40,7 @@ impl Spark for StoryStack {
 	type Action = StoryStackAction;
 	type Report = ();
 
-	fn create<E: Edge + Clone + Send + 'static>(&self, _ctx: &Create<Self::Action, Self::Report, E>) -> Self::State {
+	fn create(&self, _ctx: &Create<Self::Action, Self::Report>) -> Self::State {
 		StoryStackModel { story_ids: Vec::new(), yard_ids: Vec::new() }
 	}
 
