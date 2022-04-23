@@ -12,7 +12,7 @@ use yui::{AfterFlow, ArcYard, Before, Cling, Confine, console, Create, Flow, Pac
 use yui::app::Edge;
 use yui::palette::StrokeColor;
 use yui::sparks::selection_editor::SelectionEditorSpark;
-use yui::yard::{ButtonAction, ButtonModel};
+use yui::yard::{ButtonAction, ButtonModel, Priority};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	WriteLogger::init(
@@ -49,11 +49,13 @@ impl Spark for Main {
 			"Open".into(),
 			ctx.link().to_trigger(MainAction::OpenSelector),
 			ctx.link().to_sync().map(|_| MainAction::UpdateOpen(ButtonAction::Press)),
+			Priority::Default,
 		);
 		let close = ButtonModel::enabled(
 			"Close".into(),
 			ctx.link().to_trigger(MainAction::Close),
 			ctx.link().to_sync().map(|_| MainAction::UpdateClose(ButtonAction::Press)),
+			Priority::None,
 		);
 		(value, open, close)
 	}

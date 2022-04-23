@@ -51,10 +51,10 @@ impl ButtonModel {
 		let affordance = SubmitAffordance::Disabled;
 		ButtonModel { id, label, release_trigger, affordance }
 	}
-	pub fn enabled(label: &str, release_trigger: Trigger, press_link: SyncLink<i32>) -> Self {
+	pub fn enabled(label: &str, release_trigger: Trigger, press_link: SyncLink<i32>, priority: Priority) -> Self {
 		let id = random();
 		let label = label.to_string();
-		let affordance = SubmitAffordance::enabled(press_link);
+		let affordance = SubmitAffordance::Enabled { press_link, priority };
 		ButtonModel { id, label, release_trigger, affordance }
 	}
 	pub fn set_label(&self, label: &str) -> Self {

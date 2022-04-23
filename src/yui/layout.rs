@@ -26,6 +26,9 @@ impl ActiveFocus {
 		}
 		all
 	}
+	pub fn contains_focus_id(&self, focus_id: i32) -> bool {
+		self.to_foci().into_iter().find(|focus| focus.yard_id == focus_id).is_some()
+	}
 	pub fn expand_seam(&mut self, z: i32, depth: i32) {
 		self.peers
 			= self.to_foci()

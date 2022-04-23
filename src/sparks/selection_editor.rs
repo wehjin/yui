@@ -38,12 +38,12 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 			})
 			.collect::<Vec<_>>();
 		let scroll = ScrollModel::new_count_height(random(), choices.len(), 3, self.selected);
-		let button = {
+		let close_button = {
 			let release_trigger = ctx.link().to_trigger(SelectionAction::Close);
 			let press_link = ctx.link().to_sync().map(|_| SelectionAction::UpdateButton(ButtonAction::Press));
-			ButtonModel::enabled("Close", release_trigger, press_link)
+			ButtonModel::enabled("Close", release_trigger, press_link, Priority::None)
 		};
-		(choices, presses, scroll, button)
+		(choices, presses, scroll, close_button)
 	}
 
 	fn flow(&self, action: Self::Action, ctx: &impl Flow<Self::State, Self::Action, Self::Report>) -> AfterFlow<Self::State, Self::Report> {

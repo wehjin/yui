@@ -128,7 +128,7 @@ pub fn to_active_focus(past_active: &ActiveFocus, available_foci: Vec<Rc<Focus>>
 		if let ActiveFocus { focus: Some(past_focus), .. } = past_active {
 			let (mut continuity_foci, other_foci): (Vec<Rc<Focus>>, Vec<Rc<Focus>>) = available_foci.into_iter().partition(|it| it.yard_id == past_focus.yard_id);
 			if continuity_foci.is_empty() {
-				info!("ContinuityFocus is empty, pick priority focus");
+				info!("ContinuityFocus is empty, pick priority focus from candidates: {:?}", &other_foci);
 				pick_priority_focus(other_foci)
 			} else {
 				let focus = continuity_foci.remove(0);

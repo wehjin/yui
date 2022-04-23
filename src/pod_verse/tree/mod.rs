@@ -151,7 +151,18 @@ impl PodTree {
 		self.focus_map = link_focus_regions(&self.layout_map, &self.children);
 		let linked_focus = self.focus_map.get(&self.root_path).cloned().unwrap_or_else(|| ActiveFocus::default());
 		self.active_focus = to_active_focus(&self.active_focus, linked_focus.to_foci(), linked_focus.rear_z);
-
+		{
+			// Make sure to re-render the pod that contains the active focus
+			let new_focus_id = self.active_focus.focus_id();
+			let mut set = altered.into_iter().collect::<HashSet<_>>();
+			// Search layouts instead of focus_map because any focus can be present in multiple items in the focus map.
+			if let Some((path, _layout)) = self.layout_map.iter().find(|&(_path, layout)| layout.active_focus.contains_focus_id(new_focus_id)) {
+				set.insert(path.clone());
+			} else {
+				warn!("No pod contains new focus id {}!", new_focus_id)
+			}
+			altered = set.into_iter().collect::<Vec<_>>();
+		}
 		// Render altered pods.
 		while let Some(path) = altered.pop() {
 			let yard = self.yard_map.get(path.last_story_id()).cloned().unwrap_or_else(yard::empty);

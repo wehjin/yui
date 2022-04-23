@@ -3,7 +3,7 @@ use rand::random;
 use yui::{AfterFlow, ArcYard, Cling, Create, Flow, Link, Padding, SenderLink, Spark, yard};
 use yui::app::Edge;
 use yui::palette::{FillColor, StrokeColor};
-use yui::yard::{ButtonAction, ButtonModel, PressAction, PressModel};
+use yui::yard::{ButtonAction, ButtonModel, PressAction, PressModel, Priority};
 use yui::yard::model::{ScrollAction, ScrollModel};
 
 use crate::AppTab;
@@ -27,9 +27,10 @@ impl Spark for SelectorListDemo {
 		let button = {
 			let release_trigger = create.link().to_trigger(Action::SetValue(1));
 			let press_link = create.link().to_sync().map(|_| Action::UpdateButton(ButtonAction::Press));
-			ButtonModel::enabled("Add", release_trigger, press_link)
+			ButtonModel::enabled("Add", release_trigger, press_link, Priority::None)
 		};
-		let presses = (0..count).into_iter()
+		let presses
+			= (0..count).into_iter()
 			.map(|index| {
 				PressModel::new(random(), create.link().to_trigger(Action::SetValue(index as i32 + 1)))
 			})
