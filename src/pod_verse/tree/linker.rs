@@ -1,7 +1,54 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::layout::LayoutState;
 use crate::pod_verse::tree::PodPath;
 use crate::spot::spot_table::SpotTable;
+use crate::yui::layout::ActiveFocus;
+
+pub fn link_focus_regions(layout_map: &HashMap<PodPath, LayoutState>, children: &HashMap<PodPath, HashSet<PodPath>>) -> HashMap<PodPath, ActiveFocus> {
+	let all_paths_longest_first = {
+		let mut paths = layout_map.keys().cloned().collect::<Vec<_>>();
+		paths.sort_by_key(|it| it.len());
+		paths.reverse();
+		paths
+	};
+	trace!("Pod paths longest first({}): {:?}", all_paths_longest_first.len(),&all_paths_longest_first);
+	let mut expanded_focus_map: HashMap<PodPath, ActiveFocus> = HashMap::new();
+	for parent_path in all_paths_longest_first {
+		let path = &parent_path;
+		let mut parent_focus = path_active_focus(&path, &expanded_focus_map, layout_map).cloned().unwrap_or_else(|| ActiveFocus::default());
+		trace!("Parent focus BEFORE expansion({:?}): {:?}",parent_path.last_story_id(), &parent_focus);
+		if let Some(direct_children) = children.get(&parent_path) {
+			for child_path in direct_children {
+				let child_bounds = child_path.last_bounds();
+				let child_depth = if let Some(layout) = layout_map.get(child_path) {
+					(layout.bounds_hold.borrow().nearest_z()).abs() + 1
+				} else {
+					0
+				};
+				parent_focus.expand_seam(child_bounds.z, child_depth);
+				let path = child_path;
+				if let Some(child_active_focus) = path_active_focus(&path, &expanded_focus_map, layout_map) {
+					trace!("CHILD focus for insertion({:?}: {:?}", child_path.last_story_id(), child_active_focus);
+					parent_focus.insert_seam(child_active_focus, child_bounds.z, child_bounds.left, child_bounds.top);
+				}
+			}
+		};
+		trace!("Parent focus AFTER expansion: {:?}", &parent_focus);
+		expanded_focus_map.insert(parent_path, parent_focus);
+	};
+	expanded_focus_map
+}
+
+fn path_active_focus<'a>(path: &PodPath, expanded_focus_map: &'a HashMap<PodPath, ActiveFocus>, layouts: &'a HashMap<PodPath, LayoutState>) -> Option<&'a ActiveFocus> {
+	let expanded = expanded_focus_map.get(path);
+	if expanded.is_some() {
+		expanded
+	} else {
+		layouts.get(&path).map(|it| &it.active_focus)
+	}
+}
+
 
 pub fn link_spot_tables(spot_tables: &HashMap<PodPath, SpotTable>, children: &HashMap<PodPath, HashSet<PodPath>>, root_path: &&PodPath) -> SpotTable {
 	let mut paths = spot_tables.keys().cloned().collect::<Vec<_>>();
