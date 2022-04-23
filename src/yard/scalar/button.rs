@@ -116,7 +116,7 @@ pub fn button(button: &ButtonModel) -> ArcYard {
 	Arc::new(ButtonYard { id: button.id, label_yard, material })
 }
 
-fn focus_priority(priority: &Priority) -> u32 {
+pub fn focus_priority(priority: &Priority) -> u32 {
 	match priority {
 		Priority::None => 0,
 		Priority::Default => 1000,

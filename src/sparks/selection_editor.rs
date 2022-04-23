@@ -6,7 +6,7 @@ use crate::{AfterFlow, ArcYard, Before, Cling, Confine, Create, FillColor, FillG
 use crate::app::Edge;
 use crate::palette::StrokeColor;
 use crate::sparks::selection_editor::SelectionAction::UpdateButton;
-use crate::yard::{ButtonAction, ButtonModel, PressAction, PressModel};
+use crate::yard::{ButtonAction, ButtonModel, PressAction, PressModel, Priority};
 use crate::yard::model::{ScrollAction, ScrollModel};
 use crate::yui::prelude::yard;
 
@@ -34,7 +34,7 @@ impl<T: Clone + Send + fmt::Display> Spark for SelectionEditorSpark<T> {
 		let presses = choices.iter().enumerate()
 			.map(|(i, _)| {
 				let release_trigger = ctx.link().to_trigger(SelectionAction::SelectIndex(i));
-				PressModel::new(random(), release_trigger)
+				PressModel::new(random(), release_trigger).with_priority(Priority::Default)
 			})
 			.collect::<Vec<_>>();
 		let scroll = ScrollModel::new_count_height(random(), choices.len(), 3, self.selected);

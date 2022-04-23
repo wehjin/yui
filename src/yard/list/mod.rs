@@ -2,11 +2,11 @@ use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
 use crate::{ArcYard, DrawPad, Focus, FocusMotion, FocusMotionFuture, FocusType, Link, MultiLayout, SyncLink};
+use crate::core::bounds::Bounds;
 use crate::layout::LayoutContext;
-use crate::yard::{Yard};
 use crate::yard::list::nexus::Nexus;
 use crate::yard::model::{ScrollAction, ScrollModel};
-use crate::core::bounds::Bounds;
+use crate::yard::Yard;
 
 mod nexus;
 
@@ -43,7 +43,7 @@ pub mod model {
 				sum_heights += item_height;
 				min_item_height = min_item_height.min(item_height);
 			}
-			let nexus = Nexus::new(0, &item_heights);
+			let nexus = Nexus::new(selected_index, &item_heights);
 			ScrollModel { id, item_heights, item_tops, min_item_height, sum_heights, nexus, selected_index }
 		}
 		pub fn item_count(&self) -> usize { self.item_heights.len() }
@@ -170,21 +170,27 @@ impl ListYard {
 				}
 			}
 		});
-		let focus_type = match &sub_focus {
-			None => FocusType::CompositeSubmit(focus_motion),
+		let (focus_type, priority) = match &sub_focus {
+			None => {
+				let focus_type = FocusType::CompositeSubmit(focus_motion);
+				let priority = 0;
+				(focus_type, priority)
+			}
 			Some(focus) => {
-				match &focus.focus_type {
+				let focus_type = match &focus.focus_type {
 					FocusType::Submit => FocusType::CompositeSubmit(focus_motion),
 					FocusType::Edit(_) => FocusType::Edit(focus_motion),
 					FocusType::CompositeSubmit(_) => FocusType::CompositeSubmit(focus_motion),
-				}
+				};
+				let priority = focus.priority;
+				(focus_type, priority)
 			}
 		};
 		let focus = Focus {
 			yard_id: self.scroll.id,
 			focus_type,
 			bounds: bounds.to_owned(),
-			priority: 0,
+			priority,
 			action_block: Arc::new(move |ctx| {
 				if let Some(sub_focus) = &sub_focus {
 					(*sub_focus.action_block)(ctx);

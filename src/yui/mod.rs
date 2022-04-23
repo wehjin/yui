@@ -34,6 +34,7 @@ impl Debug for Focus {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		f.debug_struct("Focus")
 			.field("yard", &self.yard_id)
+			.field("priority", &self.priority)
 			.field("bounds", &self.bounds)
 			.finish()
 	}
