@@ -29,7 +29,7 @@ pub mod sparks;
 pub mod story;
 pub mod story_verse;
 pub mod yard;
-pub(crate) mod layout;
+pub mod layout;
 pub(crate) mod render;
 pub mod pod;
 pub mod pod_verse;

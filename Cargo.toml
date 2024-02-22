@@ -11,8 +11,8 @@ path = "src/lib.rs"
 
 [dependencies]
 ncurses = { version = "5.99.0", features = ["wide"] }
-rand = "0.7.3"
+rand = "0.8.5"
 log = "0.4.8"
-simplelog = "0.7.4"
+simplelog = "0.12.1"
 stringedit = { git = "https://github.com/wehjin/stringedit.git" }
 unicode-width = "0.1.8"
